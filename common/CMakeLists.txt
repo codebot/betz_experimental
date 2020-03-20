@@ -1,6 +1,7 @@
 add_library(common
   console.c
   pin.c
+  rs485.c
   stack.c
   startup.c
   status_led.c
