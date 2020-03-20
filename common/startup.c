@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "console.h"
 #include "stm32f405xx.h"
 #include "startup.h"
 #include "stack.h"
@@ -82,6 +83,7 @@ void reset_vector()
   // hooray we're done! we're now running at 168 MHz.
 
   status_led_init();
+  console_init();
   main(); // jump to application main()
   while (1) { } // hopefully we never get here...
 }

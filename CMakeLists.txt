@@ -46,3 +46,4 @@ include_directories(common/stm32)
 
 add_subdirectory(common)
 add_subdirectory(blink)
+add_subdirectory(hello)
