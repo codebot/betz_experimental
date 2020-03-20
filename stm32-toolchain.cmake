@@ -11,13 +11,13 @@ set(CMAKE_OBJDUMP          arm-none-eabi-objdump)
 set(ARCH_FLAGS "-mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16")
 
 SET(CMAKE_C_FLAGS
-  "-g ${ARCH_FLAGS} -fno-builtin -Wall -Werror -I. -std=gnu99 -fdata-sections -ffunction-sections -MD -DSTM32F405 -DHSE_VALUE=8000000"
+  "-g ${ARCH_FLAGS} -fno-builtin -Wall -Werror -I. -std=gnu99 -fdata-sections -ffunction-sections -MD -DSTM32F405"
   CACHE INTERNAL "c compiler flags")
 
 # cxx flags only used for cmake configure step; c++ stuff isn't set up in
 # linker script to actually work, I don't think. We're just using C.
 SET(CMAKE_CXX_FLAGS
-  "-g ${ARCH_FLAGS} -fno-builtin -Wall -Werror -I. -fdata-sections -ffunction-sections -MD -DSTM32F405 -DHSE_VALUE=8000000"
+  "-g ${ARCH_FLAGS} -fno-builtin -Wall -Werror -I. -fdata-sections -ffunction-sections -MD -DSTM32F405"
   CACHE INTERNAL "c compiler flags")
 
 
