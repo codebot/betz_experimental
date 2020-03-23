@@ -43,7 +43,7 @@ void rs485_init()
   //NVIC_EnableIRQ(USART3_IRQn);
 }
 
-void rs485_tx(const uint32_t len, const uint8_t *data)
+void rs485_tx(const uint8_t *data, const uint32_t len)
 {
   //printf("rs485_tx sending %d bytes\n", (int)len);
   if (len > 252) {
@@ -55,21 +55,23 @@ void rs485_tx(const uint32_t len, const uint8_t *data)
   framed_pkt[1] = 0xef;
   framed_pkt[2] = (uint8_t)len;
   uint16_t csum = (uint8_t)len;
-  for (uint32_t i = 0; i < len; i++) {
+  for (uint32_t i = 0; i < len; i++)
+  {
     framed_pkt[i+3] = data[i];
     csum += data[i];  // so bad. do something smarter someday.
   }
   framed_pkt[len+3] = (uint8_t)(csum & 0xff);
   framed_pkt[len+4] = (uint8_t)(csum >> 8);
+  const uint8_t *framed_pkt = data;
   pin_set_output_high(RS485_DIR_GPIO, RS485_DIR_PIN);  // enable transmitter
-  for (volatile int dumb = 0; dumb < 1000; dumb++) { }
+  for (volatile int dumb = 0; dumb < 100; dumb++) { }
   for (uint32_t i = 0; i < len+5; i++)
   {
     while (!(RS485_USART->SR & USART_SR_TXE)) { } // wait for tx to clear
     RS485_USART->DR = framed_pkt[i];
   }
   while (!(RS485_USART->SR & USART_SR_TC)) { } // wait for TX to finish
-  for (volatile int dumb = 0; dumb < 1000; dumb++) { }
+  for (volatile int dumb = 0; dumb < 100; dumb++) { }
   pin_set_output_low(RS485_DIR_GPIO, RS485_DIR_PIN);  // disable transmitter
 }
 
