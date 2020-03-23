@@ -7,17 +7,17 @@
 
 void status_led_init()
 {
-  pin_set_output(LED_GPIO, LED_PIN, 0);
+  pin_set_output(LED_GPIO, LED_PIN, 1);
 }
 
 void status_led_on()
 {
-  pin_set_output_high(LED_GPIO, LED_PIN);
+  pin_set_output_low(LED_GPIO, LED_PIN);
 }
 
 void status_led_off()
 {
-  pin_set_output_low(LED_GPIO, LED_PIN);
+  pin_set_output_high(LED_GPIO, LED_PIN);
 }
 
 void status_led_toggle()

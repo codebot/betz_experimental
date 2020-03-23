@@ -1,6 +1,8 @@
 #include <stdio.h>
-//#include "param.h"
-//#include "parser.h"
+#include <string.h>
+#include "param.h"
+#include "parser.h"
+#include "status_led.h"
 #include "pin.h"
 #include "rs485.h"
 #include "stm32f405xx.h"
@@ -21,12 +23,12 @@
 static volatile uint8_t g_rs485_rx_ring[RS485_RX_RING_LEN];
 static volatile uint32_t g_rs485_rx_ring_rpos = 0, g_rs485_rx_ring_wpos = 0;
 
-//static void rs485_rx(const uint32_t len, const uint8_t *data);
+static void rs485_rx(const uint8_t *data, const uint32_t len);
 
 void rs485_init()
 {
-  //parser_init();
-  //parser_set_rx_pkt_fptr(rs485_rx);
+  parser_init();
+  parser_set_rx_pkt_fptr(rs485_rx);
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
   pin_set_output(RS485_DIR_GPIO, RS485_DIR_PIN, 0);
   pin_set_alternate_function(RS485_USART_GPIO, TX_PIN, 7);  // AF7 = USART3 TX
@@ -36,16 +38,16 @@ void rs485_init()
   //   peripheral clock = 84 MHz. We want divisor = 84/16 = 5.25
   //   mantissa = 5, fraction (sixteenths) = 4
   RS485_USART->BRR = (5 << 4) | 4;
-  RS485_USART->CR1 |=  USART_CR1_TE | USART_CR1_RE;  // | USART_CR1_RXNEIE;
+  RS485_USART->CR1 |=  USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE;
   // for 1 Mbaud we want USARTDIV = 36M / 1M = 36
   RS485_USART->CR1 |= USART_CR1_UE;
-  //NVIC_SetPriority(USART3_IRQn, 1);
-  //NVIC_EnableIRQ(USART3_IRQn);
+  NVIC_SetPriority(USART1_IRQn, 1);
+  NVIC_EnableIRQ(USART1_IRQn);
 }
 
 void rs485_tx(const uint8_t *data, const uint32_t len)
 {
-  //printf("rs485_tx sending %d bytes\n", (int)len);
+  printf("rs485_tx(%d)\r\n", (int)len);
   if (len > 252) {
     printf("woah! unable to handle packets > 252 bytes.\n");
     return;
@@ -62,7 +64,6 @@ void rs485_tx(const uint8_t *data, const uint32_t len)
   }
   framed_pkt[len+3] = (uint8_t)(csum & 0xff);
   framed_pkt[len+4] = (uint8_t)(csum >> 8);
-  const uint8_t *framed_pkt = data;
   pin_set_output_high(RS485_DIR_GPIO, RS485_DIR_PIN);  // enable transmitter
   for (volatile int dumb = 0; dumb < 100; dumb++) { }
   for (uint32_t i = 0; i < len+5; i++)
@@ -75,21 +76,17 @@ void rs485_tx(const uint8_t *data, const uint32_t len)
   pin_set_output_low(RS485_DIR_GPIO, RS485_DIR_PIN);  // disable transmitter
 }
 
-/*
-void usart3_vector()
+void usart1_vector()
 {
-  volatile uint8_t __attribute__((unused)) sr = USART3->ISR;  // clear errors
-  volatile uint8_t b = USART3->RDR;  // drain
-  //printf("rs485 rx: 0x%02x\n", b);
+  volatile uint8_t __attribute__((unused)) sr = USART1->SR;  // clear errors
+  volatile uint8_t b = USART1->DR;  // drain
   g_rs485_rx_ring[g_rs485_rx_ring_wpos] = b;
   if (++g_rs485_rx_ring_wpos >= RS485_RX_RING_LEN)
     g_rs485_rx_ring_wpos = 0;
 }
-*/
 
 void rs485_tick()
 {
-  /*
   // called during the CPU's idle time
   while (g_rs485_rx_ring_rpos != g_rs485_rx_ring_wpos)
   {
@@ -97,10 +94,8 @@ void rs485_tick()
     if (++g_rs485_rx_ring_rpos >= RS485_RX_RING_LEN)
       g_rs485_rx_ring_rpos = 0;
   }
-  */
 }
 
-/*
 static void rs485_rx_req_num_params()
 {
   //printf("rs485_rx_req_num_params()\n");
@@ -111,21 +106,48 @@ static void rs485_rx_req_num_params()
   pkt[2] = (num_params >>  8) & 0xff;
   pkt[3] = (num_params >> 16) & 0xff;
   pkt[4] = (num_params >> 24) & 0xff;
-  rs485_tx(sizeof(pkt), pkt);
+  rs485_tx(pkt, sizeof(pkt));
 }
 
-void rs485_rx(const uint32_t len, const uint8_t *data)
+static void rs485_read_flash(const uint8_t *data, const uint32_t len)
 {
-  //printf("rs485_rx received %d bytes\n", (int)len);
+  if (len < 9)
+    return;  // must have >= 9 bytes in request message
+  uint32_t read_addr = 0, read_len = 0;
+  memcpy(&read_addr, &data[1], sizeof(read_addr));
+  memcpy(&read_len, &data[5], sizeof(read_len));
+  printf("rs485_read_flash()\r\n");
+  if (read_len > 128)
+  {
+    printf("invalid flash read: len = %d\r\n", (int)read_len);
+    return;  // cannot. too long.
+  }
+  // sanity check to make sure the address range lies in flash
+  if (read_addr < 0x08000000 || read_addr > 0x080fffff)
+  {
+    printf("invalid flash read: addr = 0x%08x\r\n", (unsigned)read_addr);
+    return;  // cannot. outside flash.
+  }
+  uint8_t pkt[128 + 9] = {0};  // max length of return request
+  pkt[0] = 0xf0;
+  memcpy(&pkt[1], &read_addr, sizeof(read_addr));
+  memcpy(&pkt[5], &read_len, sizeof(read_len));
+  memcpy(&pkt[9], (const uint8_t *)read_addr, read_len);
+  rs485_tx(pkt, 9 + read_len);
+}
+
+void rs485_rx(const uint8_t *data, const uint32_t len)
+{
+  //printf("rs485_rx received %d bytes\r\n", (int)len);
   if (len == 0)
     return;  // adios amigo
   //for (uint32_t i = 0; i < len; i++)
-  //  printf("%02d: %02x\n", i, data[i]);
+  //  printf("%02d: %02x\r\n", (int)i, (unsigned)data[i]);
   const uint8_t pkt_id = data[0];
   switch (pkt_id)
   {
     case 0x01: rs485_rx_req_num_params(); break;
+    case 0xf0: rs485_read_flash(data, len); break;
     default: break;
   }
 }
-*/

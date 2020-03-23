@@ -1,0 +1,1 @@
+betzdrive_add_executable(test_rs485_comms test_rs485_comms.c)

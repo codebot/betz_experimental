@@ -1,10 +1,11 @@
 #include <stdint.h>
 #include "console.h"
+#include "rs485.h"
 #include "stm32f405xx.h"
 #include "startup.h"
 #include "stack.h"
 #include "status_led.h"
-#include "rs485.h"
+#include "systime.h"
 
 extern uint32_t _srelocate_flash, _srelocate, _erelocate, _ebss, _sbss;
 extern int main();
@@ -85,7 +86,9 @@ void reset_vector()
 
   status_led_init();
   console_init();
+  systime_init();
   rs485_init();
+  __enable_irq();
   main(); // jump to application main()
   while (1) { } // hopefully we never get here...
 }

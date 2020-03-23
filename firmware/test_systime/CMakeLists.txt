@@ -1,0 +1,1 @@
+betzdrive_add_executable(test_systime test_systime.c)
