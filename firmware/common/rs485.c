@@ -11,6 +11,24 @@
 // PB10 = usart3 TX
 // PB11 = usart3 RX
 
+// wire formats:
+//  * initial message byte is always 0xbe, to allow easier re-sync
+//  * next byte is a set of flags:
+//    * bit 0 = direction: 0 = host->peripheral, 1 = peripheral->host
+//    * bit 1 = broadcast: 0 = intended for single recipient, 1 = broadcast
+//    * bit 2 = address format, if not broadcast:
+//       * 0 = single-byte 'id' parameter, must be set previously
+//       * 1 = 12-byte unique hardware serial number
+//    * bit 3 = currently unused. Set to zero.
+//    * bit 4 = 1
+//    * bit 5 = 0
+//    * bit 6 = 1
+//    * bit 7 = 0
+//  * if not broadcast, peripheral address follows (1 byte or 12 bytes)
+//  * next byte is the payload length
+//  * then the payload
+//  * finally a 16-bit checksum (eventually a CRC-16)
+
 #define RS485_USART_GPIO GPIOB
 #define RS485_USART USART1
 #define TX_PIN 6
@@ -22,6 +40,7 @@
 #define RS485_RX_RING_LEN 512
 static volatile uint8_t g_rs485_rx_ring[RS485_RX_RING_LEN];
 static volatile uint32_t g_rs485_rx_ring_rpos = 0, g_rs485_rx_ring_wpos = 0;
+uint8_t g_rs485_id = 42;
 
 static void rs485_rx(const uint8_t *data, const uint32_t len);
 
@@ -45,25 +64,35 @@ void rs485_init()
   NVIC_EnableIRQ(USART1_IRQn);
 }
 
-void rs485_tx(const uint8_t *data, const uint32_t len)
+void rs485_tx(
+    const uint8_t *data,
+    const uint32_t len)
 {
-  printf("rs485_tx(%d)\r\n", (int)len);
-  if (len > 252) {
-    printf("woah! unable to handle packets > 252 bytes.\n");
+  //printf("rs485_tx(%d)\r\n", (int)len);
+  if (len > 250)
+  {
+    printf("woah! unable to handle packets > 250 bytes.\n");
     return;
   }
-  uint8_t framed_pkt[len+5];
+  const int framed_pkt_len = len + 5;
+  uint8_t framed_pkt[framed_pkt_len];
   framed_pkt[0] = 0xbe;
-  framed_pkt[1] = 0xef;
-  framed_pkt[2] = (uint8_t)len;
-  uint16_t csum = (uint8_t)len;
+  framed_pkt[1] = 0x50;
+  framed_pkt[2] = g_rs485_id;
+  framed_pkt[3] = (uint8_t)len;
   for (uint32_t i = 0; i < len; i++)
+    framed_pkt[i+4] = data[i];
+
+  uint16_t crc = 0;
+  for (uint32_t i = 0; i < framed_pkt_len - 2; i++)
   {
-    framed_pkt[i+3] = data[i];
-    csum += data[i];  // so bad. do something smarter someday.
+    // this is just a placeholder hack. Do a real CRC-16 someday.
+    crc <<= 1;
+    crc ^= framed_pkt[i];
   }
-  framed_pkt[len+3] = (uint8_t)(csum & 0xff);
-  framed_pkt[len+4] = (uint8_t)(csum >> 8);
+  framed_pkt[len+4] = (uint8_t)(crc & 0xff);
+  framed_pkt[len+5] = (uint8_t)(crc >> 8);
+
   pin_set_output_high(RS485_DIR_GPIO, RS485_DIR_PIN);  // enable transmitter
   for (volatile int dumb = 0; dumb < 100; dumb++) { }
   for (uint32_t i = 0; i < len+5; i++)

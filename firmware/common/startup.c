@@ -6,6 +6,7 @@
 #include "stack.h"
 #include "status_led.h"
 #include "systime.h"
+#include "uuid.h"
 
 extern uint32_t _srelocate_flash, _srelocate, _erelocate, _ebss, _sbss;
 extern int main();
@@ -87,6 +88,7 @@ void reset_vector()
   status_led_init();
   console_init();
   systime_init();
+  uuid_init();
   rs485_init();
   __enable_irq();
   main(); // jump to application main()

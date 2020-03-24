@@ -5,8 +5,9 @@
 
 typedef enum
 {
-  PS_PREAMBLE_0 = 0,
-  PS_PREAMBLE_1,
+  PS_PREAMBLE = 0,
+  PS_FLAGS,
+  PS_ADDRESS,
   PS_LENGTH,
   PS_PAYLOAD,
   PS_CSUM_0,

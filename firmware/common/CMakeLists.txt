@@ -12,6 +12,7 @@ add_library(common
   stm32f4_vectors.c
   stubs.c
   systime.c
+  uuid.c
 )
 
 target_link_libraries(common m)
