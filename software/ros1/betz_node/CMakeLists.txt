@@ -27,7 +27,15 @@ catkin_package(
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-add_executable(betz_node betz_node.cpp lightweightserial.cpp parser.c)
+add_executable(betz_node
+  betz_node.cpp
+  bus.cpp
+  crc.cpp
+  drive.cpp
+  lightweightserial.cpp
+  main.cpp
+  packet.cpp)
+
 add_dependencies(betz_node
   betz_node_gencfg
   ${betz_node_EXPORTED_TARGETS}

@@ -1,6 +1,7 @@
 build
 software/ros1/betz_node/docs/*
 software/ros1/betz_node/src/*
+software/ros1/betz_node/cfg/cpp/*
 
 # Prerequisites
 *.d
