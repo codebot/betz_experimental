@@ -6,6 +6,7 @@
 
 void rs485_init();
 void rs485_tick();
+void rs485_enable_termination(const bool enable);
 
 // this function uses the minimal 8-bit "ID parameter" in its header
 void rs485_tx(

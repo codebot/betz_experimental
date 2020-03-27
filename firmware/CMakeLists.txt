@@ -41,6 +41,11 @@ function(betzdrive_add_executable stem)
       VERBATIM)
 endfunction()
 
+add_custom_target(PHONY_reset_mcu
+    DEPENDS blink.elf
+    COMMAND ${openocd_preamble} -c "init; halt; reset run; shutdown"
+    VERBATIM)
+
 include_directories(common)
 include_directories(common/stm32)
 

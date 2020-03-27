@@ -8,8 +8,21 @@
 #include "stm32f405xx.h"
 
 // pin connections
-// PB10 = usart3 TX
-// PB11 = usart3 RX
+// PB6 = usart1 TX
+// PB7 = usart1 RX
+// PA12 = enable termination resistor (via analog switch)
+
+#define RS485_USART_GPIO GPIOB
+#define RS485_USART USART1
+#define TX_PIN 6
+#define RX_PIN 7
+
+#define RS485_DIR_GPIO GPIOD
+#define RS485_DIR_PIN 2
+
+#define RS485_TERM_GPIO GPIOA
+#define RS485_TERM_PIN 12
+
 
 // wire formats:
 //  * initial message byte is always 0xbe, to allow easier re-sync
@@ -29,14 +42,6 @@
 //  * then the payload
 //  * finally a 16-bit checksum (eventually a CRC-16)
 
-#define RS485_USART_GPIO GPIOB
-#define RS485_USART USART1
-#define TX_PIN 6
-#define RX_PIN 7
-
-#define RS485_DIR_GPIO GPIOD
-#define RS485_DIR_PIN 2
-
 #define RS485_RX_RING_LEN 512
 static volatile uint8_t g_rs485_rx_ring[RS485_RX_RING_LEN];
 static volatile uint32_t g_rs485_rx_ring_rpos = 0, g_rs485_rx_ring_wpos = 0;
@@ -48,20 +53,44 @@ void rs485_init()
 {
   parser_init();
   parser_set_rx_pkt_fptr(rs485_rx);
+
+  pin_set_output(RS485_TERM_GPIO, RS485_TERM_PIN, 0);
+  rs485_enable_termination(true);  // todo: look up in param table
+
   RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
   pin_set_output(RS485_DIR_GPIO, RS485_DIR_PIN, 0);
   pin_set_alternate_function(RS485_USART_GPIO, TX_PIN, 7);  // AF7 = USART3 TX
   pin_set_alternate_function(RS485_USART_GPIO, RX_PIN, 7);  // AF7 = USART3 RX
+
   RS485_USART->CR1 &= ~USART_CR1_UE;
-  // we want 1 megabit (for now):
-  //   peripheral clock = 84 MHz. We want divisor = 84/16 = 5.25
-  //   mantissa = 5, fraction (sixteenths) = 4
-  RS485_USART->BRR = (5 << 4) | 4;
-  RS485_USART->CR1 |=  USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE;
-  // for 1 Mbaud we want USARTDIV = 36M / 1M = 36
+
+  // peripheral clock = 84 MHz
+
+  // 1 Mbit: divisor = 84/16 = 5.25 => mantissa = 5, fraction (16'ths) = 4
+  // RS485_USART->BRR = (5 << 4) | 4;
+
+  // 3 Mbit: divisor = 84/48 = 1.75 => mantissa = 1, fraction (16'ths) = 12
+  RS485_USART->BRR = (1 << 4) | 12;
+
+  // 6 Mbit: divisor = 84/48 = 1.75 => mantissa = 1, fraction (8'ths) = 6
+  // must use oversample-by-8 mode (not 16)
+  // 6 MBit looks fine on the oscilloscope but it seems tricky to get
+  // FT232H to work at this speed; up to 3 Mbps is easy, beyond is not easy.
+  // so for now, we'll stick to 3 Mbit.
+
+  RS485_USART->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE;
+
   RS485_USART->CR1 |= USART_CR1_UE;
   NVIC_SetPriority(USART1_IRQn, 1);
   NVIC_EnableIRQ(USART1_IRQn);
+}
+
+void rs485_enable_termination(const bool enable)
+{
+  if (enable)
+    pin_set_output_high(RS485_TERM_GPIO, RS485_TERM_PIN);
+  else
+    pin_set_output_low(RS485_TERM_GPIO, RS485_TERM_PIN);
 }
 
 void rs485_tx(
