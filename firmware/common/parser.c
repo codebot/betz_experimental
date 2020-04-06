@@ -136,7 +136,9 @@ void parser_process_byte(const uint8_t b)
             g_parser_rx_csum);
       }
       break;
+
     default:
       g_parser_state = PS_PREAMBLE;
+      break;
   }
 }

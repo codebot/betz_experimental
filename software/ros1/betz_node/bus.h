@@ -23,6 +23,7 @@
 #include "lightweightserial.h"
 #include "packet.h"
 #include "drive.h"
+#include "crc.h"
 
 namespace betz {
 
@@ -32,6 +33,23 @@ public:
   LightweightSerial *serial = nullptr;
   std::string rs485_device;
   std::vector<Drive> drives;
+
+  enum class ParserState
+  {
+    PREAMBLE,
+    FLAGS,
+    ADDRESS,
+    LENGTH,
+    PAYLOAD,
+    CSUM_0,
+    CSUM_1
+  };
+
+  ParserState parser_state = ParserState::PREAMBLE;
+  CRC parser_crc;
+  Packet parser_packet;
+
+  ////////////////////////////////////////////////////////////////////
 
   Bus();
   ~Bus();

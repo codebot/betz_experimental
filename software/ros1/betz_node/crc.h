@@ -28,6 +28,7 @@ public:
 
   void add_byte(const uint8_t b);
   uint16_t get_crc() { return crc; }
+  void reset();
 
 private:
   uint16_t crc = 0;

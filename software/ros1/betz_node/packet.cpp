@@ -24,3 +24,14 @@ Packet::Packet()
 Packet::~Packet()
 {
 }
+
+void Packet::clear()
+{
+  flags = 0;
+  drive_id = 0;
+  packet_id = 0;
+  expected_length = 0;
+  rx_csum = 0;
+  address.clear();
+  payload.clear();
+}

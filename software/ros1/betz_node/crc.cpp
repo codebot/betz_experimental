@@ -29,6 +29,11 @@ void CRC::add_byte(const uint8_t b)
 {
   // todo: replace with a real CRC-16 someday. this is a placeholder to
   // get unstuck while standing up other stuff
-  crc <<= 1;
+  crc = ((crc & 0x8000) >> 15) | (crc << 1);
   crc ^= b;
+}
+
+void CRC::reset()
+{
+  crc = 0;
 }

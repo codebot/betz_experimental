@@ -99,7 +99,92 @@ bool Bus::wait_for_packet(
 
 bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
 {
-  // todo: parser state machine
+  switch (parser_state)
+  {
+    case ParserState::PREAMBLE:
+      if (b == 0xbe)
+      {
+        parser_crc.reset();
+        parser_crc.add_byte(b);
+        parser_state = ParserState::FLAGS;
+        parser_packet.clear();
+      }
+      break;
+
+    case ParserState::FLAGS:
+      parser_crc.add_byte(b);
+      if ((b & 0xf0) != Packet::FLAG_SENTINEL)
+      {
+        parser_state = ParserState::PREAMBLE;
+        break;
+      }
+      parser_packet.flags = b;
+      if (!(parser_packet.flags & Packet::FLAG_BCAST))
+        parser_state = ParserState::ADDRESS;
+      else
+        parser_state = ParserState::LENGTH;
+      break;
+
+    case ParserState::ADDRESS:
+      parser_crc.add_byte(b);
+      if ((parser_packet.flags & Packet::FLAG_ADDR) == Packet::FLAG_ADDR_LONG)
+      {
+        parser_packet.address.push_back(b);
+        if (parser_packet.address.size() == Packet::LONG_ADDR_LEN)
+          parser_state = ParserState::LENGTH;
+      }
+      else
+      {
+        // short id = single byte
+        parser_packet.packet_id = b;
+        parser_state = ParserState::LENGTH;
+      }
+      break;
+
+    case ParserState::LENGTH:
+      parser_crc.add_byte(b);
+      parser_packet.expected_length = b;
+      if (parser_packet.expected_length == 0)
+        parser_state = ParserState::PREAMBLE;  // bogus packet
+      else
+        parser_state = ParserState::PAYLOAD;
+      break;
+
+    case ParserState::PAYLOAD:
+      parser_crc.add_byte(b);
+      parser_packet.payload.push_back(b);
+      if (parser_packet.payload.size() ==
+          static_cast<size_t>(parser_packet.expected_length))
+        parser_state = ParserState::CSUM_0;
+      break;
+
+    case ParserState::CSUM_0:
+      parser_packet.rx_csum = b;
+      parser_state = ParserState::CSUM_1;
+      break;
+
+    case ParserState::CSUM_1:
+      parser_state = ParserState::PREAMBLE;
+      parser_packet.rx_csum |= (b << 8);
+      if (parser_packet.rx_csum == parser_crc.get_crc())
+      {
+        printf("received packet, hooray\n");
+        rx_pkt = parser_packet;
+        return true;
+      }
+      else
+      {
+        printf("csum fail. 0x%0x != 0x%0x\n",
+            parser_crc.get_crc(),
+            parser_packet.rx_csum);
+      }
+      break;
+
+    default:
+      parser_state = ParserState::PREAMBLE;  // shouldn't ever get here...
+      break;
+  }
+
   return false;
 }
 

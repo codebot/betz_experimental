@@ -65,4 +65,3 @@ void Drive::rx_packet(const Packet& packet)
     default: ROS_INFO("unrecognized packet ID: %02x", (int)pkt_id);
   }
 }
-

@@ -30,9 +30,27 @@ public:
   uint8_t flags = 0;
   uint8_t drive_id = 0;
   uint8_t packet_id = 0;
-  uint8_t addr[12] = {0};
+  uint8_t expected_length = 0;
+  uint16_t rx_csum = 0;
 
+  static const size_t LONG_ADDR_LEN = 12;
+
+  std::vector<uint8_t> address;
   std::vector<uint8_t> payload;
+
+  static const uint8_t FLAG_DIR = 0x1;
+  static const uint8_t FLAG_DIR_HOST_PERIPH = 0x0;
+  static const uint8_t FLAG_DIR_PERIPH_HOST = 0x1;
+
+  static const uint8_t FLAG_BCAST = 0x2;
+
+  static const uint8_t FLAG_ADDR = 0x4;
+  static const uint8_t FLAG_ADDR_SHORT = 0x0;
+  static const uint8_t FLAG_ADDR_LONG = 0x1;
+
+  static const uint8_t FLAG_SENTINEL = 0x50;
+
+  void clear();
 };
 
 #endif
