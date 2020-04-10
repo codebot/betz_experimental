@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "console.h"
+#include "comms.h"
 #include "rs485.h"
 #include "stm32f405xx.h"
 #include "startup.h"
@@ -90,6 +91,10 @@ void reset_vector()
   systime_init();
   uuid_init();
   rs485_init();
+
+  comms_init();
+  comms_set_raw_tx_fptr(rs485_tx);
+
   __enable_irq();
   main(); // jump to application main()
   while (1) { } // hopefully we never get here...

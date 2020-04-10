@@ -8,7 +8,7 @@ int main(int argc, char **argv)
   char msg[50] = {0};
   while (1)
   {
-    for (volatile int i = 0; i < 5000000; i++) { }
+    for (volatile int i = 0; i < 1000000; i++) { }
     status_led_toggle();
     const int n = snprintf(msg, sizeof(msg), "hello %d\r\n", hello_count);
     hello_count++;

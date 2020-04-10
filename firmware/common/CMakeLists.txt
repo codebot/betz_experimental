@@ -1,9 +1,9 @@
 add_library(common
+  comms.c
   console.c
   delay.c
   flash.c
   param.c
-  parser.c
   pin.c
   rs485.c
   stack.c
