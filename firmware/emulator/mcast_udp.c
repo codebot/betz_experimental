@@ -4,6 +4,7 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <ifaddrs.h>
 #include <netdb.h>
 #include <netinet/in.h>
 
@@ -18,11 +19,40 @@ static in_addr_t g_mcast_group;
 
 //////////////////////////////////////////////////////////////////////
 
-void mcast_udp_init()
+bool mcast_udp_init()
 {
   printf("mcast_udp_init()\n");
   g_mcast_group = htonl(0xe0000042);
-  g_tx_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+  struct ifaddrs *ifaddr;
+  if (getifaddrs(&ifaddr) == -1)
+  {
+    printf("couldn't call getifaddrs\n");
+    return false;
+  }
+
+  char *tx_addr_str = NULL;
+
+  for (struct ifaddrs *ifa = ifaddr; ifa; ifa = ifa->ifa_next)
+  {
+    if (!ifa->ifa_addr)
+      continue;
+    int family = ifa->ifa_addr->sa_family;
+    if (family != AF_INET)
+      continue;
+    char host[NI_MAXHOST];
+    if (getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in),
+                    host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST))
+      continue;
+    printf("found address %s on interface %s\n", host, ifa->ifa_name);
+    if (0 == strcmp(host, "127.0.0.1"))
+      continue; // boring
+    tx_addr_str = host; // save this one for now
+  }
+  printf("using interface: %s\n", tx_addr_str);
+  g_tx_addr.sin_addr.s_addr = inet_addr(tx_addr_str);
+  freeifaddrs(ifaddr);
+
   g_tx_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
   int result;
@@ -35,7 +65,7 @@ void mcast_udp_init()
   if (result < 0)
   {
     printf("couldn't set tx socket for multicast\n");
-    return;
+    return false;
   }
 
   int loopback = 1;
@@ -93,17 +123,18 @@ void mcast_udp_init()
 
 void mcast_udp_tx(const uint8_t *data, const uint32_t len)
 {
-  printf("mcast_tx(%x)\n", len);
+  g_tx_addr.sin_addr.s_addr = g_mcast_group;
+  g_tx_addr.sin_port = htons(g_mcast_udp_port);
+
   int nsent = sendto(
-      g_rx_sock,
+      g_tx_sock,
       data,
       len,
       0,
-      (struct sockaddr *)&g_tx_addr,
+      (const struct sockaddr *)&g_tx_addr,
       sizeof(g_tx_addr));
   if (nsent <= 0)
-    printf("ERROR: couldn't send: %s\n");
-    perror("error");
+    printf("ERROR: couldn't send: %s\n", strerror(errno));
 }
 
 void mcast_udp_listen(const uint32_t max_usec)
