@@ -10,5 +10,8 @@ include_directories(../common)
 
 add_executable(comms_emulator
   main.c
-  uuid.c
-  ../common/parser.c)
+  ../common/comms.c
+  ../common/param.c
+  emulator_uuid.c
+  emulator_flash.c
+  mcast_udp.c)

@@ -1,6 +1,8 @@
+#include <stdio.h>
+#include <string.h>
+
 #include "flash.h"
 #include "stm32f405xx.h"
-#include <stdio.h>
 #include "systime.h"
 //#include "watchdog.h"
 
@@ -37,9 +39,8 @@ flash_result_t flash_erase_sector(const uint_fast8_t sector)
   return result; // we're done
 }
 
-flash_result_t flash_erase_block_by_addr(const uint32_t *p)
+flash_result_t flash_erase_block_by_addr(const uint32_t addr)
 {
-  uint32_t addr = (uint32_t)p;
   if (addr <  0x08020000 ||
       addr >  0x080fffff ||
       (addr & 0x1ffff) != 0)
@@ -88,7 +89,7 @@ flash_result_t flash_wait_for_idle()
   return FLASH_SUCCESS;
 }
 
-flash_result_t flash_program_word(const uint32_t *address, const uint32_t data)
+flash_result_t flash_program_word(const uint32_t addr, const uint32_t data)
 {
   flash_unlock();
   if (FLASH_FAIL == flash_wait_for_idle())
@@ -96,14 +97,14 @@ flash_result_t flash_program_word(const uint32_t *address, const uint32_t data)
   FLASH->CR |= FLASH_CR_PG; // set the programming bit
   FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE to get ready to set it
   FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
-  *((volatile uint32_t *)address) = data;
+  *((volatile uint32_t *)addr) = data;
   flash_result_t result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
   return result;
 }
 
-flash_result_t flash_program_byte(const uint8_t *address, const uint8_t data)
+flash_result_t flash_program_byte(const uint32_t addr, const uint8_t data)
 {
   //printf("writing byte 0x%02x to 0x%08lx\r\n", data, (uint32_t)address);
   if (FLASH_FAIL == flash_wait_for_idle())
@@ -112,7 +113,7 @@ flash_result_t flash_program_byte(const uint8_t *address, const uint8_t data)
   FLASH->CR &= ~FLASH_CR_PSIZE; // set PSIZE to 0 for byte writes
   FLASH->CR |= FLASH_CR_PG;
   //printf("  flash_cr = 0x%08lx\r\n", FLASH->CR);
-  *((volatile uint8_t *)address) = data;
+  *((volatile uint8_t *)addr) = data;
   flash_result_t result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
@@ -123,4 +124,14 @@ flash_result_t flash_flush_d_cache()
 {
   // todo
   return FLASH_FAIL;
+}
+
+void flash_read(
+    const uint32_t read_addr,
+    const uint32_t len,
+    uint8_t *dest_addr)
+{
+  if (len > 65536)
+    return;  // sanity-check to avoid anything super bonkers
+  memcpy(dest_addr, (const void *)read_addr, len);
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "comms.h"
+#include "flash.h"
 #include "param.h"
 #include "rs485.h"
 #include "uuid.h"
@@ -220,7 +221,7 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
   pkt[0] = 0xf0;
   memcpy(&pkt[1], &read_addr, sizeof(read_addr));
   memcpy(&pkt[5], &read_len, sizeof(read_len));
-  memcpy(&pkt[9], (const uint8_t *)read_addr, read_len);
+  flash_read(read_addr, read_len, (uint8_t *)&pkt[9]);
   comms_tx(pkt, 9 + read_len);
 }
 
