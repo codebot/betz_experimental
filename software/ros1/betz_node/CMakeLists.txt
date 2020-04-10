@@ -34,7 +34,8 @@ add_executable(betz_node
   drive.cpp
   lightweightserial.cpp
   main.cpp
-  packet.cpp)
+  packet.cpp
+  transport_serial.cpp)
 
 add_dependencies(betz_node
   betz_node_gencfg
@@ -51,4 +52,3 @@ install(TARGETS betz_node
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-

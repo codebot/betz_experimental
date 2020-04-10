@@ -18,20 +18,22 @@
 #ifndef BUS_H
 #define BUS_H
 
+#include <memory>
 #include <string>
 #include <stdint.h>
-#include "lightweightserial.h"
-#include "packet.h"
-#include "drive.h"
+
 #include "crc.h"
+#include "drive.h"
+#include "packet.h"
+#include "transport.h"
+
 
 namespace betz {
 
 class Bus
 {
 public:
-  LightweightSerial *serial = nullptr;
-  std::string rs485_device;
+  std::unique_ptr<Transport> transport;
   std::vector<Drive> drives;
 
   enum class ParserState
@@ -54,7 +56,7 @@ public:
   Bus();
   ~Bus();
 
-  bool open_device(const std::string& device_name);
+  bool open_serial_device(const std::string& device_name);
   bool send_packet(const uint8_t *data, const uint32_t len);
 
   bool wait_for_packet(

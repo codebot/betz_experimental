@@ -15,12 +15,17 @@
  *
 */
 
+#include <memory>
+
 #include "bus.h"
 #include "crc.h"
 #include "ros/ros.h"
+#include "transport_serial.h"
+
 using std::string;
 using betz::Bus;
 using betz::Drive;
+using std::make_unique;
 
 Bus::Bus()
 {
@@ -30,15 +35,19 @@ Bus::~Bus()
 {
 }
 
-bool Bus::open_device(const string& device_name)
+bool Bus::open_serial_device(const string& device_name)
 {
-  serial = new LightweightSerial(device_name.c_str(), 1000000);
-  if (!serial)
+  auto transport_serial = make_unique<TransportSerial>();
+
+  if (!transport_serial->open_device(device_name))
   {
     ROS_FATAL("couldn't open serial device");
     return false;
   }
+
+  transport = std::move(transport_serial);
   ROS_INFO("opened %s", device_name.c_str());
+
   return true;
 }
 
@@ -63,7 +72,7 @@ bool Bus::send_packet(const uint8_t *data, const uint32_t len)
     crc.add_byte(framed_pkt[i]);
   framed_pkt[len+3] = static_cast<uint8_t>(crc.get_crc() & 0xff);
   framed_pkt[len+4] = static_cast<uint8_t>(crc.get_crc() >> 8);
-  return serial->write_block(framed_pkt, len+5);
+  return transport->send(framed_pkt, len+5);
 }
 
 // this function spins max_seconds or until packet_id arrives
@@ -74,6 +83,7 @@ bool Bus::wait_for_packet(
 {
   ros::Rate loop_rate(1000);
   ros::Time t_end = ros::Time::now() + ros::Duration(max_seconds);
+  static uint8_t rx_buf[1024] = {0};
   while (ros::ok())
   {
     if (max_seconds > 0 && t_end < ros::Time::now())
@@ -82,9 +92,12 @@ bool Bus::wait_for_packet(
     ros::spinOnce();
 
     Packet packet;
-    uint8_t b = 0;
-    while (serial->read(&b))
+
+    int n_rx = transport->recv_nonblocking(rx_buf, sizeof(rx_buf));
+
+    for (int i = 0; i < n_rx; i++)
     {
+      const uint8_t b = rx_buf[i];
       //printf("rx: %02x\n", b);
       if (rx_byte(b, packet))
       {
@@ -93,7 +106,7 @@ bool Bus::wait_for_packet(
       }
     }
   }
-  ROS_WARN("rs485_spin timeout :(");
+  ROS_WARN("Bus::wait_for_packet timeout :(");
   return false;
 }
 

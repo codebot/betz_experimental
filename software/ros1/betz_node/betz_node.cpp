@@ -102,7 +102,7 @@ void BetzNode::run()
       "rs485_device",
       rs485_device,
       "/dev/ttyUSB0");
-  if (!bus.open_device(rs485_device))
+  if (!bus.open_serial_device(rs485_device))
   {
     ROS_FATAL("could not open device");
     return;
