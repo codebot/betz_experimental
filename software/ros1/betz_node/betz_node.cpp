@@ -17,15 +17,19 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <stdint.h>
 #include <string>
 #include <vector>
 
-#include "drive.h"
-#include "bus.h"
 #include "betz_node.h"
+#include "bus.h"
+#include "drive.h"
+#include "transport_serial.h"
+
 using betz::BetzNode;
 using std::string;
+using std::make_unique;
 
 
 BetzNode::BetzNode()
@@ -97,14 +101,30 @@ static void rs485_rx_pkt(const uint32_t len, const uint8_t *data)
 
 void BetzNode::run()
 {
-  string rs485_device;
-  nh_private.param<std::string>(
-      "rs485_device",
-      rs485_device,
-      "/dev/ttyUSB0");
-  if (!bus.open_serial_device(rs485_device))
+  string transport_name;
+  nh_private.param<std::string>("transport", transport_name, "rs485");
+
+  if (transport_name == "rs485")
   {
-    ROS_FATAL("could not open device");
+    string device_name;
+    nh_private.param<std::string>("device", device_name, "/dev/ttyUSB0");
+  
+    auto transport = make_unique<TransportSerial>();
+    if (!transport->open_device(device_name))
+    {
+      ROS_FATAL("couldn't open serial device");
+      return;
+    }
+    ROS_INFO("opened %s", device_name.c_str());
+    bus.set_transport(std::move(transport));
+  }
+  else if (transport_name == "multicast")
+  {
+    ROS_INFO("opening multicast transport...");
+  }
+  else
+  {
+    ROS_FATAL("unknown transport name: [%s]", transport_name.c_str());
     return;
   }
 

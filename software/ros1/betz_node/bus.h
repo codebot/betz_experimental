@@ -56,7 +56,8 @@ public:
   Bus();
   ~Bus();
 
-  bool open_serial_device(const std::string& device_name);
+  void set_transport(std::unique_ptr<Transport> transport);
+
   bool send_packet(const uint8_t *data, const uint32_t len);
 
   bool wait_for_packet(

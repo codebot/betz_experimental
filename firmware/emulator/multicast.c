@@ -8,21 +8,21 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
-#include "mcast_udp.h"
+#include "multicast.h"
 
 static struct sockaddr_in g_tx_addr;
 static int g_tx_sock;
 static int g_rx_sock;
 
-static const int g_mcast_udp_port = 12345;
-static in_addr_t g_mcast_group;
+static const int g_multicast_port = 12345;
+static in_addr_t g_multicast_group;
 
 //////////////////////////////////////////////////////////////////////
 
-bool mcast_udp_init()
+bool multicast_init()
 {
-  printf("mcast_udp_init()\n");
-  g_mcast_group = htonl(0xe0000042);
+  printf("multicast_init()\n");
+  g_multicast_group = htonl(0xe0000042);
 
   struct ifaddrs *ifaddr;
   if (getifaddrs(&ifaddr) == -1)
@@ -103,13 +103,16 @@ bool mcast_udp_init()
   memset(&bind_addr, 0, sizeof(bind_addr));
   bind_addr.sin_family = AF_INET;
   bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  bind_addr.sin_port = htons(g_mcast_udp_port);
-  result = bind(g_rx_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
+  bind_addr.sin_port = htons(g_multicast_port);
+  result = bind(
+      g_rx_sock,
+      (struct sockaddr *)&bind_addr,
+      sizeof(bind_addr));
   if (result < 0)
-    printf("ERROR: couldn't bind to mcast port\n");
+    printf("ERROR: couldn't bind to multicast group\n");
 
   struct ip_mreq mreq;
-  mreq.imr_multiaddr.s_addr = g_mcast_group;
+  mreq.imr_multiaddr.s_addr = g_multicast_group;
   mreq.imr_interface.s_addr = g_tx_addr.sin_addr.s_addr;
   result = setsockopt(
       g_rx_sock,
@@ -121,10 +124,10 @@ bool mcast_udp_init()
     printf("ERROR: couldn't add rx sock to multicast group\n");
 }
 
-void mcast_udp_tx(const uint8_t *data, const uint32_t len)
+void multicast_tx(const uint8_t *data, const uint32_t len)
 {
-  g_tx_addr.sin_addr.s_addr = g_mcast_group;
-  g_tx_addr.sin_port = htons(g_mcast_udp_port);
+  g_tx_addr.sin_addr.s_addr = g_multicast_group;
+  g_tx_addr.sin_port = htons(g_multicast_port);
 
   int nsent = sendto(
       g_tx_sock,
@@ -137,7 +140,7 @@ void mcast_udp_tx(const uint8_t *data, const uint32_t len)
     printf("ERROR: couldn't send: %s\n", strerror(errno));
 }
 
-void mcast_udp_listen(const uint32_t max_usec)
+void multicast_listen(const uint32_t max_usec)
 {
   fd_set rdset;
   FD_ZERO(&rdset);

@@ -35,7 +35,8 @@ add_executable(betz_node
   lightweightserial.cpp
   main.cpp
   packet.cpp
-  transport_serial.cpp)
+  transport_serial.cpp
+  transport_multicast.cpp)
 
 add_dependencies(betz_node
   betz_node_gencfg

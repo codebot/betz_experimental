@@ -35,22 +35,6 @@ Bus::~Bus()
 {
 }
 
-bool Bus::open_serial_device(const string& device_name)
-{
-  auto transport_serial = make_unique<TransportSerial>();
-
-  if (!transport_serial->open_device(device_name))
-  {
-    ROS_FATAL("couldn't open serial device");
-    return false;
-  }
-
-  transport = std::move(transport_serial);
-  ROS_INFO("opened %s", device_name.c_str());
-
-  return true;
-}
-
 bool Bus::send_packet(const uint8_t *data, const uint32_t len)
 {
   if (len >= 252)
@@ -270,4 +254,9 @@ void Bus::add_drive_id(const uint8_t drive_id)
   Drive drive;
   drive.id = drive_id;
   drives.push_back(drive);
+}
+
+void Bus::set_transport(std::unique_ptr<Transport> _transport)
+{
+  transport = std::move(_transport);
 }

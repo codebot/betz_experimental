@@ -14,4 +14,4 @@ add_executable(comms_emulator
   ../common/param.c
   emulator_uuid.c
   emulator_flash.c
-  mcast_udp.c)
+  multicast.c)
