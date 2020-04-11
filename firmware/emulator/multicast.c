@@ -50,6 +50,7 @@ bool multicast_init()
     tx_addr_str = host; // save this one for now
   }
   printf("using interface: %s\n", tx_addr_str);
+  memset(&g_tx_addr, 0, sizeof(g_tx_addr));
   g_tx_addr.sin_addr.s_addr = inet_addr(tx_addr_str);
   freeifaddrs(ifaddr);
 
@@ -144,26 +145,32 @@ void multicast_listen(const uint32_t max_usec)
 {
   fd_set rdset;
   FD_ZERO(&rdset);
+  FD_SET(g_rx_sock, &rdset);
   int max_fd = g_rx_sock;
 
   struct timeval timeout;
   timeout.tv_sec = 0;
   timeout.tv_usec = max_usec;
 
-  int rv = select(max_fd + 1, &rdset, NULL, NULL, &timeout);
-  if (rv < 0)
-    return;
-  else if (rv > 0)
+  while (true)
   {
-    char buf[1024];
-    int nbytes = recvfrom(
-        g_rx_sock,
-        buf,
-        sizeof(buf),
-        0,
-        NULL,
-        0);
-
-    printf("received %d-byte packet, hooray\n", nbytes);
+    int rv = select(max_fd + 1, &rdset, NULL, NULL, &timeout);
+    if (rv < 0)
+      return;
+    else if (rv > 0)
+    {
+      char buf[1024];
+      int nbytes = recvfrom(
+          g_rx_sock,
+          buf,
+          sizeof(buf),
+          0,
+          NULL,
+          0);
+  
+      printf("received %d-byte packet, hooray\n", nbytes);
+    }
+    else // rv == 0
+      break;
   }
 }

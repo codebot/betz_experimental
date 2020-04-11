@@ -56,6 +56,8 @@ public:
   Bus();
   ~Bus();
 
+  void spin_once();
+
   void set_transport(std::unique_ptr<Transport> transport);
 
   bool send_packet(const uint8_t *data, const uint32_t len);
@@ -80,6 +82,9 @@ public:
   void add_drive_id(const uint8_t drive_id);
 
   Drive *find_drive_by_id(const uint8_t drive_id);
+
+private:
+  uint8_t rx_buf[4096] = {0};
 };
 
 }  // namespace betz

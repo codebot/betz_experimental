@@ -26,6 +26,7 @@
 #include "bus.h"
 #include "drive.h"
 #include "transport_serial.h"
+#include "transport_multicast.h"
 
 using betz::BetzNode;
 using std::string;
@@ -121,11 +122,28 @@ void BetzNode::run()
   else if (transport_name == "multicast")
   {
     ROS_INFO("opening multicast transport...");
+    auto transport = make_unique<TransportMulticast>();
+    if (!transport->init())
+    {
+      ROS_FATAL("couldn't init multicast transport");
+      return;
+    }
+    bus.set_transport(std::move(transport));
   }
   else
   {
     ROS_FATAL("unknown transport name: [%s]", transport_name.c_str());
     return;
+  }
+
+  ros::Rate rate(2);
+  while (ros::ok())
+  {
+    bus.spin_once();
+    rate.sleep();
+
+    const char *msg = "greetings";
+    bus.transport->send((const uint8_t *)"greetings", 9);
   }
 
   /*

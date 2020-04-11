@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdbool.h>
 #include "comms.h"
 #include "multicast.h"
@@ -9,8 +10,9 @@ int main(int argc, char **argv)
   const char *pkt = "hello";
   while (true)
   {
-    multicast_listen(100000);
+    multicast_listen(0);
     multicast_tx(pkt, 5);
+    usleep(500000);
   }
   return 0;
 }

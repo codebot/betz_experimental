@@ -260,3 +260,18 @@ void Bus::set_transport(std::unique_ptr<Transport> _transport)
 {
   transport = std::move(_transport);
 }
+
+void Bus::spin_once()
+{
+  if (!transport)
+  {
+    ROS_ERROR("Bus::spin_once() with null transport!");
+    return;
+  }
+  while (true)
+  {
+    int n_bytes = transport->recv_nonblocking(rx_buf, sizeof(rx_buf));
+    if (n_bytes == 0)
+      break;
+  }
+}

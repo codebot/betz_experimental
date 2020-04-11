@@ -58,7 +58,16 @@ bool TransportMulticast::init()
     tx_addr_str = host; // save this one for now
   }
   printf("using interface: %s\n", tx_addr_str);
-  tx_addr.sin_addr.s_addr = inet_addr(tx_addr_str);
+
+  struct in_addr tx_in_addr;
+  if (inet_aton(tx_addr_str, &tx_in_addr) == 0)
+  {
+    printf("couldn't convert [%s] to in_addr\n", tx_addr_str);
+    return false;
+  }
+
+  memset(&tx_addr, 0, sizeof(tx_addr));
+  tx_addr.sin_addr.s_addr = tx_in_addr.s_addr;
   freeifaddrs(ifaddr);
 
   tx_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -72,7 +81,7 @@ bool TransportMulticast::init()
       sizeof(tx_addr));
   if (result < 0)
   {
-    printf("couldn't set tx socket for multicast\n");
+    printf("couldn't set tx socket for multicast: %s\n", strerror(errno));
     return false;
   }
 
@@ -104,6 +113,7 @@ bool TransportMulticast::init()
     return false;
   }
 
+  one = 1;
   result = setsockopt(
       rx_sock,
       SOL_SOCKET,
@@ -119,7 +129,7 @@ bool TransportMulticast::init()
   struct sockaddr_in bind_addr;
   memset(&bind_addr, 0, sizeof(bind_addr));
   bind_addr.sin_family = AF_INET;
-  bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  bind_addr.sin_addr.s_addr = htonl(INADDR_ANY); // tx_addr.sin_addr.s_addr;
   bind_addr.sin_port = htons(multicast_port);
   result = bind(
       rx_sock,
@@ -132,8 +142,9 @@ bool TransportMulticast::init()
   }
 
   struct ip_mreq mreq;
-  mreq.imr_multiaddr.s_addr = multicast_group;
-  mreq.imr_interface.s_addr = tx_addr.sin_addr.s_addr;
+  memset(&mreq, 0, sizeof(mreq));
+  mreq.imr_multiaddr.s_addr = htonl(multicast_group);
+  mreq.imr_interface.s_addr = htonl(INADDR_ANY); // tx_addr.sin_addr.s_addr;
   result = setsockopt(
       rx_sock,
       IPPROTO_IP,
@@ -151,7 +162,7 @@ bool TransportMulticast::init()
 
 bool TransportMulticast::send(const uint8_t *data, const uint32_t len)
 {
-  tx_addr.sin_addr.s_addr = multicast_group;
+  tx_addr.sin_addr.s_addr = htonl(multicast_group);
   tx_addr.sin_port = htons(multicast_port);
 
   int nsent = sendto(
@@ -170,10 +181,14 @@ bool TransportMulticast::send(const uint8_t *data, const uint32_t len)
   return true;
 }
 
-int TransportMulticast::recv_nonblocking(uint8_t *data, const uint32_t max_len)
+int TransportMulticast::recv_nonblocking(
+    uint8_t *data,
+    const uint32_t max_len)
 {
+  printf("TransportMulticast::recv_nonblocking()\n");
   fd_set rdset;
   FD_ZERO(&rdset);
+  FD_SET(rx_sock, &rdset);
   int max_fd = rx_sock;
 
   struct timeval timeout;
@@ -192,7 +207,7 @@ int TransportMulticast::recv_nonblocking(uint8_t *data, const uint32_t max_len)
         sizeof(buf),
         0,
         NULL,
-        0);
+        NULL);
 
     printf("received %d-byte packet, hooray\n", nbytes);
     return nbytes;
