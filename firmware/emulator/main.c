@@ -11,8 +11,8 @@ int main(int argc, char **argv)
   while (true)
   {
     multicast_listen(0);
-    multicast_tx(pkt, 5);
-    usleep(500000);
+    //multicast_tx(pkt, 5);
+    usleep(100000);
   }
   return 0;
 }

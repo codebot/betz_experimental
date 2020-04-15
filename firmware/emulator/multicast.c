@@ -9,6 +9,7 @@
 #include <netinet/in.h>
 
 #include "multicast.h"
+#include "comms.h"
 
 static struct sockaddr_in g_tx_addr;
 static int g_tx_sock;
@@ -169,6 +170,8 @@ void multicast_listen(const uint32_t max_usec)
           0);
   
       printf("received %d-byte packet, hooray\n", nbytes);
+      for (int i = 0; i < nbytes; i++)
+        comms_rx_byte(buf[i]);
     }
     else // rv == 0
       break;

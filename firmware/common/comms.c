@@ -56,6 +56,7 @@ static uint8_t g_comms_id = 0;
 // local functions
 static void comms_rx_pkt(const uint8_t *p, const uint32_t len);
 static void comms_tx(const uint8_t *p, const uint32_t len);
+static void comms_tx_long_addr(const uint8_t *p, const uint32_t len);
 
 /////////////////////////////////////////////////////////////////////
 
@@ -78,7 +79,7 @@ static void comms_parser_csum_byte(const uint8_t b)
 
 void comms_rx_byte(const uint8_t b)
 {
-  // printf("rx 0x%02x state %d\n", (unsigned)b, (int)g_parser_state);
+  // printf("rx 0x%02x state %d\n", (unsigned)b, (int)g_comms_parser_state);
   switch (g_comms_parser_state)
   {
     case PS_PREAMBLE:
@@ -103,7 +104,11 @@ void comms_rx_byte(const uint8_t b)
       g_comms_parser_broadcast = (b & 0x2);
       g_comms_parser_long_address = (b & 0x4);
       g_comms_parser_wpos = 0;
-      g_comms_parser_state = PS_ADDRESS;
+
+      if (g_comms_parser_broadcast)
+        g_comms_parser_state = PS_LENGTH;
+      else
+        g_comms_parser_state = PS_ADDRESS;
       break;
 
     case PS_ADDRESS:
@@ -218,16 +223,24 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
     return;  // cannot. outside flash.
   }
   uint8_t pkt[128 + 9] = {0};  // max length of return request
-  pkt[0] = 0xf0;
+  pkt[0] = 0xf8;
   memcpy(&pkt[1], &read_addr, sizeof(read_addr));
   memcpy(&pkt[5], &read_len, sizeof(read_len));
   flash_read(read_addr, read_len, (uint8_t *)&pkt[9]);
   comms_tx(pkt, 9 + read_len);
 }
 
+void comms_discovery_request()
+{
+  printf("comms_discovery_request()\n");
+  uint8_t pkt[1] = {0};
+  pkt[0] = 0xf1;
+  comms_tx_long_addr(pkt, 1);
+}
+
 void comms_rx_pkt(const uint8_t *p, const uint32_t len)
 {
-  //printf("comms_rx_pkt() received %d bytes\r\n", (int)len);
+  // printf("comms_rx_pkt() received %d bytes\r\n", (int)len);
   if (len == 0)
     return;  // adios amigo
   //for (uint32_t i = 0; i < len; i++)
@@ -236,7 +249,7 @@ void comms_rx_pkt(const uint8_t *p, const uint32_t len)
   switch (pkt_id)
   {
     case 0x01: comms_req_num_params(); break;
-    case 0xf0: comms_read_flash(p, len); break;
+    case 0xf0: comms_discovery_request(); break;
     default: break;
   }
 }
@@ -249,10 +262,10 @@ void comms_tx(const uint8_t *data, const uint32_t len)
     printf("woah! unable to handle packets > 250 bytes.\n");
     return;
   }
-  const int framed_pkt_len = len + 5;
+  const int framed_pkt_len = len + 6;
   uint8_t framed_pkt[framed_pkt_len];
   framed_pkt[0] = 0xbe;
-  framed_pkt[1] = 0x50;
+  framed_pkt[1] = 0x51;
   framed_pkt[2] = g_comms_id;
   framed_pkt[3] = (uint8_t)len;
   for (uint32_t i = 0; i < len; i++)
@@ -268,8 +281,43 @@ void comms_tx(const uint8_t *data, const uint32_t len)
   framed_pkt[len+4] = (uint8_t)(crc & 0xff);
   framed_pkt[len+5] = (uint8_t)(crc >> 8);
 
-  if (!g_comms_raw_tx_fptr)
+  if (g_comms_raw_tx_fptr)
     g_comms_raw_tx_fptr(framed_pkt, len + 5);
+  else
+    printf("woah! no raw tx fptr set\n");
 }
 
-// todo: comms_tx_long() which will use the full 12-byte UUID in the header
+static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
+{
+  printf("comms_tx_long_addr(%d)\r\n", (int)len);
+  if (len > 240)
+  {
+    printf("woah! unable to handle packets > 240 bytes.\n");
+    return;
+  }
+  const int framed_pkt_len = len + 17;
+  uint8_t framed_pkt[framed_pkt_len];
+  framed_pkt[0] = 0xbe;
+  framed_pkt[1] = 0x55;
+  memcpy(&framed_pkt[2], &g_uuid[0], 4);
+  memcpy(&framed_pkt[6], &g_uuid[1], 4);
+  memcpy(&framed_pkt[10], &g_uuid[2], 4);
+  framed_pkt[14] = (uint8_t)len;
+  for (uint32_t i = 0; i < len; i++)
+    framed_pkt[i+15] = data[i];
+
+  uint16_t crc = 0;
+  for (uint32_t i = 0; i < framed_pkt_len - 2; i++)
+  {
+    // this is just a placeholder hack. Do a real CRC-16 someday.
+    crc <<= 1;
+    crc ^= framed_pkt[i];
+  }
+  framed_pkt[len+15] = (uint8_t)(crc & 0xff);
+  framed_pkt[len+16] = (uint8_t)(crc >> 8);
+
+  if (g_comms_raw_tx_fptr)
+    g_comms_raw_tx_fptr(framed_pkt, len + 17);
+  else
+    printf("woah! no raw tx fptr set\n");
+}

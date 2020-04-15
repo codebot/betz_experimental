@@ -88,9 +88,11 @@ bool Bus::wait_for_packet(
 
 bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
 {
+#if 0
   printf("    rx: 0x%02x  parser_state = %d\n",
       static_cast<unsigned>(b),
       static_cast<int>(parser_state));
+#endif
   switch (parser_state)
   {
     case ParserState::PREAMBLE:
@@ -273,15 +275,17 @@ void Bus::spin_once()
     if (n_rx == 0)
       break;
 
-    printf("n_rx = %d\n", n_rx);
-
     for (int i = 0; i < n_rx; i++)
     {
       const uint8_t b = rx_buf[i];
-      printf("  rx: %02x\n", b);
       if (rx_byte(b, packet))
       {
-        printf("packet rx\n");
+        if (packet.flags & Packet::FLAG_DIR_PERIPH_HOST)
+        {
+          printf("packet from periph!\n");
+        }
+        else
+          printf("ignoring our own packet...\n");
       }
     }
   }
