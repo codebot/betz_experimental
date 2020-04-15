@@ -15,21 +15,22 @@
  *
 */
 
-#ifndef PACKET_H
-#define PACKET_H
+#ifndef PACKET_PACKET_H
+#define PACKET_PACKET_H
 
 #include <stdint.h>
 #include <vector>
+
+namespace betz {
 
 class Packet
 {
 public:
   Packet();
-  ~Packet();
+  virtual ~Packet();
 
   uint8_t flags = 0;
   uint8_t drive_id = 0;
-  uint8_t packet_id = 0;
   uint8_t expected_length = 0;
   uint16_t rx_csum = 0;
 
@@ -50,7 +51,19 @@ public:
 
   static const uint8_t FLAG_SENTINEL = 0x50;
 
+  enum
+  {
+    PACKET_ID_DISCOVERY_REQUEST = 0xf0
+  };
+  //static const uint8_t 
+
   void clear();
+  size_t size() const;
+  uint8_t packet_id() const;
+
+  int serialize(uint8_t *buffer, size_t buffer_len) const;
 };
+
+}  // namespace betz
 
 #endif

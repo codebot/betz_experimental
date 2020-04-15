@@ -18,9 +18,9 @@
 #include <memory>
 
 #include "bus.h"
-#include "crc.h"
 #include "ros/ros.h"
 #include "transport_serial.h"
+#include "packet/discovery_request.h"
 
 using std::string;
 using betz::Bus;
@@ -35,28 +35,19 @@ Bus::~Bus()
 {
 }
 
-bool Bus::send_packet(const uint8_t *data, const uint32_t len)
+bool Bus::send_packet(std::unique_ptr<Packet> packet)
 {
-  if (len >= 252)
+  uint8_t buffer[256];
+  const int serialized_length = packet->serialize(buffer, sizeof(buffer));
+  if (serialized_length < 0)
   {
-    ROS_ERROR("refusing to send %d-byte packet. must be <252.",
-        static_cast<int>(len));
+    ROS_ERROR("packet serialization error!");
     return false;
   }
-  // ROS_INFO("sending %d-byte packet", static_cast<int>(len));
-  uint8_t framed_pkt[len+5];
-  framed_pkt[0] = 0xbe;
-  framed_pkt[1] = 0xef;
-  framed_pkt[2] = static_cast<uint8_t>(len);
-  for (uint32_t i = 0; i < len; i++)
-    framed_pkt[i+3] = data[i];
-
-  CRC crc;
-  for (uint32_t i = 0; i < len; i++)
-    crc.add_byte(framed_pkt[i]);
-  framed_pkt[len+3] = static_cast<uint8_t>(crc.get_crc() & 0xff);
-  framed_pkt[len+4] = static_cast<uint8_t>(crc.get_crc() >> 8);
-  return transport->send(framed_pkt, len+5);
+  ROS_INFO("sending %d-byte packet:", static_cast<int>(serialized_length));
+  for (size_t i = 0; i < serialized_length; i++)
+    printf("  %2zu: 0x%02x\n", i, static_cast<unsigned>(buffer[i]));
+  return transport->send(buffer, serialized_length);
 }
 
 // this function spins max_seconds or until packet_id arrives
@@ -78,14 +69,15 @@ bool Bus::wait_for_packet(
     Packet packet;
 
     int n_rx = transport->recv_nonblocking(rx_buf, sizeof(rx_buf));
+    printf("n_rx = %d\n", n_rx);
 
     for (int i = 0; i < n_rx; i++)
     {
       const uint8_t b = rx_buf[i];
-      //printf("rx: %02x\n", b);
+      printf("  rx: %02x\n", b);
       if (rx_byte(b, packet))
       {
-        if (packet.drive_id == drive_id && packet.packet_id == packet_id)
+        if (packet.drive_id == drive_id && packet.packet_id() == packet_id)
           return true;
       }
     }
@@ -96,6 +88,9 @@ bool Bus::wait_for_packet(
 
 bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
 {
+  printf("    rx: 0x%02x  parser_state = %d\n",
+      static_cast<unsigned>(b),
+      static_cast<int>(parser_state));
   switch (parser_state)
   {
     case ParserState::PREAMBLE:
@@ -133,7 +128,7 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
       else
       {
         // short id = single byte
-        parser_packet.packet_id = b;
+        parser_packet.drive_id = b;
         parser_state = ParserState::LENGTH;
       }
       break;
@@ -195,6 +190,7 @@ void Bus::rx_packet(Packet& packet)
     }
 }
 
+#if 0
 bool Bus::read_flash(
     const uint8_t drive_id,
     const uint32_t start_addr,
@@ -244,6 +240,7 @@ Drive *Bus::find_drive_by_id(const uint8_t drive_id)
       return &drives[i];
   return nullptr;
 }
+#endif
 
 void Bus::add_drive_id(const uint8_t drive_id)
 {
@@ -268,10 +265,30 @@ void Bus::spin_once()
     ROS_ERROR("Bus::spin_once() with null transport!");
     return;
   }
+
+  Packet packet;
   while (true)
   {
-    int n_bytes = transport->recv_nonblocking(rx_buf, sizeof(rx_buf));
-    if (n_bytes == 0)
+    int n_rx = transport->recv_nonblocking(rx_buf, sizeof(rx_buf));
+    if (n_rx == 0)
       break;
+
+    printf("n_rx = %d\n", n_rx);
+
+    for (int i = 0; i < n_rx; i++)
+    {
+      const uint8_t b = rx_buf[i];
+      printf("  rx: %02x\n", b);
+      if (rx_byte(b, packet))
+      {
+        printf("packet rx\n");
+      }
+    }
   }
+}
+
+void Bus::begin_discovery()
+{
+  printf("Bus::begin_discovery()\n");
+  send_packet(std::make_unique<DiscoveryRequest>());
 }

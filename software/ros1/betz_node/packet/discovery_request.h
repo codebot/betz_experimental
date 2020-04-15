@@ -15,27 +15,19 @@
  *
 */
 
-#ifndef DRIVE_H
-#define DRIVE_H
+#ifndef PACKET_DISCOVERY_REQUEST_H
+#define PACKET_DISCOVERY_REQUEST_H
 
 #include <stdint.h>
-#include "packet/packet.h"
+#include "packet.h"
 
 namespace betz {
 
-class Drive
+class DiscoveryRequest : public Packet
 {
 public:
-  int id = 0;
-  uint8_t uuid[12] = {0};
-  int num_params = 0;
-
-  void rx_packet(const Packet& packet);
-  void rx_num_params(const Packet& packet);
-  void rx_flash_read(const Packet& packet);
-
-  Drive();
-  ~Drive();
+  DiscoveryRequest();
+  ~DiscoveryRequest();
 };
 
 }  // namespace betz

@@ -15,23 +15,16 @@
  *
 */
 
-#include "packet.h"
+#include "discovery_request.h"
+using betz::DiscoveryRequest;
+using betz::Packet;
 
-Packet::Packet()
+DiscoveryRequest::DiscoveryRequest()
 {
+  flags = FLAG_SENTINEL | FLAG_BCAST;
+  payload.push_back(PACKET_ID_DISCOVERY_REQUEST);
 }
 
-Packet::~Packet()
+DiscoveryRequest::~DiscoveryRequest()
 {
-}
-
-void Packet::clear()
-{
-  flags = 0;
-  drive_id = 0;
-  packet_id = 0;
-  expected_length = 0;
-  rx_csum = 0;
-  address.clear();
-  payload.clear();
 }

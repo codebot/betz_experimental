@@ -30,11 +30,12 @@ include_directories(${catkin_INCLUDE_DIRS})
 add_executable(betz_node
   betz_node.cpp
   bus.cpp
-  crc.cpp
   drive.cpp
   lightweightserial.cpp
   main.cpp
-  packet.cpp
+  packet/crc.cpp
+  packet/discovery_request.cpp
+  packet/packet.cpp
   transport_serial.cpp
   transport_multicast.cpp)
 

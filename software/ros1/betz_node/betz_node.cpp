@@ -136,14 +136,17 @@ void BetzNode::run()
     return;
   }
 
+  bus.begin_discovery();
+
   ros::Rate rate(2);
   while (ros::ok())
   {
     bus.spin_once();
     rate.sleep();
 
-    const char *msg = "greetings";
-    bus.transport->send((const uint8_t *)"greetings", 9);
+
+    // const char *msg = "greetings";
+    // bus.transport->send((const uint8_t *)"greetings", 9);
   }
 
   /*

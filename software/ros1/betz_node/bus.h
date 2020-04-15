@@ -22,9 +22,9 @@
 #include <string>
 #include <stdint.h>
 
-#include "crc.h"
+#include "packet/crc.h"
 #include "drive.h"
-#include "packet.h"
+#include "packet/packet.h"
 #include "transport.h"
 
 
@@ -60,7 +60,7 @@ public:
 
   void set_transport(std::unique_ptr<Transport> transport);
 
-  bool send_packet(const uint8_t *data, const uint32_t len);
+  bool send_packet(std::unique_ptr<Packet> packet);
 
   bool wait_for_packet(
       const double max_seconds,
@@ -82,6 +82,8 @@ public:
   void add_drive_id(const uint8_t drive_id);
 
   Drive *find_drive_by_id(const uint8_t drive_id);
+
+  void begin_discovery();
 
 private:
   uint8_t rx_buf[4096] = {0};

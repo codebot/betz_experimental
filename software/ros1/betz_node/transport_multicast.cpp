@@ -185,7 +185,6 @@ int TransportMulticast::recv_nonblocking(
     uint8_t *data,
     const uint32_t max_len)
 {
-  printf("TransportMulticast::recv_nonblocking()\n");
   fd_set rdset;
   FD_ZERO(&rdset);
   FD_SET(rx_sock, &rdset);
@@ -200,16 +199,15 @@ int TransportMulticast::recv_nonblocking(
     return rv;
   else if (rv > 0)
   {
-    char buf[1024];
     int nbytes = recvfrom(
         rx_sock,
-        buf,
-        sizeof(buf),
+        data,
+        max_len,
         0,
         NULL,
         NULL);
 
-    printf("received %d-byte packet, hooray\n", nbytes);
+    printf("multicast received %d-byte packet, hooray\n", nbytes);
     return nbytes;
   }
   return 0;
