@@ -26,8 +26,9 @@ namespace betz {
 class Drive
 {
 public:
-  int id = 0;
-  uint8_t uuid[12] = {0};
+  uint8_t bus_id = 0;
+  std::vector<uint8_t> uuid;
+
   int num_params = 0;
 
   void rx_packet(const Packet& packet);
@@ -36,6 +37,9 @@ public:
 
   Drive();
   ~Drive();
+
+  bool uuid_equals(const std::vector<uint8_t>& _uuid) const;
+  void set_uuid(const std::vector<uint8_t>& _uuid);
 };
 
 }  // namespace betz

@@ -47,7 +47,7 @@ public:
 
   static const uint8_t FLAG_ADDR = 0x4;
   static const uint8_t FLAG_ADDR_SHORT = 0x0;
-  static const uint8_t FLAG_ADDR_LONG = 0x1;
+  static const uint8_t FLAG_ADDR_LONG = 0x4;
 
   static const uint8_t FLAG_SENTINEL = 0x50;
 

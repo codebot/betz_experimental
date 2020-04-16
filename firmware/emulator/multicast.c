@@ -169,7 +169,7 @@ void multicast_listen(const uint32_t max_usec)
           NULL,
           0);
   
-      printf("received %d-byte packet, hooray\n", nbytes);
+      //printf("received %d-byte packet, hooray\n", nbytes);
       for (int i = 0; i < nbytes; i++)
         comms_rx_byte(buf[i]);
     }

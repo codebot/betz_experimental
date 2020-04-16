@@ -15,6 +15,7 @@
  *
 */
 
+#include <cstdio>
 #include "crc.h"
 
 CRC::CRC()
@@ -31,6 +32,7 @@ void CRC::add_byte(const uint8_t b)
   // get unstuck while standing up other stuff
   crc = ((crc & 0x8000) >> 15) | (crc << 1);
   crc ^= b;
+  //printf("crc = %02x\n", static_cast<unsigned>(crc));
 }
 
 void CRC::reset()

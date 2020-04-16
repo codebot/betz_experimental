@@ -44,8 +44,10 @@ static comms_parser_state_t g_comms_parser_state = PS_PREAMBLE;
 static uint32_t g_comms_parser_expected_length = 0;
 static uint32_t g_comms_parser_wpos = 0;
 static uint8_t  g_comms_parser_pkt[COMMS_PKT_MAX_LEN] = {0};
-static uint16_t g_comms_parser_csum = 0;
-static uint16_t g_comms_parser_rx_csum = 0;
+
+static uint16_t g_comms_parser_crc = 0;
+static uint16_t g_comms_parser_rx_crc = 0;
+
 static void (*g_comms_raw_tx_fptr)(const uint8_t *, const uint32_t) = 0;
 static bool g_comms_parser_broadcast = false;
 static bool g_comms_parser_long_address = false;
@@ -70,11 +72,20 @@ void comms_set_raw_tx_fptr(void (*fptr)(const uint8_t *, const uint32_t))
   g_comms_raw_tx_fptr = fptr;
 }
 
-static void comms_parser_csum_byte(const uint8_t b)
+static inline uint16_t comms_crc_byte(const uint16_t crc, const uint8_t b)
 {
   // placeholder for now. replace with real CRC-16 (usb csum) sometime
-  g_comms_parser_csum <<= 1;
-  g_comms_parser_csum ^= b;
+  // for now, just barrel-left-shift and XOR with the input byte
+  return (((crc & 0x8000) >> 15) | (crc << 1)) ^ b;
+}
+
+static uint16_t comms_crc(const uint8_t *p, const uint32_t len)
+{
+  uint16_t crc = 0;
+  for (uint32_t i = 0; i < len; i++)
+    crc = comms_crc_byte(crc, p[i]);
+
+  return crc;
 }
 
 void comms_rx_byte(const uint8_t b)
@@ -85,14 +96,13 @@ void comms_rx_byte(const uint8_t b)
     case PS_PREAMBLE:
       if (b == 0xbe)
       {
-        g_comms_parser_csum = 0;
-        comms_parser_csum_byte(b);
+        g_comms_parser_crc = comms_crc_byte(0, b);  // reset crc
         g_comms_parser_state = PS_FLAGS;
       }
       break;
 
     case PS_FLAGS:
-      comms_parser_csum_byte(b);
+      g_comms_parser_crc = comms_crc_byte(g_comms_parser_crc, b);
       // verify the top 4 bits are as expected
       if ((b & 0xf0) != 0x50)
       {
@@ -112,7 +122,7 @@ void comms_rx_byte(const uint8_t b)
       break;
 
     case PS_ADDRESS:
-      comms_parser_csum_byte(b);
+      g_comms_parser_crc = comms_crc_byte(g_comms_parser_crc, b);
       if (g_comms_parser_long_address)
       {
         g_comms_parser_addr[g_comms_parser_wpos] = b;
@@ -135,7 +145,7 @@ void comms_rx_byte(const uint8_t b)
       break;
 
     case PS_LENGTH:
-      comms_parser_csum_byte(b);
+      g_comms_parser_crc = comms_crc_byte(g_comms_parser_crc, b);
       if (b == 0)
       {
         g_comms_parser_state = PS_PREAMBLE;  // this shouldn't happen...
@@ -148,7 +158,7 @@ void comms_rx_byte(const uint8_t b)
       break;
 
     case PS_PAYLOAD:
-      comms_parser_csum_byte(b);
+      g_comms_parser_crc = comms_crc_byte(g_comms_parser_crc, b);
       g_comms_parser_pkt[g_comms_parser_wpos] = b;
       // printf("  payload %d/%d\n",
       //     g_parser_wpos, g_parser_expected_length);
@@ -160,13 +170,13 @@ void comms_rx_byte(const uint8_t b)
 
     case PS_CSUM_0:
       g_comms_parser_state = PS_CSUM_1;
-      g_comms_parser_rx_csum = b;
+      g_comms_parser_rx_crc = b;
       break;
 
     case PS_CSUM_1:
       g_comms_parser_state = PS_PREAMBLE;
-      g_comms_parser_rx_csum |= (b << 8);
-      if (g_comms_parser_rx_csum == g_comms_parser_csum)
+      g_comms_parser_rx_crc |= (b << 8);
+      if (g_comms_parser_rx_crc == g_comms_parser_crc)
       {
         // printf("  pkt csum ok\n");
         if (g_comms_parser_ignore_pkt)
@@ -179,8 +189,8 @@ void comms_rx_byte(const uint8_t b)
       else
       {
         printf("csum fail: 0x%0x != 0x%x\n",
-            g_comms_parser_csum,
-            g_comms_parser_rx_csum);
+            g_comms_parser_crc,
+            g_comms_parser_rx_crc);
       }
       break;
 
@@ -306,13 +316,7 @@ static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
   for (uint32_t i = 0; i < len; i++)
     framed_pkt[i+15] = data[i];
 
-  uint16_t crc = 0;
-  for (uint32_t i = 0; i < framed_pkt_len - 2; i++)
-  {
-    // this is just a placeholder hack. Do a real CRC-16 someday.
-    crc <<= 1;
-    crc ^= framed_pkt[i];
-  }
+  const uint16_t crc = comms_crc(framed_pkt, framed_pkt_len - 2);
   framed_pkt[len+15] = (uint8_t)(crc & 0xff);
   framed_pkt[len+16] = (uint8_t)(crc >> 8);
 

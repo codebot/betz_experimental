@@ -22,10 +22,13 @@
 #include "transport_serial.h"
 #include "packet/discovery_request.h"
 
+using std::make_shared;
+using std::make_unique;
+using std::shared_ptr;
 using std::string;
+
 using betz::Bus;
 using betz::Drive;
-using std::make_unique;
 
 Bus::Bus()
 {
@@ -93,6 +96,7 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
       static_cast<unsigned>(b),
       static_cast<int>(parser_state));
 #endif
+
   switch (parser_state)
   {
     case ParserState::PREAMBLE:
@@ -121,7 +125,7 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
 
     case ParserState::ADDRESS:
       parser_crc.add_byte(b);
-      if ((parser_packet.flags & Packet::FLAG_ADDR) == Packet::FLAG_ADDR_LONG)
+      if (parser_packet.flags & Packet::FLAG_ADDR_LONG)
       {
         parser_packet.address.push_back(b);
         if (parser_packet.address.size() == Packet::LONG_ADDR_LEN)
@@ -162,7 +166,6 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
       parser_packet.rx_csum |= (b << 8);
       if (parser_packet.rx_csum == parser_crc.get_crc())
       {
-        printf("received packet, hooray\n");
         rx_pkt = parser_packet;
         return true;
       }
@@ -182,6 +185,7 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
   return false;
 }
 
+/*
 void Bus::rx_packet(Packet& packet)
 {
   for (auto& drive : drives)
@@ -191,6 +195,7 @@ void Bus::rx_packet(Packet& packet)
       break;
     }
 }
+*/
 
 #if 0
 bool Bus::read_flash(
@@ -244,6 +249,28 @@ Drive *Bus::find_drive_by_id(const uint8_t drive_id)
 }
 #endif
 
+shared_ptr<Drive> Bus::drive_by_uuid(const std::vector<uint8_t>& uuid)
+{
+  for (auto drive : drives)
+    if (drive->uuid_equals(uuid))
+      return drive;
+  return nullptr;
+}
+
+std::shared_ptr<Drive> Bus::add_drive_by_uuid(const std::vector<uint8_t>& uuid)
+{
+  // if the drive is already there, return a pointer to it
+  shared_ptr<Drive> drive = drive_by_uuid(uuid);
+  if (drive)
+    return drive;
+
+  // if we get here, we need to create a new one
+  drive = make_shared<Drive>();
+  drive->set_uuid(uuid);
+  return drive;
+}
+
+/*
 void Bus::add_drive_id(const uint8_t drive_id)
 {
   for (auto& drive : drives)
@@ -254,6 +281,15 @@ void Bus::add_drive_id(const uint8_t drive_id)
   drive.id = drive_id;
   drives.push_back(drive);
 }
+
+Drive *Bus::find_drive_by_id(const uint8_t drive_id)
+{
+  for (size_t i = 0; i < drives.size(); i++)
+    if (drives[i].id == drive_id)
+      return &drives[i];
+  return nullptr;
+}
+*/
 
 void Bus::set_transport(std::unique_ptr<Transport> _transport)
 {
@@ -278,14 +314,10 @@ void Bus::spin_once()
     for (int i = 0; i < n_rx; i++)
     {
       const uint8_t b = rx_buf[i];
-      if (rx_byte(b, packet))
+      // printf("rx 0x%02x\n", static_cast<unsigned>(b));
+      if (rx_byte(b, packet) && (packet.flags & Packet::FLAG_DIR_PERIPH_HOST))
       {
-        if (packet.flags & Packet::FLAG_DIR_PERIPH_HOST)
-        {
-          printf("packet from periph!\n");
-        }
-        else
-          printf("ignoring our own packet...\n");
+        printf("received packet from peripheral\n");
       }
     }
   }

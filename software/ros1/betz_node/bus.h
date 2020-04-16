@@ -34,7 +34,7 @@ class Bus
 {
 public:
   std::unique_ptr<Transport> transport;
-  std::vector<Drive> drives;
+  std::vector<std::shared_ptr<Drive>> drives;
 
   enum class ParserState
   {
@@ -79,9 +79,11 @@ public:
 
   int get_num_params(const uint8_t drive_id);
 
-  void add_drive_id(const uint8_t drive_id);
+  // void add_drive_id(const uint8_t drive_id);
+  //Drive *find_drive_by_id(const uint8_t drive_id);
 
-  Drive *find_drive_by_id(const uint8_t drive_id);
+  std::shared_ptr<Drive> drive_by_uuid(const std::vector<uint8_t>& uuid);
+  std::shared_ptr<Drive> add_drive_by_uuid(const std::vector<uint8_t>& uuid);
 
   void begin_discovery();
 

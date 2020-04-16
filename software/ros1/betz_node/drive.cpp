@@ -65,3 +65,18 @@ void Drive::rx_packet(const Packet& packet)
     default: ROS_INFO("unrecognized packet ID: %02x", (int)pkt_id);
   }
 }
+
+bool Drive::uuid_equals(const std::vector<uint8_t>& _uuid) const
+{
+  for (size_t i = 0; i < uuid.size() && i < _uuid.size(); i++)
+    if (uuid[i] != _uuid[i])
+      return false;
+  return true;
+}
+
+void Drive::set_uuid(const std::vector<uint8_t>& _uuid)
+{
+  uuid.resize(_uuid.size());
+  for (size_t i = 0; i < _uuid.size(); i++)
+    uuid[i] = _uuid[i];
+}

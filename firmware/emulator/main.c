@@ -7,11 +7,9 @@ int main(int argc, char **argv)
 {
   multicast_init();
   comms_set_raw_tx_fptr(multicast_tx);
-  const char *pkt = "hello";
   while (true)
   {
     multicast_listen(0);
-    //multicast_tx(pkt, 5);
     usleep(100000);
   }
   return 0;
