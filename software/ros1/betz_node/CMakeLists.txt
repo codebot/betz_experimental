@@ -34,7 +34,8 @@ add_executable(betz_node
   lightweightserial.cpp
   main.cpp
   packet/crc.cpp
-  packet/discovery_request.cpp
+  packet/discovery.cpp
+  packet/num_params.cpp
   packet/packet.cpp
   transport_serial.cpp
   transport_multicast.cpp)

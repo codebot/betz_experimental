@@ -15,21 +15,14 @@
  *
 */
 
-#ifndef PACKET_DISCOVERY_REQUEST_H
-#define PACKET_DISCOVERY_REQUEST_H
+#include "control.h"
+#include "param.h"
+#include <stdio.h>
 
-#include <stdint.h>
-#include "packet.h"
+int joint_idx = 0;
 
-namespace betz {
-
-class DiscoveryRequest : public Packet
+void control_init()
 {
-public:
-  DiscoveryRequest();
-  ~DiscoveryRequest();
-};
-
-}  // namespace betz
-
-#endif
+  printf("control_init()\n");
+  param_add("joint_id", PARAM_TYPE_INT, &joint_idx);
+}

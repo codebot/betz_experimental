@@ -15,16 +15,9 @@
  *
 */
 
-#include "discovery_request.h"
-using betz::DiscoveryRequest;
-using betz::Packet;
+#ifndef CONTROL_H
+#define CONTROL_H
 
-DiscoveryRequest::DiscoveryRequest()
-{
-  flags = FLAG_SENTINEL | FLAG_BCAST;
-  payload.push_back(PACKET_ID_DISCOVERY_REQUEST);
-}
+void control_init();
 
-DiscoveryRequest::~DiscoveryRequest()
-{
-}
+#endif

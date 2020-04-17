@@ -1,6 +1,7 @@
 add_library(common
   comms.c
   console.c
+  control.c
   delay.c
   flash.c
   param.c

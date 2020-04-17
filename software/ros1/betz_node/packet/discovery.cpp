@@ -15,36 +15,16 @@
  *
 */
 
-#ifndef DRIVE_H
-#define DRIVE_H
+#include "discovery.h"
+using betz::Discovery;
+using betz::Packet;
 
-#include <stdint.h>
-#include "packet/packet.h"
-#include "transport.h"
-
-namespace betz {
-
-class Drive
+Discovery::Discovery()
 {
-public:
-  uint8_t bus_id = 0;
-  std::vector<uint8_t> uuid;
+  flags = FLAG_SENTINEL | FLAG_BCAST;
+  payload.push_back(ID_DISCOVERY);
+}
 
-  int num_params = 0;
-
-  void rx_packet(const Packet& packet);
-  void rx_num_params(const Packet& packet);
-  void rx_flash_read(const Packet& packet);
-  void rx_discovery(const Packet& packet);
-
-  Drive();
-  ~Drive();
-
-  bool uuid_equals(const std::vector<uint8_t>& _uuid) const;
-  void set_uuid(const std::vector<uint8_t>& _uuid);
-  void print() const;
-};
-
-}  // namespace betz
-
-#endif
+Discovery::~Discovery()
+{
+}

@@ -136,9 +136,9 @@ void BetzNode::run()
     return;
   }
 
-  bus.begin_discovery();
+  bus.discovery_begin();
 
-  ros::Rate rate(2);
+  ros::Rate rate(10);
   while (ros::ok())
   {
     bus.spin_once();

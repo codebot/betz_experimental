@@ -20,7 +20,8 @@
 #include "bus.h"
 #include "ros/ros.h"
 #include "transport_serial.h"
-#include "packet/discovery_request.h"
+#include "packet/discovery.h"
+#include "packet/num_params.h"
 
 using std::make_shared;
 using std::make_unique;
@@ -48,8 +49,8 @@ bool Bus::send_packet(std::unique_ptr<Packet> packet)
     return false;
   }
   ROS_INFO("sending %d-byte packet:", static_cast<int>(serialized_length));
-  for (size_t i = 0; i < serialized_length; i++)
-    printf("  %2zu: 0x%02x\n", i, static_cast<unsigned>(buffer[i]));
+  // for (size_t i = 0; i < serialized_length; i++)
+  //   printf("  %2zu: 0x%02x\n", i, static_cast<unsigned>(buffer[i]));
   return transport->send(buffer, serialized_length);
 }
 
@@ -125,10 +126,10 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
 
     case ParserState::ADDRESS:
       parser_crc.add_byte(b);
-      if (parser_packet.flags & Packet::FLAG_ADDR_LONG)
+      if (parser_packet.flags & Packet::FLAG_ADDR_UUID)
       {
-        parser_packet.address.push_back(b);
-        if (parser_packet.address.size() == Packet::LONG_ADDR_LEN)
+        parser_packet.uuid.push_back(b);
+        if (parser_packet.uuid.size() == Packet::UUID_LEN)
           parser_state = ParserState::LENGTH;
       }
       else
@@ -185,18 +186,6 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
   return false;
 }
 
-/*
-void Bus::rx_packet(Packet& packet)
-{
-  for (auto& drive : drives)
-    if (drive.id == packet.drive_id)
-    {
-      drive.rx_packet(packet);
-      break;
-    }
-}
-*/
-
 #if 0
 bool Bus::read_flash(
     const uint8_t drive_id,
@@ -226,27 +215,6 @@ bool Bus::set_led(const uint8_t drive_id, const bool on)
   return send_packet(pkt, sizeof(pkt));
 }
 
-int Bus::get_num_params(const uint8_t drive_id)
-{
-  add_drive_id(drive_id);
-
-  uint8_t pkt[1] = { 0x01 };
-  send_packet(pkt, sizeof(pkt));
-  if (wait_for_packet(1.0, drive_id, 0x01))
-  {
-    Drive *drive = find_drive_by_id(drive_id);
-    return drive->num_params;
-  }
-  return -1;
-}
-
-Drive *Bus::find_drive_by_id(const uint8_t drive_id)
-{
-  for (size_t i = 0; i < drives.size(); i++)
-    if (drives[i].id == drive_id)
-      return &drives[i];
-  return nullptr;
-}
 #endif
 
 shared_ptr<Drive> Bus::drive_by_uuid(const std::vector<uint8_t>& uuid)
@@ -254,34 +222,16 @@ shared_ptr<Drive> Bus::drive_by_uuid(const std::vector<uint8_t>& uuid)
   for (auto drive : drives)
     if (drive->uuid_equals(uuid))
       return drive;
-  return nullptr;
-}
 
-std::shared_ptr<Drive> Bus::add_drive_by_uuid(const std::vector<uint8_t>& uuid)
-{
-  // if the drive is already there, return a pointer to it
-  shared_ptr<Drive> drive = drive_by_uuid(uuid);
-  if (drive)
-    return drive;
-
-  // if we get here, we need to create a new one
-  drive = make_shared<Drive>();
+  // if we get here, that means we didn't find this UUID. create a new one.
+  shared_ptr<Drive> drive = make_shared<Drive>();
   drive->set_uuid(uuid);
+  drives.push_back(drive);
+
   return drive;
 }
 
 /*
-void Bus::add_drive_id(const uint8_t drive_id)
-{
-  for (auto& drive : drives)
-    if (drive.id == drive_id)
-      return;  // nothing to do; drive already exists
-
-  Drive drive;
-  drive.id = drive_id;
-  drives.push_back(drive);
-}
-
 Drive *Bus::find_drive_by_id(const uint8_t drive_id)
 {
   for (size_t i = 0; i < drives.size(); i++)
@@ -318,13 +268,66 @@ void Bus::spin_once()
       if (rx_byte(b, packet) && (packet.flags & Packet::FLAG_DIR_PERIPH_HOST))
       {
         printf("received packet from peripheral\n");
+        shared_ptr<Drive> drive = drive_by_uuid(packet.uuid);
+        drive->rx_packet(packet);
       }
     }
   }
+
+  if (!discovery_complete)
+    discovery_tick();
 }
 
-void Bus::begin_discovery()
+void Bus::discovery_begin()
 {
-  printf("Bus::begin_discovery()\n");
-  send_packet(std::make_unique<DiscoveryRequest>());
+  printf("Bus::discovery_begin()\n");
+  discovery_time = ros::Time::now();
+  discovery_complete = false;
+  discovery_broadcast_count = 0;
+  send_packet(std::make_unique<Discovery>());
+}
+
+void Bus::discovery_tick()
+{
+  const double elapsed = (ros::Time::now() - discovery_time).toSec();
+
+  /*
+  printf(
+      "Bus::discovery_tick() elapsed = %.3f %zu drives\n",
+      elapsed,
+      drives.size());
+  */
+
+  switch (discovery_state)
+  {
+    case DiscoveryState::UUID:
+      // send out broadcast discovery requests to learn drive UUID's
+      if (elapsed > 0.5)
+      {
+        if (discovery_broadcast_count > 1)
+        {
+          discovery_state = DiscoveryState::NUM_PARAMS;
+          break;
+        }
+        discovery_broadcast_count++;
+        discovery_time = ros::Time::now();
+        send_packet(std::make_unique<Discovery>());
+      }
+      break;
+
+    case DiscoveryState::NUM_PARAMS:
+      for (auto& drive : drives)
+      {
+        if (drive->num_params == 0)
+        {
+          send_packet(std::make_unique<NumParams>(*drive));
+          return;
+        }
+      }
+      break;
+
+    default:
+      printf("unhandled discovery state\n");
+      break;
+  }
 }

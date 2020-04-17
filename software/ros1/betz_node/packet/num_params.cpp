@@ -15,36 +15,17 @@
  *
 */
 
-#ifndef DRIVE_H
-#define DRIVE_H
+#include "num_params.h"
+using betz::NumParams;
+using betz::Packet;
 
-#include <stdint.h>
-#include "packet/packet.h"
-#include "transport.h"
-
-namespace betz {
-
-class Drive
+NumParams::NumParams(const Drive& drive)
 {
-public:
-  uint8_t bus_id = 0;
-  std::vector<uint8_t> uuid;
+  flags = FLAG_SENTINEL | FLAG_ADDR_UUID;
+  uuid = drive.uuid;
+  payload.push_back(ID_NUM_PARAMS);
+}
 
-  int num_params = 0;
-
-  void rx_packet(const Packet& packet);
-  void rx_num_params(const Packet& packet);
-  void rx_flash_read(const Packet& packet);
-  void rx_discovery(const Packet& packet);
-
-  Drive();
-  ~Drive();
-
-  bool uuid_equals(const std::vector<uint8_t>& _uuid) const;
-  void set_uuid(const std::vector<uint8_t>& _uuid);
-  void print() const;
-};
-
-}  // namespace betz
-
-#endif
+NumParams::~NumParams()
+{
+}

@@ -34,9 +34,9 @@ public:
   uint8_t expected_length = 0;
   uint16_t rx_csum = 0;
 
-  static const size_t LONG_ADDR_LEN = 12;
+  static const size_t UUID_LEN = 12;
 
-  std::vector<uint8_t> address;
+  std::vector<uint8_t> uuid;
   std::vector<uint8_t> payload;
 
   static const uint8_t FLAG_DIR = 0x1;
@@ -46,14 +46,15 @@ public:
   static const uint8_t FLAG_BCAST = 0x2;
 
   static const uint8_t FLAG_ADDR = 0x4;
-  static const uint8_t FLAG_ADDR_SHORT = 0x0;
-  static const uint8_t FLAG_ADDR_LONG = 0x4;
+  static const uint8_t FLAG_ADDR_ID = 0x0;
+  static const uint8_t FLAG_ADDR_UUID = 0x4;
 
   static const uint8_t FLAG_SENTINEL = 0x50;
 
   enum
   {
-    PACKET_ID_DISCOVERY_REQUEST = 0xf0
+    ID_DISCOVERY  = 0xf0,
+    ID_NUM_PARAMS = 0xf1,
   };
   //static const uint8_t 
 

@@ -89,8 +89,10 @@ void reset_vector()
   status_led_init();
   console_init();
   systime_init();
+  param_init();
   uuid_init();
   rs485_init();
+  control_init();
 
   comms_init();
   comms_set_raw_tx_fptr(rs485_tx);

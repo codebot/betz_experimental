@@ -32,15 +32,13 @@ Drive::~Drive()
 void Drive::rx_num_params(const Packet& packet)
 {
   ROS_INFO("Drive::rx_num_params()");
-  if (packet.payload.size() != 4) {
+  if (packet.payload.size() != 5)
+  {
     ROS_ERROR("unexpected payload len: %d", (int)packet.payload.size());
     return;
   }
-  num_params =
-      packet.payload[0]         |
-      (packet.payload[1] << 8)  |
-      (packet.payload[2] << 16) |
-      (packet.payload[3] << 24) ;
+  memcpy(&num_params, &packet.payload[1], 4);
+  printf("num_params = %u\n", num_params);
 }
 
 void Drive::rx_flash_read(const Packet& packet)
@@ -52,17 +50,21 @@ void Drive::rx_packet(const Packet& packet)
 {
   if (packet.payload.size() == 0)
   {
-    ROS_ERROR("received zero-length rs485 packet");
+    ROS_ERROR("received zero-length packet");
     return;
   }
 
   // dispatch to packet handler, to keep the function size sane
-  const uint8_t pkt_id = packet.payload[0];
-  switch(pkt_id)
+  const uint8_t packet_id = packet.payload[0];
+  switch(packet_id)
   {
-    case 0x01: rx_num_params(packet); break;
-    case 0xf0: rx_flash_read(packet); break;
-    default: ROS_INFO("unrecognized packet ID: %02x", (int)pkt_id);
+    case Packet::ID_DISCOVERY:  rx_discovery(packet); break;
+    case Packet::ID_NUM_PARAMS: rx_num_params(packet); break;
+    // case 0xf0: rx_flash_read(packet); break;
+    default:
+      ROS_INFO(
+          "unrecognized packet ID: %02x",
+          static_cast<unsigned>(packet_id));
   }
 }
 
@@ -79,4 +81,21 @@ void Drive::set_uuid(const std::vector<uint8_t>& _uuid)
   uuid.resize(_uuid.size());
   for (size_t i = 0; i < _uuid.size(); i++)
     uuid[i] = _uuid[i];
+}
+
+void Drive::print() const
+{
+  for (size_t i = 0; i < Packet::UUID_LEN; i++)
+  {
+    printf("%02x", uuid[i]);
+    if (i % 4 == 3 && i != (Packet::UUID_LEN - 1))
+      printf(":");
+  }
+}
+
+void Drive::rx_discovery(const Packet& packet)
+{
+  printf("Discovery response from ");
+  print();
+  printf("\n");
 }

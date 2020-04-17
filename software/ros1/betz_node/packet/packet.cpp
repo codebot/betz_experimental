@@ -34,7 +34,7 @@ void Packet::clear()
   drive_id = 0;
   expected_length = 0;
   rx_csum = 0;
-  address.clear();
+  uuid.clear();
   payload.clear();
 }
 
@@ -53,24 +53,23 @@ int Packet::serialize(uint8_t *buffer, size_t buffer_len) const
 
   buffer[0] = 0xbe;
   buffer[1] = flags;
-  buffer[2] = payload.size();
-
-  int wr_idx = 3;
+  int wr_idx = 2;
   if (!(flags & FLAG_BCAST))
   {
-    if (flags & FLAG_ADDR_LONG)
+    if (flags & FLAG_ADDR_UUID)
     {
-      if (address.size() != LONG_ADDR_LEN)
+      if (uuid.size() != UUID_LEN)
       {
         printf("ERROR: requested long address, but was not provided.\n");
         return -1;
       }
-      for (size_t i = 0; i < LONG_ADDR_LEN; i++)
-        buffer[wr_idx++] = address[i];
+      for (size_t i = 0; i < UUID_LEN; i++)
+        buffer[wr_idx++] = uuid[i];
     }
     else
       buffer[wr_idx++] = drive_id;
   }
+  buffer[wr_idx++] = payload.size();
   for (size_t i = 0; i < payload.size(); i++)
     buffer[wr_idx++] = payload[i];
 

@@ -29,8 +29,10 @@ uint32_t param_count()
   return num_params;
 }
 
-void param_add(const char *param_name,
-    const param_type_t param_type, volatile void *param_ptr)
+void param_add(
+    const char *param_name,
+    const param_type_t param_type,
+    volatile void *param_ptr)
 {
   if (num_params >= MAX_PARAMS) {
     printf("out of param storage; can't add param [%s]\n", param_name);

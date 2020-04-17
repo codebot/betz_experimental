@@ -22,6 +22,8 @@
 #include <string>
 #include <stdint.h>
 
+#include <ros/time.h>
+
 #include "packet/crc.h"
 #include "drive.h"
 #include "packet/packet.h"
@@ -83,9 +85,20 @@ public:
   //Drive *find_drive_by_id(const uint8_t drive_id);
 
   std::shared_ptr<Drive> drive_by_uuid(const std::vector<uint8_t>& uuid);
-  std::shared_ptr<Drive> add_drive_by_uuid(const std::vector<uint8_t>& uuid);
 
-  void begin_discovery();
+  enum class DiscoveryState
+  {
+    UUID,
+    NUM_PARAMS,
+    PARAM_VALUES
+  };
+  DiscoveryState discovery_state = DiscoveryState::UUID;
+
+  void discovery_begin();
+  void discovery_tick();
+  bool discovery_complete = false;
+  int discovery_broadcast_count = 0;
+  ros::Time discovery_time;
 
 private:
   uint8_t rx_buf[4096] = {0};

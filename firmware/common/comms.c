@@ -129,10 +129,13 @@ void comms_rx_byte(const uint8_t b)
         g_comms_parser_wpos++;
         if (g_comms_parser_wpos == COMMS_LONG_ADDR_LEN)
         {
-          if ((g_uuid[0] != *((uint32_t *)&g_comms_parser_addr[0])) ||
-              (g_uuid[1] != *((uint32_t *)&g_comms_parser_addr[4])) ||
-              (g_uuid[2] != *((uint32_t *)&g_comms_parser_addr[8])))
-            g_comms_parser_ignore_pkt = true;
+          // verify UUID
+          for (int i = 0; i < UUID_LEN; i++)
+            if (g_uuid[i] != g_comms_parser_addr[i])
+            {
+              g_comms_parser_ignore_pkt = true;
+              break;
+            }
           g_comms_parser_state = PS_LENGTH;
         }
       }
@@ -181,7 +184,7 @@ void comms_rx_byte(const uint8_t b)
         // printf("  pkt csum ok\n");
         if (g_comms_parser_ignore_pkt)
         {
-          printf("ignoring packet\r\n");
+          // printf("ignoring packet\r\n");
           break;
         }
         comms_rx_pkt(g_comms_parser_pkt, g_comms_parser_expected_length);
@@ -198,19 +201,6 @@ void comms_rx_byte(const uint8_t b)
       g_comms_parser_state = PS_PREAMBLE;
       break;
   }
-}
-
-void comms_req_num_params()
-{
-  //printf("comms_rx_req_num_params()\n");
-  const uint32_t num_params = param_count();
-  uint8_t pkt[5] = {0};
-  pkt[0] = 0x01;
-  pkt[1] = num_params & 0xff;
-  pkt[2] = (num_params >>  8) & 0xff;
-  pkt[3] = (num_params >> 16) & 0xff;
-  pkt[4] = (num_params >> 24) & 0xff;
-  comms_tx(pkt, sizeof(pkt));
 }
 
 void comms_read_flash(const uint8_t *data, const uint32_t len)
@@ -240,12 +230,22 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
   comms_tx(pkt, 9 + read_len);
 }
 
-void comms_discovery_request()
+void comms_discovery()
 {
-  printf("comms_discovery_request()\n");
+  printf("comms_discovery()\n");
   uint8_t pkt[1] = {0};
-  pkt[0] = 0xf1;
+  pkt[0] = 0xf0;
   comms_tx_long_addr(pkt, 1);
+}
+
+void comms_num_params()
+{
+  printf("comms_num_params()\n");
+  uint8_t pkt[5] = {0};
+  pkt[0] = 0xf1;
+  const uint32_t num_params = param_count();
+  memcpy(&pkt[1], &num_params, 4);
+  comms_tx_long_addr(pkt, 5);
 }
 
 void comms_rx_pkt(const uint8_t *p, const uint32_t len)
@@ -258,8 +258,8 @@ void comms_rx_pkt(const uint8_t *p, const uint32_t len)
   const uint8_t pkt_id = p[0];
   switch (pkt_id)
   {
-    case 0x01: comms_req_num_params(); break;
-    case 0xf0: comms_discovery_request(); break;
+    case 0xf0: comms_discovery(); break;
+    case 0xf1: comms_num_params(); break;
     default: break;
   }
 }
@@ -299,7 +299,7 @@ void comms_tx(const uint8_t *data, const uint32_t len)
 
 static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
 {
-  printf("comms_tx_long_addr(%d)\r\n", (int)len);
+  // printf("comms_tx_long_addr(%d)\r\n", (int)len);
   if (len > 240)
   {
     printf("woah! unable to handle packets > 240 bytes.\n");
@@ -309,9 +309,7 @@ static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
   uint8_t framed_pkt[framed_pkt_len];
   framed_pkt[0] = 0xbe;
   framed_pkt[1] = 0x55;
-  memcpy(&framed_pkt[2], &g_uuid[0], 4);
-  memcpy(&framed_pkt[6], &g_uuid[1], 4);
-  memcpy(&framed_pkt[10], &g_uuid[2], 4);
+  memcpy(&framed_pkt[2], g_uuid, 12);
   framed_pkt[14] = (uint8_t)len;
   for (uint32_t i = 0; i < len; i++)
     framed_pkt[i+15] = data[i];

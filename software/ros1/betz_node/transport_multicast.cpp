@@ -207,7 +207,11 @@ int TransportMulticast::recv_nonblocking(
         NULL,
         NULL);
 
-    // printf("multicast received %d-byte packet, hooray\n", nbytes);
+    /*
+    printf("multicast received %d-byte packet, hooray\n", nbytes);
+    for (int i = 0; i < nbytes; i++)
+      printf("  %3d: 0x%02x\n", i, static_cast<unsigned>(data[i]));
+    */
     return nbytes;
   }
   return 0;
