@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.0.0)
 project(betzdrive)
 
 if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "Setting CMAKE_BUILD_TYPE to Debug explicitly")
-  set(CMAKE_BUILD_TYPE Debug)
+  message(STATUS "Setting CMAKE_BUILD_TYPE explicitly")
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
 # More linker flags in toolchain file.
@@ -56,3 +56,4 @@ add_subdirectory(rs485_hello)
 add_subdirectory(test_comms)
 add_subdirectory(test_systime)
 add_subdirectory(test_uuid)
+add_subdirectory(test_rng)

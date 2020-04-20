@@ -23,6 +23,5 @@ int joint_idx = 0;
 
 void control_init()
 {
-  printf("control_init()\n");
   param_add("joint_id", PARAM_TYPE_INT, &joint_idx);
 }

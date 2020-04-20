@@ -72,19 +72,12 @@ void rs485_enable_termination(const bool enable)
 void rs485_tx(const uint8_t *data, const uint32_t len)
 {
   pin_set_output_high(RS485_DIR_GPIO, RS485_DIR_PIN);  // enable transmitter
-  for (volatile int wait = 0; wait < 10; wait++) { }
   for (uint32_t i = 0; i < len; i++)
   {
     while (!(RS485_USART->SR & USART_SR_TXE)) { } // wait for tx to clear
     RS485_USART->DR = data[i];
   }
   while (!(RS485_USART->SR & USART_SR_TC)) { } // wait for TX to finish
-
-  // because the rs485 bus is currently not biased at the interface board
-  // there are some weird ringings that cause a START bit to "sometimes"
-  // be transmitted if we keep driving the bus after the STOP bit.
-  //for (volatile int wait = 0; wait < 100; wait++) { }
-
   pin_set_output_low(RS485_DIR_GPIO, RS485_DIR_PIN);  // disable transmitter
 }
 

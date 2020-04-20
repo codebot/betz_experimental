@@ -9,10 +9,14 @@ int main(int argc, char **argv)
     for (int i = 0; i < 10; i++)
       delay_ms(100);
 
-    printf("uuid = 0x%08x 0x%08x 0x%08x\r\n",
-        (unsigned)g_uuid[0],
-        (unsigned)g_uuid[1],
-        (unsigned)g_uuid[2]);
+    printf("uuid = ");
+    for (int i = 0; i < UUID_LEN; i++)
+    {
+      printf("%02x", (unsigned)g_uuid[i]);
+      if (i % 4 == 3 && i != 11)
+        printf(":");
+    }
+    printf("\r\n");
   }
   return 0;
 }

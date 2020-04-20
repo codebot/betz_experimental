@@ -24,7 +24,7 @@ void rng_init()
   RNG->CR |= RNG_CR_RNGEN;
 }
 
-uint32_t rnd_read()
+uint32_t rng_read()
 {
   return RNG->DR;
 }
