@@ -6,6 +6,7 @@ add_library(common
   flash.c
   param.c
   pin.c
+  rng.c
   rs485.c
   stack.c
   startup.c

@@ -13,6 +13,7 @@ add_executable(comms_emulator
   ../common/comms.c
   ../common/control.c
   ../common/param.c
-  emulator_uuid.c
   emulator_flash.c
+  emulator_rng.c
+  emulator_uuid.c
   multicast.c)
