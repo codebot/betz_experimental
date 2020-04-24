@@ -88,3 +88,26 @@ uint8_t Packet::packet_id() const
   else
     return 0;
 }
+
+void Packet::append(const uint8_t b)
+{
+  payload.push_back(b);
+}
+
+void Packet::append(const uint16_t s)
+{
+  // little-endian. I'm sure there is a faster way someday, but it's nice
+  // to be explicit also
+  payload.push_back(s & 0xff);
+  payload.push_back((s >> 8) & 0xff);
+}
+
+void Packet::append(const uint32_t i)
+{
+  // little-endian. I'm sure there is a faster way someday, but it's nice
+  // to be explicit also
+  payload.push_back(i & 0xff);
+  payload.push_back((i >> 8) & 0xff);
+  payload.push_back((i >> 16) & 0xff);
+  payload.push_back((i >> 24) & 0xff);
+}

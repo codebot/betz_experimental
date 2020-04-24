@@ -15,21 +15,30 @@
  *
 */
 
-#include "rng.h"
+#include "systime.h"
 #include <stdlib.h>
 #include <time.h>
 
-void rng_init()
+static struct timespec g_systime_t_start;
+
+void systime_init()
 {
-  srandom(time(NULL));
+  clock_gettime(CLOCK_REALTIME, &g_systime_t_start);
 }
 
-uint32_t rng_read()
+uint32_t systime_read()
 {
-  // make sure we get a full 32-bit random, to be like the STM32 RNG
-  // otherwise we might just get a 15-bit random number and be sad.
-  uint32_t rands[4] = {0};
-  for (int i = 0; i < 4; i++)
-    rands[i] = random() & 0xff;
-  return rands[0] | (rands[1] << 8) | (rands[2] << 16) | (rands[3] << 24);
+  struct timespec t;
+  clock_gettime(CLOCK_REALTIME, &t);
+
+  int32_t nsec_diff = t.tv_nsec - g_systime_t_start.tv_nsec;
+  int32_t sec_diff = t.tv_sec - g_systime_t_start.tv_sec;
+
+  if (nsec_diff < 0)
+  {
+    nsec_diff += 1000000000;
+    sec_diff -= 1;
+  }
+
+  return (nsec_diff / 1000) + sec_diff * 1000000;
 }

@@ -1,13 +1,16 @@
 #include <unistd.h>
 #include <stdbool.h>
+
 #include "comms.h"
-#include "uuid.h"
-#include "param.h"
 #include "control.h"
 #include "multicast.h"
+#include "param.h"
+#include "rng.h"
+#include "uuid.h"
 
 int main(int argc, char **argv)
 {
+  rng_init();
   multicast_init();
   uuid_init();
   param_init();
@@ -17,6 +20,7 @@ int main(int argc, char **argv)
   while (true)
   {
     multicast_listen(0);
+    comms_tick();
     usleep(10000);
   }
   return 0;

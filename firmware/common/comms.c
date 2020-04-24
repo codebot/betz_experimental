@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2020 Open Source Robotics Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+*/
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -5,7 +22,9 @@
 #include "comms.h"
 #include "flash.h"
 #include "param.h"
+#include "rng.h"
 #include "rs485.h"
+#include "systime.h"
 #include "uuid.h"
 
 // wire formats:
@@ -40,6 +59,7 @@ typedef enum
   PS_CSUM_1
 } comms_parser_state_t;
 
+// local variables
 static comms_parser_state_t g_comms_parser_state = PS_PREAMBLE;
 static uint32_t g_comms_parser_expected_length = 0;
 static uint32_t g_comms_parser_wpos = 0;
@@ -55,6 +75,8 @@ static bool g_comms_parser_ignore_pkt = false;
 static uint8_t g_comms_parser_addr[COMMS_LONG_ADDR_LEN] = {0};
 static uint8_t g_comms_id = 0;
 
+static uint32_t g_comms_discovery_send_time = 0;
+
 // local functions
 static void comms_rx_pkt(const uint8_t *p, const uint32_t len);
 static void comms_tx(const uint8_t *p, const uint32_t len);
@@ -65,6 +87,21 @@ static void comms_tx_long_addr(const uint8_t *p, const uint32_t len);
 void comms_init()
 {
   g_comms_parser_state = PS_PREAMBLE;
+}
+
+void comms_tick()
+{
+  if (g_comms_discovery_send_time)
+  {
+    const uint32_t t = systime_read();
+    if (t >= g_comms_discovery_send_time)
+    {
+      g_comms_discovery_send_time = 0;
+      uint8_t pkt[1] = {0};
+      pkt[0] = 0xf0;
+      comms_tx_long_addr(pkt, 1);
+    }
+  }
 }
 
 void comms_set_raw_tx_fptr(void (*fptr)(const uint8_t *, const uint32_t))
@@ -230,12 +267,18 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
   comms_tx(pkt, 9 + read_len);
 }
 
-void comms_discovery()
+void comms_discovery(const uint8_t* p, const uint32_t len)
 {
   printf("comms_discovery()\n");
-  uint8_t pkt[1] = {0};
-  pkt[0] = 0xf0;
-  comms_tx_long_addr(pkt, 1);
+  if (len >= 3)
+  {
+    const uint16_t req_max_delay = (uint16_t)(p[1]) | (p[2] << 8);
+    uint32_t sampled_delay = rng_read() % (uint32_t)req_max_delay;
+    g_comms_discovery_send_time = systime_read() + sampled_delay;
+    printf("discovery response in %u usec\n", (unsigned)sampled_delay);
+    // for now, ignore the corner cases where this equals zero or wraparound
+    // we'll query multiple times on the host to enumerate anyway.
+  }
 }
 
 void comms_num_params()
@@ -248,7 +291,7 @@ void comms_num_params()
   comms_tx_long_addr(pkt, 5);
 }
 
-void comms_rx_pkt(const uint8_t *p, const uint32_t len)
+void comms_rx_pkt(const uint8_t* p, const uint32_t len)
 {
   // printf("comms_rx_pkt() received %d bytes\r\n", (int)len);
   if (len == 0)
@@ -258,7 +301,7 @@ void comms_rx_pkt(const uint8_t *p, const uint32_t len)
   const uint8_t pkt_id = p[0];
   switch (pkt_id)
   {
-    case 0xf0: comms_discovery(); break;
+    case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_num_params(); break;
     default: break;
   }

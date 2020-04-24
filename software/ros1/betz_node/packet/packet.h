@@ -63,6 +63,10 @@ public:
   uint8_t packet_id() const;
 
   int serialize(uint8_t *buffer, size_t buffer_len) const;
+
+  void append(const uint8_t b);
+  void append(const uint16_t s);
+  void append(const uint32_t i);
 };
 
 }  // namespace betz

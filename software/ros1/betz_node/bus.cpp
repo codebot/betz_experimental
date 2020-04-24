@@ -284,6 +284,7 @@ void Bus::discovery_begin()
   discovery_time = ros::Time::now();
   discovery_complete = false;
   discovery_broadcast_count = 0;
+  // default is a random response time between 0 and 500 milliseconds
   send_packet(std::make_unique<Discovery>());
 }
 
