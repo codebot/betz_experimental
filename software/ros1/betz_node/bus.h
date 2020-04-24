@@ -90,6 +90,7 @@ public:
   {
     UUID,
     NUM_PARAMS,
+    RETRIEVE_IDS,
     PARAM_VALUES
   };
   DiscoveryState discovery_state = DiscoveryState::UUID;

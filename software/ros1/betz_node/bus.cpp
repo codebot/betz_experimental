@@ -317,15 +317,34 @@ void Bus::discovery_tick()
       break;
 
     case DiscoveryState::NUM_PARAMS:
+    {
+      bool all_done = true;
       for (auto& drive : drives)
       {
         if (drive->num_params == 0)
         {
+          all_done = false;
           send_packet(std::make_unique<NumParams>(*drive));
           return;
         }
       }
+      if (all_done)
+      {
+        discovery_state = DiscoveryState::RETRIEVE_IDS;
+        break;
+      }
       break;
+    }
+
+    case DiscoveryState::RETRIEVE_IDS:
+    {
+      bool all_done = true;
+      for (auto& drive : drives)
+      {
+        // todo: request ID parameter (the single-byte ID for this board)
+      }
+      break;
+    }
 
     default:
       printf("unhandled discovery state\n");
