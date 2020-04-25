@@ -1,0 +1,412 @@
+EESchema Schematic File Version 5
+EELAYER 34 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "Betz Mini"
+Date "2020-04-25"
+Rev "A"
+Comp "Open Robotics"
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+Comment5 ""
+Comment6 ""
+Comment7 ""
+Comment8 ""
+Comment9 ""
+$EndDescr
+Connection ~ 8600 4450
+Connection ~ 8600 4650
+Connection ~ 8300 4650
+Connection ~ 8000 4250
+Connection ~ 8300 3950
+Connection ~ 8300 4350
+Connection ~ 9750 2850
+Connection ~ 9750 2950
+Connection ~ 9600 4050
+Connection ~ 9600 4250
+Connection ~ 9600 4450
+Connection ~ 9600 4650
+Connection ~ 10100 2850
+Connection ~ 10450 2850
+Connection ~ 10450 3050
+Connection ~ 10100 3050
+Wire Wire Line
+	3050 3400 3400 3400
+Wire Wire Line
+	8000 3950 8300 3950
+Wire Wire Line
+	8000 4150 8000 4250
+Wire Wire Line
+	8000 4250 8000 4450
+Wire Wire Line
+	8000 4650 8300 4650
+Wire Wire Line
+	8300 3950 8600 3950
+Wire Wire Line
+	8300 4150 8300 4350
+Wire Wire Line
+	8300 4350 8300 4450
+Wire Wire Line
+	8300 4650 8600 4650
+Wire Wire Line
+	8350 2850 8850 2850
+Wire Wire Line
+	8600 2950 8850 2950
+Wire Wire Line
+	8600 3050 8850 3050
+Wire Wire Line
+	8600 3150 8850 3150
+Wire Wire Line
+	8600 3250 8850 3250
+Wire Wire Line
+	8600 3350 8850 3350
+Wire Wire Line
+	8600 3450 8850 3450
+Wire Wire Line
+	8600 3550 8850 3550
+Wire Wire Line
+	8600 4150 8600 4450
+Wire Wire Line
+	8600 4450 8850 4450
+Wire Wire Line
+	8600 4650 8850 4650
+Wire Wire Line
+	8850 4250 8000 4250
+Wire Wire Line
+	8850 4350 8300 4350
+Wire Wire Line
+	9600 2950 9750 2950
+Wire Wire Line
+	9600 3150 9750 3150
+Wire Wire Line
+	9600 3250 9750 3250
+Wire Wire Line
+	9600 3450 9750 3450
+Wire Wire Line
+	9600 3550 9750 3550
+Wire Wire Line
+	9600 3950 9600 4050
+Wire Wire Line
+	9600 4050 9800 4050
+Wire Wire Line
+	9600 4150 9600 4250
+Wire Wire Line
+	9600 4250 9800 4250
+Wire Wire Line
+	9600 4350 9600 4450
+Wire Wire Line
+	9600 4450 9800 4450
+Wire Wire Line
+	9600 4550 9600 4650
+Wire Wire Line
+	9600 4650 9800 4650
+Wire Wire Line
+	9750 2850 9600 2850
+Wire Wire Line
+	9750 2850 10100 2850
+Wire Wire Line
+	9750 2950 9750 2850
+Wire Wire Line
+	10100 2850 10450 2850
+Wire Wire Line
+	10100 3050 10450 3050
+Wire Wire Line
+	10450 2850 10800 2850
+Wire Wire Line
+	10450 3050 10800 3050
+Text Notes 7400 5850 2    50   ~ 0
+rs485 on top "connector" board to eliminate stubs
+Text Notes 9600 2500 0    50   ~ 0
+todo: bulk cap on connector board
+Text Notes 10100 3450 0    50   ~ 0
+datasheet: 100n\neval board: 470n
+Text Label 3350 3400 2    50   ~ 0
+VREF
+Text Label 8000 3950 0    50   ~ 0
+VREF
+Text Label 8600 2850 0    50   ~ 0
+FAULT
+Text Label 8600 2950 0    50   ~ 0
+SLEEP
+Text Label 8600 3050 0    50   ~ 0
+ENA
+Text Label 8600 3150 0    50   ~ 0
+ENB
+Text Label 8600 3250 0    50   ~ 0
+ENC
+Text Label 8600 3350 0    50   ~ 0
+PWMA
+Text Label 8600 3450 0    50   ~ 0
+PWMB
+Text Label 8600 3550 0    50   ~ 0
+PWMC
+Text Label 8750 4250 2    50   ~ 0
+IA
+Text Label 8750 4350 2    50   ~ 0
+IB
+Text Label 8750 4450 2    50   ~ 0
+IC
+Text Label 9650 4050 0    50   ~ 0
+SA
+Text Label 9650 4250 0    50   ~ 0
+SB
+Text Label 9650 4450 0    50   ~ 0
+SC
+$Comp
+L power:+3V3 #PWR0101
+U 1 1 5EAD83FC
+P 8350 2650
+F 0 "#PWR0101" H 8350 2500 50  0001 C CNN
+F 1 "+3V3" H 8365 2820 50  0000 C CNN
+F 2 "" H 8350 2650 50  0001 C CNN
+F 3 "" H 8350 2650 50  0001 C CNN
+	1    8350 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:VBUS #PWR0105
+U 1 1 5EAE342B
+P 9750 2850
+F 0 "#PWR0105" H 9750 2700 50  0001 C CNN
+F 1 "VBUS" H 9765 3020 50  0000 C CNN
+F 2 "" H 9750 2850 50  0001 C CNN
+F 3 "" H 9750 2850 50  0001 C CNN
+	1    9750 2850
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0103
+U 1 1 5EAD5659
+P 8600 4650
+F 0 "#PWR0103" H 8600 4400 50  0001 C CNN
+F 1 "GND" H 8604 4480 50  0001 C CNN
+F 2 "" H 8600 4650 50  0001 C CNN
+F 3 "" H 8600 4650 50  0001 C CNN
+	1    8600 4650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0104
+U 1 1 5EAE5680
+P 9750 3750
+F 0 "#PWR0104" H 9750 3500 50  0001 C CNN
+F 1 "GND" H 9754 3580 50  0001 C CNN
+F 2 "" H 9750 3750 50  0001 C CNN
+F 3 "" H 9750 3750 50  0001 C CNN
+	1    9750 3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0106
+U 1 1 5EAE888E
+P 9800 4650
+F 0 "#PWR0106" H 9800 4400 50  0001 C CNN
+F 1 "GND" H 9804 4480 50  0001 C CNN
+F 2 "" H 9800 4650 50  0001 C CNN
+F 3 "" H 9800 4650 50  0001 C CNN
+	1    9800 4650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0102
+U 1 1 5EAED9CE
+P 10100 3050
+F 0 "#PWR0102" H 10100 2800 50  0001 C CNN
+F 1 "GND" H 10104 2880 50  0001 C CNN
+F 2 "" H 10100 3050 50  0001 C CNN
+F 3 "" H 10100 3050 50  0001 C CNN
+	1    10100 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R1
+U 1 1 5EAD0E56
+P 8000 4050
+F 0 "R1" H 8059 4095 50  0000 L CNN
+F 1 "4k7" H 8059 4005 50  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 8000 4050 50  0001 C CNN
+F 3 "~" H 8000 4050 50  0001 C CNN
+	1    8000 4050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R2
+U 1 1 5EAD19B7
+P 8000 4550
+F 0 "R2" H 8059 4595 50  0000 L CNN
+F 1 "4k7" H 8059 4505 50  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 8000 4550 50  0001 C CNN
+F 3 "~" H 8000 4550 50  0001 C CNN
+	1    8000 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R3
+U 1 1 5EAD038B
+P 8300 4050
+F 0 "R3" H 8359 4095 50  0000 L CNN
+F 1 "4k7" H 8359 4005 50  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 8300 4050 50  0001 C CNN
+F 3 "~" H 8300 4050 50  0001 C CNN
+	1    8300 4050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R4
+U 1 1 5EACFB6D
+P 8300 4550
+F 0 "R4" H 8359 4595 50  0000 L CNN
+F 1 "4k7" H 8359 4505 50  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 8300 4550 50  0001 C CNN
+F 3 "~" H 8300 4550 50  0001 C CNN
+	1    8300 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R5
+U 1 1 5EAD6160
+P 8350 2750
+F 0 "R5" H 8409 2795 50  0000 L CNN
+F 1 "4k7" H 8409 2705 50  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 8350 2750 50  0001 C CNN
+F 3 "~" H 8350 2750 50  0001 C CNN
+	1    8350 2750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R6
+U 1 1 5EACBDF1
+P 8600 4050
+F 0 "R6" H 8659 4095 50  0000 L CNN
+F 1 "4k7" H 8659 4005 50  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 8600 4050 50  0001 C CNN
+F 3 "~" H 8600 4050 50  0001 C CNN
+	1    8600 4050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small R7
+U 1 1 5EACC212
+P 8600 4550
+F 0 "R7" H 8659 4595 50  0000 L CNN
+F 1 "4k7" H 8659 4505 50  0000 L CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 8600 4550 50  0001 C CNN
+F 3 "~" H 8600 4550 50  0001 C CNN
+	1    8600 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C1
+U 1 1 5EAE675C
+P 9750 3050
+F 0 "C1" H 9842 3095 50  0000 L CNN
+F 1 "1u" H 9841 3005 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 9750 3050 50  0001 C CNN
+F 3 "~" H 9750 3050 50  0001 C CNN
+	1    9750 3050
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C2
+U 1 1 5EAE156A
+P 9750 3350
+F 0 "C2" H 9842 3395 50  0000 L CNN
+F 1 "100n" H 9841 3305 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 9750 3350 50  0001 C CNN
+F 3 "~" H 9750 3350 50  0001 C CNN
+	1    9750 3350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C3
+U 1 1 5EAE1DE1
+P 9750 3650
+F 0 "C3" H 9842 3695 50  0000 L CNN
+F 1 "4u7" H 9841 3605 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric" H 9750 3650 50  0001 C CNN
+F 3 "~" H 9750 3650 50  0001 C CNN
+	1    9750 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C4
+U 1 1 5EAEBC9B
+P 10100 2950
+F 0 "C4" H 10192 2995 50  0000 L CNN
+F 1 "10u" H 10191 2905 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1210_3225Metric" H 10100 2950 50  0001 C CNN
+F 3 "~" H 10100 2950 50  0001 C CNN
+	1    10100 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C5
+U 1 1 5EAEC182
+P 10450 2950
+F 0 "C5" H 10542 2995 50  0000 L CNN
+F 1 "10u" H 10541 2905 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1210_3225Metric" H 10450 2950 50  0001 C CNN
+F 3 "~" H 10450 2950 50  0001 C CNN
+	1    10450 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C6
+U 1 1 5EAECE7D
+P 10800 2950
+F 0 "C6" H 10892 2995 50  0000 L CNN
+F 1 "10u" H 10891 2905 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1210_3225Metric" H 10800 2950 50  0001 C CNN
+F 3 "~" H 10800 2950 50  0001 C CNN
+	1    10800 2950
+	1    0    0    -1  
+$EndComp
+$Comp
+L encoders:AS5047D U2
+U 1 1 5EAC600D
+P 6250 2800
+F 0 "U2" H 6275 3385 60  0000 C CNN
+F 1 "AS5047U" H 6275 3278 60  0000 C CNN
+F 2 "Package_SO:TSSOP-14_4.4x5mm_P0.65mm" H 7000 2100 60  0001 C CNN
+F 3 "" H 7000 2100 60  0001 C CNN
+	1    6250 2800
+	1    0    0    -1  
+$EndComp
+$Comp
+L mps_bldc_drivers:MP6540 U4
+U 1 1 5EACB5CF
+P 9250 3750
+F 0 "U4" H 9225 4914 50  0000 C CNN
+F 1 "MP6540" H 9225 4823 50  0000 C CNN
+F 2 "MPS:MP6540" H 9150 4500 50  0001 C CNN
+F 3 "" H 9150 4500 50  0001 C CNN
+	1    9250 3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L BLDC:IIS328DQ U3
+U 1 1 5EAC8C50
+P 6350 4550
+F 0 "U3" H 6375 5511 50  0000 C CNN
+F 1 "IIS328DQ" H 6375 5420 50  0000 C CNN
+F 2 "Package_DFN_QFN:QFN-24-1EP_4x4mm_P0.5mm_EP2.6x2.6mm" H 6350 4550 50  0001 C CNN
+F 3 "" H 6350 4550 50  0001 C CNN
+	1    6350 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L stm32g474ceu6:stm32g474ceu6 U1
+U 1 1 5EAC4FEA
+P 3950 4100
+F 0 "U1" H 3925 5964 50  0000 C CNN
+F 1 "stm32g474ceu6" H 3925 5873 50  0000 C CNN
+F 2 "Package_DFN_QFN:QFN-48-1EP_7x7mm_P0.5mm_EP5.6x5.6mm" H 3250 4300 50  0001 C CNN
+F 3 "" H 3250 4300 50  0001 C CNN
+	1    3950 4100
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC

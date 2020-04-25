@@ -1,0 +1,6 @@
+(sym_lib_table
+  (lib (name "stm32g474ceu6")(type "Legacy")(uri "/home/mquigley/hw/osrf_hw/kicad_libraries/stm32g474ceu6.lib")(options "")(descr ""))
+  (lib (name "encoders")(type "Legacy")(uri "/home/mquigley/hw/osrf_hw/kicad_libraries/encoders.lib")(options "")(descr ""))
+  (lib (name "BLDC")(type "Legacy")(uri "/home/mquigley/hw/bldc-controller-hardware/library/BLDC.lib")(options "")(descr ""))
+  (lib (name "mps_bldc_drivers")(type "Legacy")(uri "/home/mquigley/hw/osrf_hw/kicad_libraries/mps_bldc_drivers.lib")(options "")(descr ""))
+)
