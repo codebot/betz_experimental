@@ -1,4 +1,4 @@
-update=Sat Apr 25 19:23:00 2020
+update=Sun Apr 26 00:07:35 2020
 last_client=kicad
 [general]
 version=1
@@ -6,8 +6,33 @@ version=1
 version=1
 [LibeditFrame]
 version=1
+[schematic_editor]
+version=1
+PageLayoutDescrFile=
+PlotDirectoryName=
+NetFmtName=
+SpiceAjustPassiveValues=0
+SubpartIdSeparator=0
+SubpartFirstId=65
+LabSize=50
+TextOffsetRatio=0.3
+LineThickness=6
+BusThickness=12
+WireThickness=6
+JunctionSize=40
+FieldNameTemplates=(templatefields)
+ERC_TestSimilarLabels=1
+ERC_CheckUniqueGlobalLabels=1
+ERC_CheckBusDriverConflicts=1
+ERC_CheckBusEntryConflicts=1
+ERC_CheckBusToBusConflicts=1
+ERC_CheckBusToNetConflicts=1
+[PcbFrame]
+version=1
 [SchematicFrame]
 version=1
+[sheetnames]
+1=00000000-0000-0000-0000-00005ea449f1:
 [pcbnew]
 version=1
 PageLayoutDescrFile=
@@ -17,7 +42,7 @@ LastIDFExportPath=
 LastVRMLExportPath=
 LastSpecctraDSNExportPath=
 LastGenCADExportPath=
-CopperLayerCount=2
+CopperLayerCount=4
 BoardThickness=1.6
 AllowMicroVias=0
 AllowBlindVias=0
@@ -37,8 +62,8 @@ dPairWidth1=0.2
 dPairGap1=0.25
 dPairViaGap1=0.25
 SilkLineWidth=0.12
-SilkTextSizeV=1
-SilkTextSizeH=1
+SilkTextSizeV=0.7999999999999999
+SilkTextSizeH=0.7999999999999999
 SilkTextSizeThickness=0.15
 SilkTextItalic=0
 SilkTextUpright=0
@@ -51,8 +76,8 @@ CopperTextUpright=0
 EdgeCutLineWidth=0.05
 CourtyardLineWidth=0.05
 OthersLineWidth=0.09999999999999999
-OthersTextSizeV=1
-OthersTextSizeH=1
+OthersTextSizeV=0.7999999999999999
+OthersTextSizeH=0.7999999999999999
 OthersTextSizeThickness=0.15
 OthersTextItalic=0
 OthersTextUpright=0
@@ -61,7 +86,7 @@ DimensionPrecision=1
 SolderMaskClearance=0.05
 SolderMaskMinWidth=0
 SolderPasteClearance=0
-SolderPasteRatio=0
+SolderPasteRatio=-0
 [pcbnew/Layer.F.Cu]
 Name=F.Cu
 Type=0
@@ -69,11 +94,11 @@ Enabled=1
 [pcbnew/Layer.In1.Cu]
 Name=In1.Cu
 Type=0
-Enabled=0
+Enabled=1
 [pcbnew/Layer.In2.Cu]
 Name=In2.Cu
 Type=0
-Enabled=0
+Enabled=1
 [pcbnew/Layer.In3.Cu]
 Name=In3.Cu
 Type=0
@@ -227,7 +252,7 @@ Enabled=1
 [pcbnew/Layer.F.Fab]
 Enabled=1
 [pcbnew/Layer.Rescue]
-Enabled=1
+Enabled=0
 [pcbnew/Netclasses]
 [pcbnew/Netclasses/Default]
 Name=Default
@@ -240,5 +265,3 @@ uViaDrill=0.1
 dPairWidth=0.2
 dPairGap=0.25
 dPairViaGap=0.25
-[sheetnames]
-1=00000000-0000-0000-0000-00005eac4ef8:
