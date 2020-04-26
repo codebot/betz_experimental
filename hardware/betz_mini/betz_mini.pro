@@ -1,8 +1,6 @@
-update=Sun Apr 26 17:00:20 2020
+update=Mon Apr 27 00:13:17 2020
 last_client=kicad
 [general]
-version=1
-[ModEditFrame]
 version=1
 [LibeditFrame]
 version=1
@@ -27,17 +25,19 @@ ERC_CheckBusDriverConflicts=1
 ERC_CheckBusEntryConflicts=1
 ERC_CheckBusToBusConflicts=1
 ERC_CheckBusToNetConflicts=1
-[SchematicFrame]
-version=1
 [PcbFrame]
 version=1
+[SchematicFrame]
+version=1
+[ModEditFrame]
+version=1
 [sheetnames]
-1=00000000-0000-0000-0000-00005ea547d0:
+1=00000000-0000-0000-0000-00005ea56555:
 [pcbnew]
 version=1
 PageLayoutDescrFile=
 LastNetListRead=
-LastSTEPExportPath=
+LastSTEPExportPath=betz_mini.step
 LastIDFExportPath=
 LastVRMLExportPath=
 LastSpecctraDSNExportPath=
