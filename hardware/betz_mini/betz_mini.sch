@@ -172,10 +172,8 @@ Wire Wire Line
 	10100 2850 10450 2850
 Wire Wire Line
 	10100 3050 10450 3050
-Text Notes 6250 6200 2    50   ~ 0
-todo: status LED\ntodo: debug UART
-Text Notes 7400 5850 2    50   ~ 0
-rs485 on top "connector" board to eliminate stubs
+Text Notes 5750 6450 0    50   ~ 0
+todo items:\n* status LED\n* debug UART\n* rs485 transceiver\n* 24v -> 3v3 supply
 Text Notes 9600 2500 0    50   ~ 0
 todo: bulk caps \non connector board
 Text Notes 10100 3450 0    50   ~ 0

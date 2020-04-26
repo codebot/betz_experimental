@@ -1,4 +1,4 @@
-update=Sun Apr 26 00:07:35 2020
+update=Sun Apr 26 17:00:20 2020
 last_client=kicad
 [general]
 version=1
@@ -27,12 +27,12 @@ ERC_CheckBusDriverConflicts=1
 ERC_CheckBusEntryConflicts=1
 ERC_CheckBusToBusConflicts=1
 ERC_CheckBusToNetConflicts=1
-[PcbFrame]
-version=1
 [SchematicFrame]
 version=1
+[PcbFrame]
+version=1
 [sheetnames]
-1=00000000-0000-0000-0000-00005ea449f1:
+1=00000000-0000-0000-0000-00005ea547d0:
 [pcbnew]
 version=1
 PageLayoutDescrFile=
@@ -86,7 +86,7 @@ DimensionPrecision=1
 SolderMaskClearance=0.05
 SolderMaskMinWidth=0
 SolderPasteClearance=0
-SolderPasteRatio=-0
+SolderPasteRatio=0
 [pcbnew/Layer.F.Cu]
 Name=F.Cu
 Type=0
