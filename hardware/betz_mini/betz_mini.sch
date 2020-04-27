@@ -47,9 +47,26 @@ Connection ~ 10450 3050
 Connection ~ 8500 1400
 Connection ~ 9250 2100
 Connection ~ 9850 1400
+Connection ~ 1200 3400
 NoConn ~ 9750 1800
 Wire Wire Line
+	800  3200 1200 3200
+Wire Wire Line
+	800  3400 1200 3400
+Wire Wire Line
+	800  3600 1200 3600
+Wire Wire Line
+	1200 3300 1200 3400
+Wire Wire Line
 	1400 7400 1500 7400
+Wire Wire Line
+	1650 5200 2050 5200
+Wire Wire Line
+	1650 5300 2050 5300
+Wire Wire Line
+	2000 3100 2350 3100
+Wire Wire Line
+	2000 3300 2350 3300
 Wire Wire Line
 	2000 6300 2000 6500
 Wire Wire Line
@@ -91,15 +108,13 @@ Wire Wire Line
 Wire Wire Line
 	3400 2700 3400 2800
 Wire Wire Line
-	3900 6600 4100 6600
-Wire Wire Line
-	3900 6700 4100 6700
-Wire Wire Line
-	3900 6800 4100 6800
-Wire Wire Line
 	4450 3800 4800 3800
 Wire Wire Line
 	4450 3900 4800 3900
+Wire Wire Line
+	4750 6900 5100 6900
+Wire Wire Line
+	4750 7400 5100 7400
 Wire Wire Line
 	5000 6800 5100 6800
 Wire Wire Line
@@ -107,7 +122,11 @@ Wire Wire Line
 Wire Wire Line
 	5600 6700 5600 6800
 Wire Wire Line
+	5600 6900 5950 6900
+Wire Wire Line
 	5600 7200 5600 7300
+Wire Wire Line
+	5600 7400 5950 7400
 Wire Wire Line
 	5750 6700 5600 6700
 Wire Wire Line
@@ -175,9 +194,13 @@ Wire Wire Line
 Wire Wire Line
 	8850 4350 8300 4350
 Wire Wire Line
+	8850 5300 9350 5300
+Wire Wire Line
 	9250 2100 9250 2000
 Wire Wire Line
 	9250 2100 10050 2100
+Wire Wire Line
+	9550 5300 9750 5300
 Wire Wire Line
 	9600 2950 9750 2950
 Wire Wire Line
@@ -191,15 +214,15 @@ Wire Wire Line
 Wire Wire Line
 	9600 3950 9600 4050
 Wire Wire Line
-	9600 4050 9800 4050
+	9600 4050 9900 4050
 Wire Wire Line
 	9600 4150 9600 4250
 Wire Wire Line
-	9600 4250 9800 4250
+	9600 4250 9900 4250
 Wire Wire Line
 	9600 4350 9600 4450
 Wire Wire Line
-	9600 4450 9800 4450
+	9600 4450 9900 4450
 Wire Wire Line
 	9600 4550 9600 4650
 Wire Wire Line
@@ -219,6 +242,12 @@ Wire Wire Line
 Wire Wire Line
 	9850 1600 9850 1400
 Wire Wire Line
+	9900 4050 9900 4150
+Wire Wire Line
+	9900 4450 9900 4350
+Wire Wire Line
+	9950 5300 10150 5300
+Wire Wire Line
 	10050 1400 10050 1500
 Wire Wire Line
 	10050 2100 10050 1700
@@ -230,14 +259,26 @@ Wire Wire Line
 	10450 2850 10800 2850
 Wire Wire Line
 	10450 3050 10800 3050
-Text Notes 4350 7000 2    50   ~ 0
-housing: Molex 1053071203
-Text Notes 5750 6450 0    50   ~ 0
-todo items:\n* status LED\n* debug UART\n* rs485 transceiver
+Text Notes 750  1700 0    118  ~ 24
+todo items:\n* debug UART\n* decoupling caps\n* VDDA ferrite\n* external encoder header
 Text Notes 5900 7550 2    50   ~ 0
 housing: Molex 1053081204
 Text Notes 10100 3450 0    50   ~ 0
 datasheet: 100n\neval board: 470n
+Text Notes 11000 4550 2    50   ~ 0
+housing: Molex 1053071203
+Text Label 800  3200 0    50   ~ 0
+RS485_RO
+Text Label 800  3400 0    50   ~ 0
+RS485_DE
+Text Label 800  3600 0    50   ~ 0
+RS485_DI
+Text Label 1650 5200 0    50   ~ 0
+DEBUG_TX
+Text Label 2000 3100 0    50   ~ 0
+RS485_A
+Text Label 2000 3300 0    50   ~ 0
+RS485_B
 Text Label 2000 6300 0    50   ~ 0
 NRST
 Text Label 2050 6700 0    50   ~ 0
@@ -248,16 +289,48 @@ Text Label 3350 3200 2    50   ~ 0
 NRST
 Text Label 3350 3400 2    50   ~ 0
 VREF
-Text Label 4000 6600 2    50   ~ 0
-SC
-Text Label 4000 6700 2    50   ~ 0
-SB
-Text Label 4000 6800 2    50   ~ 0
-SA
 Text Label 4550 3800 0    50   ~ 0
 SWDIO
 Text Label 4550 3900 0    50   ~ 0
 SWCLK
+Text Label 4950 2750 0    50   ~ 0
+RS485_RO
+Text Label 4950 2850 0    50   ~ 0
+RS485_DE
+Text Label 4950 2950 0    50   ~ 0
+RS485_DI
+Text Label 4950 3050 0    50   ~ 0
+FAULT
+Text Label 4950 3150 0    50   ~ 0
+SLEEP
+Text Label 4950 3250 0    50   ~ 0
+ENA
+Text Label 4950 3350 0    50   ~ 0
+ENB
+Text Label 4950 3450 0    50   ~ 0
+ENC
+Text Label 4950 3550 0    50   ~ 0
+PWMA
+Text Label 4950 3650 0    50   ~ 0
+PWMB
+Text Label 4950 3750 0    50   ~ 0
+PWMC
+Text Label 4950 3850 0    50   ~ 0
+IA
+Text Label 4950 3950 0    50   ~ 0
+IB
+Text Label 4950 4050 0    50   ~ 0
+IC
+Text Label 4950 4150 0    50   ~ 0
+STATUS_LED
+Text Label 5100 6900 2    50   ~ 0
+RS485_B
+Text Label 5100 7400 2    50   ~ 0
+RS485_B
+Text Label 5600 6900 0    50   ~ 0
+RS485_A
+Text Label 5600 7400 0    50   ~ 0
+RS485_A
 Text Label 8000 3950 0    50   ~ 0
 VREF
 Text Label 8600 2850 0    50   ~ 0
@@ -282,6 +355,8 @@ Text Label 8750 4350 2    50   ~ 0
 IB
 Text Label 8750 4450 2    50   ~ 0
 IC
+Text Label 8850 5300 0    50   ~ 0
+STATUS_LED
 Text Label 9600 3150 0    50   ~ 0
 VCP
 Text Label 9600 3250 0    50   ~ 0
@@ -305,6 +380,17 @@ F 1 "+3V3" H 1515 6370 50  0000 C CNN
 F 2 "" H 1500 6200 50  0001 C CNN
 F 3 "" H 1500 6200 50  0001 C CNN
 	1    1500 6200
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3V3 #PWR0120
+U 1 1 5EAF54C7
+P 1600 2800
+F 0 "#PWR0120" H 1600 2650 50  0001 C CNN
+F 1 "+3V3" H 1615 2970 50  0000 C CNN
+F 2 "" H 1600 2800 50  0001 C CNN
+F 3 "" H 1600 2800 50  0001 C CNN
+	1    1600 2800
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -374,6 +460,17 @@ F 3 "" H 9850 1400 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
+L power:+3V3 #PWR0122
+U 1 1 5EB16503
+P 10150 5300
+F 0 "#PWR0122" H 10150 5150 50  0001 C CNN
+F 1 "+3V3" H 10165 5470 50  0000 C CNN
+F 2 "" H 10150 5300 50  0001 C CNN
+F 3 "" H 10150 5300 50  0001 C CNN
+	1    10150 5300
+	1    0    0    -1  
+$EndComp
+$Comp
 L power:GND #PWR0111
 U 1 1 5EAF0B8F
 P 1500 7400
@@ -382,6 +479,28 @@ F 1 "GND" H 1504 7230 50  0001 C CNN
 F 2 "" H 1500 7400 50  0001 C CNN
 F 3 "" H 1500 7400 50  0001 C CNN
 	1    1500 7400
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0121
+U 1 1 5EAF4567
+P 1600 4000
+F 0 "#PWR0121" H 1600 3750 50  0001 C CNN
+F 1 "GND" H 1604 3830 50  0001 C CNN
+F 2 "" H 1600 4000 50  0001 C CNN
+F 3 "" H 1600 4000 50  0001 C CNN
+	1    1600 4000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0123
+U 1 1 5EB1CEC4
+P 2050 5300
+F 0 "#PWR0123" H 2050 5050 50  0001 C CNN
+F 1 "GND" H 2054 5130 50  0001 C CNN
+F 2 "" H 2050 5300 50  0001 C CNN
+F 3 "" H 2050 5300 50  0001 C CNN
+	1    2050 5300
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -572,6 +691,28 @@ F 3 "~" H 8600 4550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
+L Device:R_Small R5
+U 1 1 5EB14AB3
+P 9850 5300
+F 0 "R5" V 10045 5300 50  0000 C CNN
+F 1 "330" V 9954 5300 50  0000 C CNN
+F 2 "Resistor_SMD:R_0402_1005Metric" H 9850 5300 50  0001 C CNN
+F 3 "~" H 9850 5300 50  0001 C CNN
+	1    9850 5300
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:LED_Small D1
+U 1 1 5EB1327C
+P 9450 5300
+F 0 "D1" H 9450 5531 50  0000 C CNN
+F 1 "status" H 9450 5440 50  0000 C CNN
+F 2 "LED_SMD:LED_0402_1005Metric" V 9450 5300 50  0001 C CNN
+F 3 "~" V 9450 5300 50  0001 C CNN
+	1    9450 5300
+	1    0    0    -1  
+$EndComp
+$Comp
 L Device:Crystal_Small X1
 U 1 1 5EAE22CC
 P 2950 4000
@@ -748,18 +889,29 @@ F 3 "~" H 8900 5800 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
+L Connector_Generic:Conn_01x02 J5
+U 1 1 5EB1C37A
+P 1450 5200
+F 0 "J5" H 1370 5416 50  0000 C CNN
+F 1 "debug" H 1370 5325 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 1450 5200 50  0001 C CNN
+F 3 "~" H 1450 5200 50  0001 C CNN
+	1    1450 5200
+	-1   0    0    -1  
+$EndComp
+$Comp
 L Connector_Generic:Conn_01x03 J4
 U 1 1 5EAE8372
-P 3700 6700
-F 0 "J4" H 3620 7016 50  0000 C CNN
-F 1 "BLDC" H 3620 6925 50  0000 C CNN
-F 2 "Connector_Molex:Molex_Nano-Fit_105313-xx03_1x03_P2.50mm_Horizontal" H 3700 6700 50  0001 C CNN
-F 3 "~" H 3700 6700 50  0001 C CNN
-F 4 "1053131203" H 3700 6700 50  0001 C CNN "MPN"
-F 5 "Molex" H 3700 6700 50  0001 C CNN "MFN"
-F 6 "WM14973-ND" H 3700 6700 50  0001 C CNN "DPN"
-	1    3700 6700
-	-1   0    0    -1  
+P 10100 4250
+F 0 "J4" H 10100 3950 50  0000 C CNN
+F 1 "BLDC" H 10100 4050 50  0000 C CNN
+F 2 "Connector_Molex:Molex_Nano-Fit_105313-xx03_1x03_P2.50mm_Horizontal" H 10100 4250 50  0001 C CNN
+F 3 "~" H 10100 4250 50  0001 C CNN
+F 4 "1053131203" H 10100 4250 50  0001 C CNN "MPN"
+F 5 "Molex" H 10100 4250 50  0001 C CNN "MFN"
+F 6 "WM14973-ND" H 10100 4250 50  0001 C CNN "DPN"
+	1    10100 4250
+	1    0    0    1   
 $EndComp
 $Comp
 L Connector_Generic:Conn_02x02_Odd_Even J1
@@ -809,6 +961,17 @@ F 1 "AS5047U" H 6275 3278 60  0000 C CNN
 F 2 "Package_SO:TSSOP-14_4.4x5mm_P0.65mm" H 7000 2100 60  0001 C CNN
 F 3 "" H 7000 2100 60  0001 C CNN
 	1    6250 2800
+	1    0    0    -1  
+$EndComp
+$Comp
+L Interface_UART:LTC2850xMS8 U6
+U 1 1 5EAF0690
+P 1600 3400
+F 0 "U6" H 1150 4050 50  0000 C CNN
+F 1 "THVD2450" H 1300 3950 50  0000 C CNN
+F 2 "Package_SO:VSSOP-8_3.0x3.0mm_P0.65mm" H 1600 2500 50  0001 C CNN
+F 3 "https://www.analog.com/media/en/technical-documentation/data-sheets/285012fe.pdf" H 1100 3500 50  0001 C CNN
+	1    1600 3400
 	1    0    0    -1  
 $EndComp
 $Comp
