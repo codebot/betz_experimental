@@ -60,9 +60,11 @@ Wire Wire Line
 Wire Wire Line
 	1400 7400 1500 7400
 Wire Wire Line
-	1650 5200 2050 5200
+	1550 4700 1950 4700
 Wire Wire Line
-	1650 5300 2050 5300
+	1550 5300 1950 5300
+Wire Wire Line
+	1700 5400 1550 5400
 Wire Wire Line
 	2000 3100 2350 3100
 Wire Wire Line
@@ -260,7 +262,7 @@ Wire Wire Line
 Wire Wire Line
 	10450 3050 10800 3050
 Text Notes 750  1700 0    118  ~ 24
-todo items:\n* debug UART\n* decoupling caps\n* VDDA ferrite\n* external encoder header
+todo items:\n* decoupling caps\n* VDDA ferrite
 Text Notes 5900 7550 2    50   ~ 0
 housing: Molex 1053081204
 Text Notes 10100 3450 0    50   ~ 0
@@ -273,8 +275,10 @@ Text Label 800  3400 0    50   ~ 0
 RS485_DE
 Text Label 800  3600 0    50   ~ 0
 RS485_DI
-Text Label 1650 5200 0    50   ~ 0
+Text Label 1550 4700 0    50   ~ 0
 DEBUG_TX
+Text Label 1550 5300 0    50   ~ 0
++3V3
 Text Label 2000 3100 0    50   ~ 0
 RS485_A
 Text Label 2000 3300 0    50   ~ 0
@@ -323,6 +327,18 @@ Text Label 4950 4050 0    50   ~ 0
 IC
 Text Label 4950 4150 0    50   ~ 0
 STATUS_LED
+Text Label 4950 4250 0    50   ~ 0
+DEBUG_TX
+Text Label 4950 4350 0    50   ~ 0
+BONUS_CS
+Text Label 4950 4450 0    50   ~ 0
+BONUS_SCK
+Text Label 4950 4550 0    50   ~ 0
+BONUS_MOSI
+Text Label 4950 4650 0    50   ~ 0
+BONUS_MISO
+Text Label 4950 4750 0    50   ~ 0
+BONUS_GPIO
 Text Label 5100 6900 2    50   ~ 0
 RS485_B
 Text Label 5100 7400 2    50   ~ 0
@@ -495,12 +511,12 @@ $EndComp
 $Comp
 L power:GND #PWR0123
 U 1 1 5EB1CEC4
-P 2050 5300
-F 0 "#PWR0123" H 2050 5050 50  0001 C CNN
-F 1 "GND" H 2054 5130 50  0001 C CNN
-F 2 "" H 2050 5300 50  0001 C CNN
-F 3 "" H 2050 5300 50  0001 C CNN
-	1    2050 5300
+P 1700 5400
+F 0 "#PWR0123" H 1700 5150 50  0001 C CNN
+F 1 "GND" H 1704 5230 50  0001 C CNN
+F 2 "" H 1700 5400 50  0001 C CNN
+F 3 "" H 1700 5400 50  0001 C CNN
+	1    1700 5400
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -889,17 +905,6 @@ F 3 "~" H 8900 5800 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Connector_Generic:Conn_01x02 J5
-U 1 1 5EB1C37A
-P 1450 5200
-F 0 "J5" H 1370 5416 50  0000 C CNN
-F 1 "debug" H 1370 5325 50  0000 C CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 1450 5200 50  0001 C CNN
-F 3 "~" H 1450 5200 50  0001 C CNN
-	1    1450 5200
-	-1   0    0    -1  
-$EndComp
-$Comp
 L Connector_Generic:Conn_01x03 J4
 U 1 1 5EAE8372
 P 10100 4250
@@ -940,6 +945,17 @@ F 5 "1053141204" H 5300 7300 50  0001 C CNN "MPN"
 F 6 "WM14976-ND" H 5300 7300 50  0001 C CNN "DPN"
 	1    5300 7300
 	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x08 J5
+U 1 1 5EAF6153
+P 1350 5000
+F 0 "J5" H 1270 5516 50  0000 C CNN
+F 1 "BONUS" H 1270 5425 50  0000 C CNN
+F 2 "Connector_PinHeader_1.27mm:PinHeader_1x08_P1.27mm_Horizontal" H 1350 5000 50  0001 C CNN
+F 3 "~" H 1350 5000 50  0001 C CNN
+	1    1350 5000
+	-1   0    0    -1  
 $EndComp
 $Comp
 L Regulator_Switching:LMZM23601V3 U5
