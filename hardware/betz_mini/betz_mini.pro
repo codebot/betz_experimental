@@ -1,4 +1,4 @@
-update=Tue Apr 28 17:09:13 2020
+update=Wed Apr 29 00:23:47 2020
 last_client=kicad
 [general]
 version=1
@@ -25,14 +25,14 @@ ERC_CheckBusDriverConflicts=1
 ERC_CheckBusEntryConflicts=1
 ERC_CheckBusToBusConflicts=1
 ERC_CheckBusToNetConflicts=1
-[ModEditFrame]
-version=1
 [PcbFrame]
 version=1
 [SchematicFrame]
 version=1
+[ModEditFrame]
+version=1
 [sheetnames]
-1=00000000-0000-0000-0000-00005ea7842c:
+1=00000000-0000-0000-0000-00005ea84236:
 [pcbnew]
 version=1
 PageLayoutDescrFile=
@@ -46,9 +46,9 @@ CopperLayerCount=4
 BoardThickness=1.6
 AllowMicroVias=0
 AllowBlindVias=0
-MinTrackWidth=0.2
+MinTrackWidth=0.1524
 MinViaDiameter=0.4
-MinViaDrill=0.3
+MinViaDrill=0.2032
 MinMicroViaDiameter=0.2
 MinMicroViaDrill=0.09999999999999999
 MinHoleToHole=0.25
@@ -56,11 +56,24 @@ RequireCourtyardDefinitions=0
 ProhibitOverlappingCourtyards=1
 CopperEdgeClearance=0.01
 TrackWidth1=0.25
+TrackWidth2=0.1778
+TrackWidth3=0.2032
+TrackWidth4=0.254
+TrackWidth5=0.381
+TrackWidth6=0.46
+TrackWidth7=0.8
 ViaDiameter1=0.8
 ViaDrill1=0.4
+ViaDiameter2=0.4572
+ViaDrill2=0.2032
+ViaDiameter3=0.6096
+ViaDrill3=0.3048
 dPairWidth1=0.2
 dPairGap1=0.25
 dPairViaGap1=0.25
+dPairWidth2=0.1778
+dPairGap2=0.2032
+dPairViaGap2=0.2032
 SilkLineWidth=0.12
 SilkTextSizeV=0.7999999999999999
 SilkTextSizeH=0.7999999999999999
@@ -86,7 +99,7 @@ DimensionPrecision=1
 SolderMaskClearance=0.05
 SolderMaskMinWidth=0
 SolderPasteClearance=0
-SolderPasteRatio=0
+SolderPasteRatio=-0
 [pcbnew/Layer.F.Cu]
 Name=F.Cu
 Type=0
