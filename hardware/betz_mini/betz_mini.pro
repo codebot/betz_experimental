@@ -1,4 +1,4 @@
-update=Wed Apr 29 00:23:47 2020
+update=Wed Apr 29 17:09:03 2020
 last_client=kicad
 [general]
 version=1
@@ -27,12 +27,12 @@ ERC_CheckBusToBusConflicts=1
 ERC_CheckBusToNetConflicts=1
 [PcbFrame]
 version=1
-[SchematicFrame]
-version=1
 [ModEditFrame]
 version=1
+[SchematicFrame]
+version=1
 [sheetnames]
-1=00000000-0000-0000-0000-00005ea84236:
+1=00000000-0000-0000-0000-00005ea91128:
 [pcbnew]
 version=1
 PageLayoutDescrFile=
@@ -56,18 +56,21 @@ RequireCourtyardDefinitions=0
 ProhibitOverlappingCourtyards=1
 CopperEdgeClearance=0.01
 TrackWidth1=0.25
-TrackWidth2=0.1778
-TrackWidth3=0.2032
-TrackWidth4=0.254
-TrackWidth5=0.381
-TrackWidth6=0.46
-TrackWidth7=0.8
+TrackWidth2=0.1524
+TrackWidth3=0.1778
+TrackWidth4=0.2032
+TrackWidth5=0.254
+TrackWidth6=0.381
+TrackWidth7=0.46
+TrackWidth8=0.8
 ViaDiameter1=0.8
 ViaDrill1=0.4
 ViaDiameter2=0.4572
 ViaDrill2=0.2032
-ViaDiameter3=0.6096
-ViaDrill3=0.3048
+ViaDiameter3=0.508
+ViaDrill3=0.2032
+ViaDiameter4=0.6096
+ViaDrill4=0.3048
 dPairWidth1=0.2
 dPairGap1=0.25
 dPairViaGap1=0.25
@@ -269,7 +272,7 @@ Enabled=0
 [pcbnew/Netclasses]
 [pcbnew/Netclasses/Default]
 Name=Default
-Clearance=0.2
+Clearance=0.1524
 TrackWidth=0.25
 ViaDiameter=0.8
 ViaDrill=0.4

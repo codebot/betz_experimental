@@ -206,6 +206,8 @@ Wire Wire Line
 Wire Wire Line
 	2675 5375 2875 5375
 Wire Wire Line
+	3000 1700 3200 1700
+Wire Wire Line
 	3650 6800 4050 6800
 Wire Wire Line
 	3650 7000 4050 7000
@@ -485,6 +487,8 @@ Wire Wire Line
 	10900 5000 10900 5100
 Wire Wire Line
 	10900 5700 10900 5300
+Text Notes 1000 3800 0    50   ~ 0
+TIM8_CH4N
 Text Notes 3200 1200 0    50   ~ 0
 ADC1_IN1
 Text Notes 3200 1900 0    50   ~ 0
@@ -493,8 +497,6 @@ Text Notes 3225 3000 0    50   ~ 0
 ADC3_IN1
 Text Notes 3500 2100 2    50   ~ 0
 TIM1
-Text Notes 3500 3800 0    50   ~ 0
-TIM4_CH4
 Text Notes 3525 1400 0    50   ~ 0
 USART2
 Text Notes 3575 2700 0    50   ~ 0
@@ -533,22 +535,24 @@ Text Label 1950 3600 2    50   ~ 0
 BONUS_SCK
 Text Label 1950 3700 2    50   ~ 0
 BONUS_MISO
+Text Label 1950 3800 2    50   ~ 0
+STATUS_LED
 Text Label 2700 6700 0    50   ~ 0
 GND
 Text Label 2700 6800 0    50   ~ 0
 +3V3
 Text Label 2700 6900 0    50   ~ 0
-DEBUG_TX
-Text Label 2700 7000 0    50   ~ 0
-BONUS_MOSI
-Text Label 2700 7100 0    50   ~ 0
-BONUS_MISO
-Text Label 2700 7200 0    50   ~ 0
 BONUS_SCK
-Text Label 2700 7300 0    50   ~ 0
+Text Label 2700 7000 0    50   ~ 0
+BONUS_MISO
+Text Label 2700 7100 0    50   ~ 0
 BONUS_GPIO
-Text Label 2700 7400 0    50   ~ 0
+Text Label 2700 7200 0    50   ~ 0
 BONUS_CS
+Text Label 2700 7300 0    50   ~ 0
+BONUS_MOSI
+Text Label 2700 7400 0    50   ~ 0
+DEBUG_TX
 Text Label 3000 1200 0    50   ~ 0
 IC
 Text Label 3000 1300 0    50   ~ 0
@@ -557,6 +561,8 @@ Text Label 3000 1400 0    50   ~ 0
 RS485_DI
 Text Label 3000 1500 0    50   ~ 0
 RS485_RO
+Text Label 3000 1700 0    50   ~ 0
+PA5
 Text Label 3000 1900 0    50   ~ 0
 IB
 Text Label 3000 2000 0    50   ~ 0
@@ -587,8 +593,6 @@ Text Label 3000 3500 0    50   ~ 0
 DEBUG_TX
 Text Label 3000 3600 0    50   ~ 0
 ACCEL_SDA
-Text Label 3000 3800 0    50   ~ 0
-STATUS_LED
 Text Label 3000 4000 0    50   ~ 0
 ENC_CS
 Text Label 3000 4100 0    50   ~ 0
@@ -1559,6 +1563,17 @@ F 3 "~" H 10900 5200 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
+L Connector_Generic:Conn_01x01 J6
+U 1 1 5EB21197
+P 3400 1700
+F 0 "J6" H 3480 1743 50  0000 L CNN
+F 1 "EXTRA_BONUS" H 3480 1653 50  0000 L CNN
+F 2 "Connector_PinHeader_1.27mm:PinHeader_1x01_P1.27mm_Vertical" H 3400 1700 50  0001 C CNN
+F 3 "~" H 3400 1700 50  0001 C CNN
+	1    3400 1700
+	1    0    0    -1  
+$EndComp
+$Comp
 L Mechanical:MountingHole_Pad H1
 U 1 1 5EAD0ADD
 P 8000 6250
@@ -1642,6 +1657,17 @@ F 4 "Molex" H 9725 4225 50  0001 C CNN "MFN"
 F 5 "1053141204" H 9725 4225 50  0001 C CNN "MPN"
 F 6 "WM14976-ND" H 9725 4225 50  0001 C CNN "DPN"
 	1    9725 4225
+	1    0    0    -1  
+$EndComp
+$Comp
+L Graphic:Logo_Open_Hardware_Small LOGO1
+U 1 1 5EB2557B
+P 5200 4850
+F 0 "LOGO1" H 5200 5125 50  0001 C CNN
+F 1 "Logo_Open_Hardware_Small" H 5200 4625 50  0001 C CNN
+F 2 "Symbol:OSHW-Logo_7.5x8mm_SilkScreen" H 5200 4850 50  0001 C CNN
+F 3 "~" H 5200 4850 50  0001 C CNN
+	1    5200 4850
 	1    0    0    -1  
 $EndComp
 $Comp
