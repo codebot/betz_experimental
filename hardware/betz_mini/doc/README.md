@@ -16,4 +16,4 @@ brushless motors with up to around 24 volts DC and 3 amps.
 
 # Renderings
 
-![](top_diag_front.png | width=400)
+![](top_diag_front.png)
