@@ -15,21 +15,19 @@
  *
 */
 
-#ifndef NUM_PARAMS_H
-#define NUM_PARAMS_H
+#include "read_flash.h"
+using betz::ReadFlash;
+using betz::Packet;
 
-#include <stdint.h>
-#include "../drive.h"
-#include "packet.h"
-
-namespace betz {
-
-class NumParams : public Packet
+ReadFlash::ReadFlash(
+    const Drive& drive,
+    const uint32_t addr,
+    const uint32_t len)
 {
-public:
-  NumParams(const Drive& drive);
-};
+  flags = FLAG_SENTINEL | FLAG_ADDR_UUID;
+  uuid = drive.uuid;
 
-}  // namespace betz
-
-#endif
+  payload.push_back(ID_READ_FLASH);
+  append(addr);
+  append(len);
+}

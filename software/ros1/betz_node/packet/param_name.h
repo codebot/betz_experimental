@@ -15,8 +15,8 @@
  *
 */
 
-#ifndef NUM_PARAMS_H
-#define NUM_PARAMS_H
+#ifndef PARAM_NAME_H
+#define PARAM_NAME_H
 
 #include <stdint.h>
 #include "../drive.h"
@@ -24,10 +24,13 @@
 
 namespace betz {
 
-class NumParams : public Packet
+class ParamName : public Packet
 {
 public:
-  NumParams(const Drive& drive);
+  ParamName(
+      const Drive& drive,
+      const uint32_t param_idx,
+      const bool force_long_addr = false);
 };
 
 }  // namespace betz

@@ -22,6 +22,7 @@
 #include "transport_serial.h"
 #include "packet/discovery.h"
 #include "packet/num_params.h"
+#include "packet/read_flash.h"
 
 using std::make_shared;
 using std::make_unique;
@@ -48,7 +49,7 @@ bool Bus::send_packet(std::unique_ptr<Packet> packet)
     ROS_ERROR("packet serialization error!");
     return false;
   }
-  ROS_INFO("sending %d-byte packet:", static_cast<int>(serialized_length));
+  // ROS_INFO("sending %d-byte packet:", static_cast<int>(serialized_length));
   // for (size_t i = 0; i < serialized_length; i++)
   //   printf("  %2zu: 0x%02x\n", i, static_cast<unsigned>(buffer[i]));
   return transport->send(buffer, serialized_length);
@@ -267,7 +268,7 @@ void Bus::spin_once()
       // printf("rx 0x%02x\n", static_cast<unsigned>(b));
       if (rx_byte(b, packet) && (packet.flags & Packet::FLAG_DIR_PERIPH_HOST))
       {
-        printf("received packet from peripheral\n");
+        // printf("received packet from peripheral\n");
         shared_ptr<Drive> drive = drive_by_uuid(packet.uuid);
         drive->rx_packet(packet);
       }
@@ -291,31 +292,28 @@ void Bus::discovery_begin()
 void Bus::discovery_tick()
 {
   const double elapsed = (ros::Time::now() - discovery_time).toSec();
-
-  /*
-  printf(
-      "Bus::discovery_tick() elapsed = %.3f %zu drives\n",
-      elapsed,
-      drives.size());
-  */
-
-  switch (discovery_state)
+  if (discovery_state == DiscoveryState::PROBING)
   {
-    case DiscoveryState::UUID:
-      // send out broadcast discovery requests to learn drive UUID's
-      if (elapsed > 0.5)
+    // send out broadcast discovery requests to learn drive UUID's
+    if (elapsed > 0.5)
+    {
+      discovery_broadcast_count++;
+      if (discovery_broadcast_count < 3)
       {
-        if (discovery_broadcast_count > 1)
-        {
-          discovery_state = DiscoveryState::NUM_PARAMS;
-          break;
-        }
-        discovery_broadcast_count++;
         discovery_time = ros::Time::now();
         send_packet(std::make_unique<Discovery>());
       }
-      break;
+      else
+        discovery_complete = true;
+    }
+  }
+}
 
+void Bus::enumeration_tick()
+{
+#if 0
+  switch (discovery_state)
+  {
     case DiscoveryState::NUM_PARAMS:
     {
       bool all_done = true;
@@ -330,7 +328,7 @@ void Bus::discovery_tick()
       }
       if (all_done)
       {
-        discovery_state = DiscoveryState::RETRIEVE_IDS;
+        discovery_state = DiscoveryState::RETRIEVE_PARAM_NAMES;
         break;
       }
       break;
@@ -350,4 +348,50 @@ void Bus::discovery_tick()
       printf("unhandled discovery state\n");
       break;
   }
+#endif
+}
+
+bool Bus::burn_firmware(const std::string& firmware_filename)
+{
+  for (auto drive : drives)
+    if (!burn_firmware(*drive, firmware_filename))
+      return false;
+  return true;
+}
+
+bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
+{
+  ROS_INFO(
+      "burning firmware [%s] to drive %s",
+      firmware_filename.c_str(),
+      drive.uuid_str.c_str());
+
+  FILE *f = fopen(firmware_filename.c_str(), "r");
+  if (!f)
+  {
+    ROS_FATAL("couldn't open firmware: [%s]", firmware_filename.c_str());
+    return false;
+  }
+
+  bool burn_needed = false;
+
+  // first make sure we actually need to do this: read back flash image
+  // and bail the first time we see something is not looking right
+  const int CHUNK_LEN = 64;
+  for (int addr = 0x08020000;
+      !feof(f) && addr < 0x08100000;
+      addr += CHUNK_LEN)
+  {
+    uint8_t chunk[CHUNK_LEN] = {0};
+    size_t nread = fread(chunk, 1, CHUNK_LEN, f);
+    if (nread < CHUNK_LEN)
+      printf("last read: only got %d bytes from file\n", (int)nread);
+
+    // read this address from the MCU flash
+
+    send_packet(std::make_unique<ReadFlash>(drive, addr, CHUNK_LEN));
+
+  }
+
+  return true;
 }

@@ -88,12 +88,10 @@ public:
 
   enum class DiscoveryState
   {
-    UUID,
-    NUM_PARAMS,
-    RETRIEVE_IDS,
-    PARAM_VALUES
+    PROBING,
+    COMPLETE
   };
-  DiscoveryState discovery_state = DiscoveryState::UUID;
+  DiscoveryState discovery_state = DiscoveryState::PROBING;
 
   void discovery_begin();
   void discovery_tick();
@@ -101,8 +99,13 @@ public:
   int discovery_broadcast_count = 0;
   ros::Time discovery_time;
 
+  void enumeration_tick();
+
+  bool burn_firmware(const std::string& firmware_filename);
+
 private:
   uint8_t rx_buf[4096] = {0};
+  bool burn_firmware(Drive& drive, const std::string& firmware_filename);
 };
 
 }  // namespace betz

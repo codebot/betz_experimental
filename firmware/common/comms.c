@@ -74,6 +74,7 @@ static bool g_comms_parser_long_address = false;
 static bool g_comms_parser_ignore_pkt = false;
 static uint8_t g_comms_parser_addr[COMMS_LONG_ADDR_LEN] = {0};
 static uint8_t g_comms_id = 0;
+static uint8_t g_comms_is_bootloader = 0;
 
 static uint32_t g_comms_discovery_send_time = 0;
 
@@ -84,8 +85,9 @@ static void comms_tx_long_addr(const uint8_t *p, const uint32_t len);
 
 /////////////////////////////////////////////////////////////////////
 
-void comms_init()
+void comms_init(const uint8_t is_bootloader)
 {
+  g_comms_is_bootloader = is_bootloader;
   g_comms_parser_state = PS_PREAMBLE;
 }
 
@@ -97,9 +99,10 @@ void comms_tick()
     if (t >= g_comms_discovery_send_time)
     {
       g_comms_discovery_send_time = 0;
-      uint8_t pkt[1] = {0};
+      uint8_t pkt[2] = {0};
       pkt[0] = 0xf0;
-      comms_tx_long_addr(pkt, 1);
+      pkt[1] = g_comms_is_bootloader;
+      comms_tx_long_addr(pkt, 2);
     }
   }
 }
@@ -302,8 +305,10 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
   switch (pkt_id)
   {
     case 0xf0: comms_discovery(p, len); break;
-    case 0xf1: comms_num_params(); break;
-    default: break;
+    case 0x01: comms_num_params(); break;
+    default: 
+      printf("unhandled packet id: [%02x]\n", pkt_id);
+      break;
   }
 }
 

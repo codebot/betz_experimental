@@ -25,7 +25,3 @@ Discovery::Discovery(const uint16_t max_ms)
   append(static_cast<uint8_t>(ID_DISCOVERY));
   append(max_ms);
 }
-
-Discovery::~Discovery()
-{
-}

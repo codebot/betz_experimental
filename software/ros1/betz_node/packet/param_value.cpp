@@ -15,21 +15,24 @@
  *
 */
 
-#ifndef NUM_PARAMS_H
-#define NUM_PARAMS_H
+#include "param_value.h"
+using betz::ParamValue;
+using betz::Packet;
 
-#include <stdint.h>
-#include "../drive.h"
-#include "packet.h"
-
-namespace betz {
-
-class NumParams : public Packet
+ParamValue::ParamValue(
+    const Drive& drive,
+    const uint32_t param_idx,
+    const bool force_long_addr)
 {
-public:
-  NumParams(const Drive& drive);
-};
+  flags = FLAG_SENTINEL;
+  if (drive.id == 0 || force_long_addr)
+  {
+    flags |= FLAG_ADDR_UUID;
+    uuid = drive.uuid;
+  }
+  else
+    drive_id = drive.id;
 
-}  // namespace betz
-
-#endif
+  payload.push_back(ID_PARAM_VALUE);
+  append(param_idx);
+}

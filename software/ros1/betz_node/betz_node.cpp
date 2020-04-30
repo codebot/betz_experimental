@@ -100,8 +100,11 @@ static void rs485_rx_pkt(const uint32_t len, const uint8_t *data)
 }
 */
 
-void BetzNode::run()
+int BetzNode::init(int argc, char **argv)
 {
+  if (argc <= 1)
+    return usage();
+
   string transport_name;
   nh_private.param<std::string>("transport", transport_name, "rs485");
 
@@ -114,7 +117,7 @@ void BetzNode::run()
     if (!transport->open_device(device_name))
     {
       ROS_FATAL("couldn't open serial device");
-      return;
+      return 1;
     }
     ROS_INFO("opened %s", device_name.c_str());
     bus.set_transport(std::move(transport));
@@ -126,28 +129,63 @@ void BetzNode::run()
     if (!transport->init())
     {
       ROS_FATAL("couldn't init multicast transport");
-      return;
+      return 1;
     }
     bus.set_transport(std::move(transport));
   }
   else
   {
     ROS_FATAL("unknown transport name: [%s]", transport_name.c_str());
-    return;
+    return 1;
   }
 
   bus.discovery_begin();
 
   ros::Rate rate(10);
-  while (ros::ok())
+  while (ros::ok() && !bus.discovery_complete)
   {
     bus.spin_once();
     rate.sleep();
-
-
-    // const char *msg = "greetings";
-    // bus.transport->send((const uint8_t *)"greetings", 9);
   }
+
+  ROS_INFO("discovery complete. found %zu drives.", bus.drives.size());
+  
+  const string verb(argv[1]);
+  if (verb == "run")
+    return run();
+  else if (verb == "burn_firmware")
+  {
+    if (argc <= 2)
+    {
+      ROS_FATAL("syntax: betz_node burn_firmware FILENAME");
+      return 1;
+    }
+    return burn_firmware(string(argv[2]));
+  }
+  else
+    return usage();
+}
+
+int BetzNode::run()
+{
+  ROS_INFO("run()");
+  return 0;
+}
+
+int BetzNode::burn_firmware(const string& filename)
+{
+  ROS_INFO("burning firmware...");
+  if (!bus.burn_firmware(filename))
+  {
+    ROS_FATAL("error burning firmware");
+    return 1;
+  }
+  else
+  {
+    ROS_INFO("firmware burn completed");
+    return 0;
+  }
+}
 
   /*
   const int num_params = betz.get_num_params();
@@ -156,8 +194,9 @@ void BetzNode::run()
   const bool read_ok = betz.read_flash(0x08000000, 128);
   ROS_INFO("read_flash(0x0, 128) = %d", read_ok ? 1 : 0);
   */
-  /*
-  ROS_INFO("entering slow_bldc spin loop");
-  betz.rs485_spin(-1);  // spin forever. wooooahhh that makes me feel dizzy
-  */
+
+int BetzNode::usage()
+{
+  ROS_FATAL("no verb supplied!\n\nvalid verbs: run, reset, burn_firmware");
+  return 1;
 }

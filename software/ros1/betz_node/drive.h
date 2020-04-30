@@ -19,6 +19,8 @@
 #define DRIVE_H
 
 #include <stdint.h>
+#include <string>
+
 #include "packet/packet.h"
 #include "transport.h"
 
@@ -27,9 +29,11 @@ namespace betz {
 class Drive
 {
 public:
-  uint8_t bus_id = 0;
+  uint8_t id = 0;
   std::vector<uint8_t> uuid;
+  std::string uuid_str;  // for printing messages to console
 
+  bool is_bootloader = false;
   int num_params = 0;
 
   void rx_packet(const Packet& packet);

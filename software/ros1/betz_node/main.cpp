@@ -22,6 +22,5 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "betz_node");
   BetzNode node;
-  node.run();
-  return 0;
+  return node.init(argc, argv);
 }

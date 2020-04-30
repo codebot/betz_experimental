@@ -27,7 +27,6 @@ class Discovery : public Packet
 {
 public:
   Discovery(const uint16_t max_ms = 500);
-  ~Discovery();
 };
 
 }  // namespace betz

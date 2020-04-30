@@ -38,7 +38,11 @@ public:
   BetzNode();
   ~BetzNode();
 
-  void run();
+  int init(int argc, char **argv);
+  int usage();
+
+  int run();
+  int burn_firmware(const std::string& filename);
 };
 
 }  // namespace betz

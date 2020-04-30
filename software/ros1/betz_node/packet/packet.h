@@ -53,8 +53,12 @@ public:
 
   enum
   {
+    ID_NUM_PARAMS = 0x01,
+    ID_PARAM_NAME = 0x02,
+    ID_PARAM_VALUE = 0x03,
+
     ID_DISCOVERY  = 0xf0,
-    ID_NUM_PARAMS = 0xf1,
+    ID_READ_FLASH = 0xf1,
   };
   //static const uint8_t 
 

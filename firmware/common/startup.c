@@ -98,7 +98,7 @@ void reset_vector()
   rs485_init();
   control_init();
 
-  comms_init();
+  comms_init(1);
   comms_set_raw_tx_fptr(rs485_tx);
 
   __enable_irq();

@@ -25,7 +25,3 @@ NumParams::NumParams(const Drive& drive)
   uuid = drive.uuid;
   payload.push_back(ID_NUM_PARAMS);
 }
-
-NumParams::~NumParams()
-{
-}

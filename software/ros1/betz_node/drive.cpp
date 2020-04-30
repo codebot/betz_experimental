@@ -19,6 +19,7 @@
 #include "ros/ros.h"
 #include <string.h>  // for memcpy
 using betz::Drive;
+using std::string;
 
 
 Drive::Drive()
@@ -79,23 +80,30 @@ bool Drive::uuid_equals(const std::vector<uint8_t>& _uuid) const
 void Drive::set_uuid(const std::vector<uint8_t>& _uuid)
 {
   uuid.resize(_uuid.size());
+  uuid_str = string();
   for (size_t i = 0; i < _uuid.size(); i++)
-    uuid[i] = _uuid[i];
-}
-
-void Drive::print() const
-{
-  for (size_t i = 0; i < Packet::UUID_LEN; i++)
   {
-    printf("%02x", uuid[i]);
-    if (i % 4 == 3 && i != (Packet::UUID_LEN - 1))
-      printf(":");
+    uuid[i] = _uuid[i];
+
+    char byte_buf[10] = {0};
+    snprintf(
+        byte_buf,
+        sizeof(byte_buf),
+        "%02x",
+        static_cast<unsigned>(_uuid[i]));
+    uuid_str += string(byte_buf);
+    if (i % 4 == 3 && i != 11)
+      uuid_str += ":";
   }
 }
 
 void Drive::rx_discovery(const Packet& packet)
 {
-  printf("Discovery response from ");
-  print();
-  printf("\n");
+  ROS_INFO("discovered %s", uuid_str.c_str());
+  if (packet.payload.size() != 2)
+  {
+    ROS_ERROR("unexpected payload len: %zu", packet.payload.size());
+    return;
+  }
+  is_bootloader = packet.payload[1];
 }

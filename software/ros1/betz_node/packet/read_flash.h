@@ -15,8 +15,8 @@
  *
 */
 
-#ifndef NUM_PARAMS_H
-#define NUM_PARAMS_H
+#ifndef READ_FLASH_H
+#define READ_FLASH_H
 
 #include <stdint.h>
 #include "../drive.h"
@@ -24,10 +24,13 @@
 
 namespace betz {
 
-class NumParams : public Packet
+class ReadFlash : public Packet
 {
 public:
-  NumParams(const Drive& drive);
+  ReadFlash(
+      const Drive& drive,
+      const uint32_t addr,
+      const uint32_t len);
 };
 
 }  // namespace betz
