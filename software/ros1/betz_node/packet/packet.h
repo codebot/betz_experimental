@@ -58,7 +58,7 @@ public:
     ID_PARAM_VALUE = 0x03,
 
     ID_DISCOVERY  = 0xf0,
-    ID_READ_FLASH = 0xf1,
+    ID_FLASH_READ = 0xf1,
   };
   //static const uint8_t 
 

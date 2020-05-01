@@ -58,16 +58,13 @@ public:
   Bus();
   ~Bus();
 
-  void spin_once();
+  bool spin_once(const uint8_t watch_packet_id = 0);
 
   void set_transport(std::unique_ptr<Transport> transport);
 
   bool send_packet(std::unique_ptr<Packet> packet);
 
-  bool wait_for_packet(
-      const double max_seconds,
-      const uint8_t drive_id,
-      const uint8_t packet_id);
+  bool wait_for_packet(const double max_seconds, const uint8_t packet_id);
 
   bool rx_byte(const uint8_t b, Packet& rx_pkt);
   void rx_packet(Packet& packet);

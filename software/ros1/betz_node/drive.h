@@ -33,6 +33,9 @@ public:
   std::vector<uint8_t> uuid;
   std::string uuid_str;  // for printing messages to console
 
+  std::vector<uint8_t> flash_last_read;
+  uint32_t flash_last_addr;
+
   bool is_bootloader = false;
   int num_params = 0;
 

@@ -22,7 +22,7 @@
 #include "transport_serial.h"
 #include "packet/discovery.h"
 #include "packet/num_params.h"
-#include "packet/read_flash.h"
+#include "packet/flash_read.h"
 
 using std::make_shared;
 using std::make_unique;
@@ -56,10 +56,7 @@ bool Bus::send_packet(std::unique_ptr<Packet> packet)
 }
 
 // this function spins max_seconds or until packet_id arrives
-bool Bus::wait_for_packet(
-    const double max_seconds,
-    const uint8_t drive_id,
-    const uint8_t packet_id)
+bool Bus::wait_for_packet(const double max_seconds, const uint8_t packet_id)
 {
   ros::Rate loop_rate(1000);
   ros::Time t_end = ros::Time::now() + ros::Duration(max_seconds);
@@ -68,24 +65,10 @@ bool Bus::wait_for_packet(
   {
     if (max_seconds > 0 && t_end < ros::Time::now())
       break;
-    loop_rate.sleep();
     ros::spinOnce();
-
-    Packet packet;
-
-    int n_rx = transport->recv_nonblocking(rx_buf, sizeof(rx_buf));
-    printf("n_rx = %d\n", n_rx);
-
-    for (int i = 0; i < n_rx; i++)
-    {
-      const uint8_t b = rx_buf[i];
-      printf("  rx: %02x\n", b);
-      if (rx_byte(b, packet))
-      {
-        if (packet.drive_id == drive_id && packet.packet_id() == packet_id)
-          return true;
-      }
-    }
+    if (spin_once(packet_id))
+      return true;
+    loop_rate.sleep();
   }
   ROS_WARN("Bus::wait_for_packet timeout :(");
   return false;
@@ -188,24 +171,6 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
 }
 
 #if 0
-bool Bus::read_flash(
-    const uint8_t drive_id,
-    const uint32_t start_addr,
-    const uint32_t len)
-{
-  add_drive_id(drive_id);
-
-  uint8_t pkt[9] = {0};
-  pkt[0] = 0xf0;
-  memcpy(&pkt[1], &start_addr, sizeof(uint32_t));
-  memcpy(&pkt[5], &len, sizeof(uint32_t));
-  send_packet(pkt, sizeof(pkt));
-
-  if (wait_for_packet(1.0, drive_id, 0xf0) == 0xf0)
-    return true;
-  return false;
-}
-
 bool Bus::set_led(const uint8_t drive_id, const bool on)
 {
   add_drive_id(drive_id);
@@ -215,7 +180,6 @@ bool Bus::set_led(const uint8_t drive_id, const bool on)
     pkt[1] = 1;
   return send_packet(pkt, sizeof(pkt));
 }
-
 #endif
 
 shared_ptr<Drive> Bus::drive_by_uuid(const std::vector<uint8_t>& uuid)
@@ -247,12 +211,12 @@ void Bus::set_transport(std::unique_ptr<Transport> _transport)
   transport = std::move(_transport);
 }
 
-void Bus::spin_once()
+bool Bus::spin_once(const uint8_t watch_packet_id)
 {
   if (!transport)
   {
     ROS_ERROR("Bus::spin_once() with null transport!");
-    return;
+    return false;
   }
 
   Packet packet;
@@ -271,12 +235,16 @@ void Bus::spin_once()
         // printf("received packet from peripheral\n");
         shared_ptr<Drive> drive = drive_by_uuid(packet.uuid);
         drive->rx_packet(packet);
+        if (watch_packet_id && (watch_packet_id == packet.packet_id()))
+          return true;
       }
     }
   }
 
   if (!discovery_complete)
     discovery_tick();
+
+  return false;
 }
 
 void Bus::discovery_begin()
@@ -379,7 +347,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
   // and bail the first time we see something is not looking right
   const int CHUNK_LEN = 64;
   for (int addr = 0x08020000;
-      !feof(f) && addr < 0x08100000;
+      !burn_needed && !feof(f) && addr < 0x08100000;
       addr += CHUNK_LEN)
   {
     uint8_t chunk[CHUNK_LEN] = {0};
@@ -389,9 +357,64 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
 
     // read this address from the MCU flash
 
-    send_packet(std::make_unique<ReadFlash>(drive, addr, CHUNK_LEN));
+    send_packet(std::make_unique<FlashRead>(drive, addr, CHUNK_LEN));
+    if (!wait_for_packet(1.0, Packet::ID_FLASH_READ))
+    {
+      ROS_ERROR(
+          "couldn't read drive %s addr %08x",
+          drive.uuid_str.c_str(),
+          static_cast<unsigned>(addr));
+      return false;
+    }
 
+    // check that we received the expected chunk
+    if (drive.flash_last_addr != addr)
+    {
+      ROS_ERROR("woah! didn't seem to read the requested address!");
+      return false;
+    }
+
+    if (drive.flash_last_read.size() != CHUNK_LEN)
+    {
+      ROS_ERROR("woah! unexpected read size");
+      return false;
+    }
+
+    for (int i = 0; i < CHUNK_LEN; i++)
+    {
+      if (chunk[i] != drive.flash_last_read[i])
+      {
+        ROS_INFO("mismatch at address 0x%08x", addr + i);
+        burn_needed = true;
+        break;
+      }
+    }
   }
+
+  if (!burn_needed)
+  {
+    ROS_INFO("image verified successfully; not burning it.");
+    return true;
+  }
+
+  ROS_INFO("proceeding with burn...");
+  rewind(f);
+
+  for (int addr = 0x08020000;
+      !burn_needed && !feof(f) && addr < 0x08100000;
+      addr += CHUNK_LEN)
+  {
+    uint8_t chunk[CHUNK_LEN] = {0};
+    size_t nread = fread(chunk, 1, CHUNK_LEN, f);
+    if (nread < CHUNK_LEN)
+      printf("last read: only got %d bytes from file\n", (int)nread);
+
+    // todo: check if this is aligned on a page boundary, if so, erase page
+
+    // todo: write chunk to flash
+  }
+
+  // todo: verify
 
   return true;
 }

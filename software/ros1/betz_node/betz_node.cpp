@@ -141,7 +141,7 @@ int BetzNode::init(int argc, char **argv)
 
   bus.discovery_begin();
 
-  ros::Rate rate(10);
+  ros::Rate rate(100);
   while (ros::ok() && !bus.discovery_complete)
   {
     bus.spin_once();

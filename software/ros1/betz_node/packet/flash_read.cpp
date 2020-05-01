@@ -15,11 +15,11 @@
  *
 */
 
-#include "read_flash.h"
-using betz::ReadFlash;
+#include "flash_read.h"
+using betz::FlashRead;
 using betz::Packet;
 
-ReadFlash::ReadFlash(
+FlashRead::FlashRead(
     const Drive& drive,
     const uint32_t addr,
     const uint32_t len)
@@ -27,7 +27,7 @@ ReadFlash::ReadFlash(
   flags = FLAG_SENTINEL | FLAG_ADDR_UUID;
   uuid = drive.uuid;
 
-  payload.push_back(ID_READ_FLASH);
+  payload.push_back(ID_FLASH_READ);
   append(addr);
   append(len);
 }

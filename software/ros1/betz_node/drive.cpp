@@ -44,7 +44,24 @@ void Drive::rx_num_params(const Packet& packet)
 
 void Drive::rx_flash_read(const Packet& packet)
 {
-  ROS_INFO("rs485_rx_flash_read(%d)", static_cast<int>(packet.payload.size()));
+  ROS_INFO("rx_flash_read(%d)", static_cast<int>(packet.payload.size()));
+  if (packet.payload.size() < 10)
+  {
+    ROS_ERROR("unexpected payload len: %zu", packet.payload.size());
+    return;
+  }
+  memcpy(&flash_last_addr, &packet.payload[1], 4);
+  uint32_t read_len = 0;
+  memcpy(&read_len, &packet.payload[5], 4);
+  // sanity-check the read length (!!)
+  if (read_len > 128)
+  {
+    ROS_ERROR("unexpected read len: %u", read_len);
+    return;
+  }
+  flash_last_read.resize(read_len);
+  memcpy(&flash_last_read[0], &packet.payload[9], read_len);
+  ROS_INFO("received %u bytes from 0x%08x", read_len, flash_last_addr);
 }
 
 void Drive::rx_packet(const Packet& packet)
@@ -59,9 +76,9 @@ void Drive::rx_packet(const Packet& packet)
   const uint8_t packet_id = packet.payload[0];
   switch(packet_id)
   {
-    case Packet::ID_DISCOVERY:  rx_discovery(packet); break;
     case Packet::ID_NUM_PARAMS: rx_num_params(packet); break;
-    // case 0xf0: rx_flash_read(packet); break;
+    case Packet::ID_DISCOVERY:  rx_discovery(packet); break;
+    case Packet::ID_FLASH_READ: rx_flash_read(packet); break;
     default:
       ROS_INFO(
           "unrecognized packet ID: %02x",

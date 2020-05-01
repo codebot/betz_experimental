@@ -263,14 +263,14 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
     return;  // cannot. outside flash.
   }
   uint8_t pkt[128 + 9] = {0};  // max length of return request
-  pkt[0] = 0xf8;
+  pkt[0] = 0xf1;
   memcpy(&pkt[1], &read_addr, sizeof(read_addr));
   memcpy(&pkt[5], &read_len, sizeof(read_len));
   flash_read(read_addr, read_len, (uint8_t *)&pkt[9]);
-  comms_tx(pkt, 9 + read_len);
+  comms_tx_long_addr(pkt, 9 + read_len);
 }
 
-void comms_discovery(const uint8_t* p, const uint32_t len)
+void comms_discovery(const uint8_t *p, const uint32_t len)
 {
   printf("comms_discovery()\n");
   if (len >= 3)
@@ -288,7 +288,7 @@ void comms_num_params()
 {
   printf("comms_num_params()\n");
   uint8_t pkt[5] = {0};
-  pkt[0] = 0xf1;
+  pkt[0] = 0x01;
   const uint32_t num_params = param_count();
   memcpy(&pkt[1], &num_params, 4);
   comms_tx_long_addr(pkt, 5);
@@ -304,8 +304,9 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
   const uint8_t pkt_id = p[0];
   switch (pkt_id)
   {
-    case 0xf0: comms_discovery(p, len); break;
     case 0x01: comms_num_params(); break;
+    case 0xf0: comms_discovery(p, len); break;
+    case 0xf1: comms_read_flash(p, len); break;
     default: 
       printf("unhandled packet id: [%02x]\n", pkt_id);
       break;
@@ -314,7 +315,7 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
 
 void comms_tx(const uint8_t *data, const uint32_t len)
 {
-  //printf("comms_tx(%d)\r\n", (int)len);
+  printf("comms_tx(%d)\r\n", (int)len);
   if (len > 250)
   {
     printf("woah! unable to handle packets > 250 bytes.\n");

@@ -15,8 +15,8 @@
  *
 */
 
-#ifndef READ_FLASH_H
-#define READ_FLASH_H
+#ifndef FLASH_READ_H
+#define FLASH_READ_H
 
 #include <stdint.h>
 #include "../drive.h"
@@ -24,10 +24,10 @@
 
 namespace betz {
 
-class ReadFlash : public Packet
+class FlashRead : public Packet
 {
 public:
-  ReadFlash(
+  FlashRead(
       const Drive& drive,
       const uint32_t addr,
       const uint32_t len);
