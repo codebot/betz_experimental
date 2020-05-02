@@ -1,1 +1,0 @@
-betzdrive_add_executable(test_comms test_comms.c)

@@ -42,6 +42,7 @@ public:
   void rx_packet(const Packet& packet);
   void rx_num_params(const Packet& packet);
   void rx_flash_read(const Packet& packet);
+  void rx_flash_write(const Packet& packet);
   void rx_discovery(const Packet& packet);
 
   Drive();

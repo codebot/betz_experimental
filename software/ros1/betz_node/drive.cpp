@@ -44,7 +44,7 @@ void Drive::rx_num_params(const Packet& packet)
 
 void Drive::rx_flash_read(const Packet& packet)
 {
-  ROS_INFO("rx_flash_read(%d)", static_cast<int>(packet.payload.size()));
+  // ROS_INFO("rx_flash_read(%d)", static_cast<int>(packet.payload.size()));
   if (packet.payload.size() < 10)
   {
     ROS_ERROR("unexpected payload len: %zu", packet.payload.size());
@@ -61,7 +61,13 @@ void Drive::rx_flash_read(const Packet& packet)
   }
   flash_last_read.resize(read_len);
   memcpy(&flash_last_read[0], &packet.payload[9], read_len);
-  ROS_INFO("received %u bytes from 0x%08x", read_len, flash_last_addr);
+  // ROS_INFO("received %u bytes from 0x%08x", read_len, flash_last_addr);
+}
+
+void Drive::rx_flash_write(const Packet& packet)
+{
+  // nothing to do (for now, at least) with this notification of
+  // a successful write
 }
 
 void Drive::rx_packet(const Packet& packet)
@@ -76,9 +82,10 @@ void Drive::rx_packet(const Packet& packet)
   const uint8_t packet_id = packet.payload[0];
   switch(packet_id)
   {
-    case Packet::ID_NUM_PARAMS: rx_num_params(packet); break;
-    case Packet::ID_DISCOVERY:  rx_discovery(packet); break;
-    case Packet::ID_FLASH_READ: rx_flash_read(packet); break;
+    case Packet::ID_NUM_PARAMS:  rx_num_params(packet); break;
+    case Packet::ID_DISCOVERY:   rx_discovery(packet); break;
+    case Packet::ID_FLASH_READ:  rx_flash_read(packet); break;
+    case Packet::ID_FLASH_WRITE: rx_flash_write(packet); break;
     default:
       ROS_INFO(
           "unrecognized packet ID: %02x",

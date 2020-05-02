@@ -1,0 +1,1 @@
+betzdrive_raw_executable(bootloader bootloader.c)

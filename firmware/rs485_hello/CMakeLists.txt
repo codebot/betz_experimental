@@ -1,1 +1,0 @@
-betzdrive_add_executable(rs485_hello rs485_hello.c)

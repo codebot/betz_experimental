@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bootloader.h"
 #include "comms.h"
 #include "flash.h"
 #include "param.h"
@@ -250,7 +251,7 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
   uint32_t read_addr = 0, read_len = 0;
   memcpy(&read_addr, &data[1], sizeof(read_addr));
   memcpy(&read_len, &data[5], sizeof(read_len));
-  printf("comms_read_flash()\r\n");
+  // printf("comms_read_flash()\r\n");
   if (read_len > 128)
   {
     printf("invalid flash read: len = %d\r\n", (int)read_len);
@@ -277,12 +278,14 @@ void comms_write_flash(const uint8_t *data, const uint32_t len)
   const uint32_t write_len = len - 5;
   uint32_t write_addr = 0;
   memcpy(&write_addr, &data[1], sizeof(write_addr));
-  const uint8_t *write_data = &data[9];
+  const uint8_t *write_data = &data[5];
 
+  /*
   printf(
       "comms_write_flash(0x%08x, %u)\r\n",
       (unsigned)write_addr,
       (unsigned)write_len);
+  */
 
   if (write_len > 64)
   {
@@ -297,7 +300,6 @@ void comms_write_flash(const uint8_t *data, const uint32_t len)
     return;  // cannot. outside flash.
   }
 
-  // TODO: actually do the write, first erasing the sector/page (if needed)
   if (flash_write(write_addr, write_len, write_data))
   {
     uint8_t pkt[9] = {0};  // length of return request
@@ -321,6 +323,14 @@ void comms_discovery(const uint8_t *p, const uint32_t len)
   }
 }
 
+void comms_run_application()
+{
+  if (!g_comms_is_bootloader)
+    return;
+
+  bootloader_run_application();  // this function never returns!
+}
+
 void comms_num_params()
 {
   printf("comms_num_params()\n");
@@ -333,7 +343,7 @@ void comms_num_params()
 
 void comms_rx_pkt(const uint8_t* p, const uint32_t len)
 {
-  // printf("comms_rx_pkt() received %d bytes\r\n", (int)len);
+  //printf("comms_rx_pkt() received %d bytes\r\n", (int)len);
   if (len == 0)
     return;  // adios amigo
   //for (uint32_t i = 0; i < len; i++)
@@ -345,6 +355,7 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
     case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_read_flash(p, len); break;
     case 0xf2: comms_write_flash(p, len); break;
+    case 0xf3: comms_run_application(); break;
     default: 
       printf("unhandled packet id: [%02x]\n", pkt_id);
       break;

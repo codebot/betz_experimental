@@ -3,6 +3,7 @@
 
 #include "comms.h"
 #include "control.h"
+#include "flash.h"
 #include "multicast.h"
 #include "param.h"
 #include "rng.h"
@@ -10,6 +11,7 @@
 
 int main(int argc, char **argv)
 {
+  flash_init();
   rng_init();
   multicast_init();
   uuid_init();

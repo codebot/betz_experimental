@@ -424,7 +424,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
       chunk_vec.push_back(chunk[i]);
     send_packet(std::make_unique<FlashWrite>(drive, addr, chunk_vec));
 
-    if (!wait_for_packet(1.0, Packet::ID_FLASH_WRITE))
+    if (!wait_for_packet(3.0, Packet::ID_FLASH_WRITE))
     {
       ROS_ERROR(
           "couldn't write drive %s addr 0x%08x",

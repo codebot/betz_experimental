@@ -26,6 +26,7 @@ TransportSerial::TransportSerial()
 
 bool TransportSerial::open_device(const std::string& device_name)
 {
+  printf("TransportSerial::open_device(%s)\n", device_name.c_str());
   serial = make_unique<LightweightSerial>(device_name.c_str(), 3000000);
   if (!serial->is_ok())
     return false;
@@ -34,6 +35,7 @@ bool TransportSerial::open_device(const std::string& device_name)
 
 bool TransportSerial::send(const uint8_t *data, const uint32_t len)
 {
+  serial->write_block(data, len);
   return true;
 }
 

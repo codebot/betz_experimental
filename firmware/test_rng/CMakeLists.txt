@@ -1,1 +1,1 @@
-betzdrive_add_executable(test_rng main.c)
+betzdrive_raw_executable(test_rng main.c)

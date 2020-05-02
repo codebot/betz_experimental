@@ -1,1 +1,1 @@
-betzdrive_add_executable(test_systime test_systime.c)
+betzdrive_raw_executable(test_systime test_systime.c)

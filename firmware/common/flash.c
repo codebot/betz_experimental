@@ -23,9 +23,11 @@
 
 static void flash_unlock();
 static void flash_lock() __attribute__((unused));
-static flash_result_t flash_wait_for_idle();
+static bool flash_wait_for_idle();
 static uint32_t g_flash_size = 0;
 static uint32_t g_flash_page_size = 0;
+static bool flash_erase_page_by_addr(const uint32_t addr);
+static bool flash_program_word(const uint32_t addr, const uint32_t data);
 
 void flash_init()
 {
@@ -44,52 +46,13 @@ void flash_init()
     g_flash_page_size = 0x20000;  // 128 KB flash sectors
   else if (dev_id == 0x469)
     g_flash_page_size = 0x1000;  // 4096 byte flash pages
+  else
+    printf("AAAAAAHHHH! unknown dev_id!\r\n");
 
   printf("  flash size: %d\r\n", (int)g_flash_size);
   printf("  idcode: 0x%08x\r\n", (int)idcode);
   printf("  dev_id = 0x%03x\r\n", (int)dev_id);
   printf("  flash page size = %d\r\n", (int)g_flash_page_size);
-}
-
-uint32_t flash_size()
-{
-  return g_flash_size;
-}
-
-uint32_t flash_page_size()
-{
-  return g_flash_page_size;
-}
-
-// we'll store parameters in sector 11
-flash_result_t flash_erase_sector(const uint_fast8_t sector)
-{
-  if (sector >= NUM_SECTORS)
-    return FLASH_FAIL; // bogus sector 
-  flash_unlock();
-  flash_wait_for_idle();
-  FLASH->CR &= ~FLASH_CR_PSIZE;
-  FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
-  FLASH->CR &= ~0xf8; // wipe out the sector address bits
-  FLASH->CR |= sector << 3;  // fill in the sector address bits
-  FLASH->CR |= FLASH_CR_SER; // sector erase operation
-  FLASH->CR |= FLASH_CR_STRT; // start the sector-erase operation
-  flash_result_t result = flash_wait_for_idle();
-  FLASH->CR &= ~FLASH_CR_SER; // reset the sector-erase operation bit
-  FLASH->CR &= ~0xf8; // and wipe out the sector address bits
-  //flash_lock(); // lock the flash again
-  return result; // we're done
-}
-
-flash_result_t flash_erase_block_by_addr(const uint32_t addr)
-{
-  if (addr <  0x08020000 ||
-      addr >  0x080fffff ||
-      (addr & 0x1ffff) != 0)
-    return FLASH_FAIL; // bad address
-  int offset = addr - 0x08020000;
-  int block = 5 + offset / 0x20000;
-  return flash_erase_sector(block);
 }
 
 void flash_unlock()
@@ -109,7 +72,7 @@ void flash_lock()
   FLASH->CR |= FLASH_CR_LOCK;
 }
 
-flash_result_t flash_wait_for_idle()
+bool flash_wait_for_idle()
 {
   // uint32_t t_start = SYSTIME;
   while (FLASH->SR & FLASH_SR_BSY)
@@ -126,46 +89,24 @@ flash_result_t flash_wait_for_idle()
     printf("unexpected FLASH_SR error bit: FLASH_SR = 0x%08lx\r\n",
            FLASH->SR);
     FLASH->SR |= (FLASH->SR & 0x1f3); // clear the error bit(s)
-    return FLASH_FAIL;
+    return false;
   }
-  return FLASH_SUCCESS;
+  return true;
 }
 
-flash_result_t flash_program_word(const uint32_t addr, const uint32_t data)
+bool flash_program_word(const uint32_t addr, const uint32_t data)
 {
   flash_unlock();
-  if (FLASH_FAIL == flash_wait_for_idle())
-    return FLASH_FAIL;
+  if (!flash_wait_for_idle())
+    return false;
   FLASH->CR |= FLASH_CR_PG; // set the programming bit
   FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE to get ready to set it
   FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
   *((volatile uint32_t *)addr) = data;
-  flash_result_t result = flash_wait_for_idle();
+  const bool result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
   return result;
-}
-
-flash_result_t flash_program_byte(const uint32_t addr, const uint8_t data)
-{
-  //printf("writing byte 0x%02x to 0x%08lx\r\n", data, (uint32_t)address);
-  if (FLASH_FAIL == flash_wait_for_idle())
-    return FLASH_FAIL;
-  flash_unlock();
-  FLASH->CR &= ~FLASH_CR_PSIZE; // set PSIZE to 0 for byte writes
-  FLASH->CR |= FLASH_CR_PG;
-  //printf("  flash_cr = 0x%08lx\r\n", FLASH->CR);
-  *((volatile uint8_t *)addr) = data;
-  flash_result_t result = flash_wait_for_idle();
-  FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
-  //flash_lock();
-  return result;
-}
-
-flash_result_t flash_flush_d_cache()
-{
-  // todo
-  return FLASH_FAIL;
 }
 
 void flash_read(
@@ -173,7 +114,7 @@ void flash_read(
     const uint32_t len,
     uint8_t *dest_addr)
 {
-  if (len > 65536)
+  if (len >= 65536)
     return;  // sanity-check to avoid anything super bonkers
   memcpy(dest_addr, (const void *)read_addr, len);
 }
@@ -185,14 +126,59 @@ bool flash_write(
 {
   if (write_addr % g_flash_page_size == 0)
   {
-    // todo: erase page
     if (!flash_erase_page_by_addr(write_addr))
       return false;
   }
+
+  // now we can program the payload
+  for (int i = 0; i < write_len; i += 4)
+  {
+    uint32_t word = 0;
+    memcpy(&word, &write_data[i], sizeof(word));
+    flash_program_word(write_addr + i, word);
+  }
+
   return true;
 }
 
 bool flash_erase_page_by_addr(const uint32_t addr)
 {
-  return true;
+  printf("erase page at 0x%08x\r\n", (unsigned)addr);
+  if (g_flash_page_size == 0x20000)
+  {
+    // stm32f405 and friends
+    if (addr <  0x08020000 ||
+        addr >  0x080fffff ||
+        (addr & 0x1ffff) != 0)
+      return false;  // bad address
+    const int offset = addr - 0x08020000;
+    const int sector = 5 + offset / g_flash_page_size;
+
+    flash_unlock();
+    flash_wait_for_idle();
+    FLASH->CR &= ~FLASH_CR_PSIZE;
+    FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
+    FLASH->CR &= ~0xf8; // wipe out the sector address bits
+    // todo: revisit this calculation for sectors beyond 12 (?)
+    FLASH->CR |= sector << 3;  // fill in the sector address bits
+    FLASH->CR |= FLASH_CR_SER; // sector erase operation
+    FLASH->CR |= FLASH_CR_STRT; // start the sector-erase operation
+    const bool result = flash_wait_for_idle();
+    FLASH->CR &= ~FLASH_CR_SER; // reset the sector-erase operation bit
+    FLASH->CR &= ~0xf8; // and wipe out the sector address bits
+    //flash_lock(); // lock the flash again
+    return result; // we're done
+  }
+  else if (g_flash_page_size == 0x1000)
+  {
+    // todo: stm32g474 and friends
+    return false;
+  }
+  else
+  {
+    printf(
+        "OH NO! unrecognized g_flash_page_size: 0x%08x\n",
+        (unsigned)g_flash_page_size);
+    return false;
+  }
 }
