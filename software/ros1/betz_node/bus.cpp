@@ -21,8 +21,9 @@
 #include "ros/ros.h"
 #include "transport_serial.h"
 #include "packet/discovery.h"
-#include "packet/num_params.h"
 #include "packet/flash_read.h"
+#include "packet/flash_write.h"
+#include "packet/num_params.h"
 
 using std::make_shared;
 using std::make_unique;
@@ -347,7 +348,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
   // and bail the first time we see something is not looking right
   const int CHUNK_LEN = 64;
   for (int addr = 0x08020000;
-      !burn_needed && !feof(f) && addr < 0x08100000;
+      !burn_needed && !feof(f) && addr < 0x08080000;
       addr += CHUNK_LEN)
   {
     uint8_t chunk[CHUNK_LEN] = {0};
@@ -361,7 +362,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
     if (!wait_for_packet(1.0, Packet::ID_FLASH_READ))
     {
       ROS_ERROR(
-          "couldn't read drive %s addr %08x",
+          "couldn't read drive %s addr 0x%08x",
           drive.uuid_str.c_str(),
           static_cast<unsigned>(addr));
       return false;
@@ -400,19 +401,39 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
   ROS_INFO("proceeding with burn...");
   rewind(f);
 
+  const int FLASH_PAGE_LEN = 4096;  //0x20000;
+  const int FLASH_NUM_PAGES = 128;
+  // highest flash address: 0x0807_ffff (end of page 127)
+
   for (int addr = 0x08020000;
-      !burn_needed && !feof(f) && addr < 0x08100000;
+      !feof(f) && addr < 0x08080000;
       addr += CHUNK_LEN)
   {
+    ROS_INFO("burning chunk at addr 0x%08x", static_cast<unsigned>(addr));
+
     uint8_t chunk[CHUNK_LEN] = {0};
     size_t nread = fread(chunk, 1, CHUNK_LEN, f);
     if (nread < CHUNK_LEN)
       printf("last read: only got %d bytes from file\n", (int)nread);
 
-    // todo: check if this is aligned on a page boundary, if so, erase page
+    // erasing page is triggered in MCU bootloader when writing the first
+    // chunk of a page
 
-    // todo: write chunk to flash
+    std::vector<uint8_t> chunk_vec;
+    for (int i = 0; i < CHUNK_LEN; i++)
+      chunk_vec.push_back(chunk[i]);
+    send_packet(std::make_unique<FlashWrite>(drive, addr, chunk_vec));
+
+    if (!wait_for_packet(1.0, Packet::ID_FLASH_WRITE))
+    {
+      ROS_ERROR(
+          "couldn't write drive %s addr 0x%08x",
+          drive.uuid_str.c_str(),
+          static_cast<unsigned>(addr));
+      return false;
+    }
   }
+  ROS_INFO("burn complete");
 
   // todo: verify
 

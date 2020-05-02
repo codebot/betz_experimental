@@ -28,8 +28,6 @@ uint8_t g_rs485_id = 42;
 
 void rs485_init()
 {
-  comms_init();
-
   pin_set_output(RS485_TERM_GPIO, RS485_TERM_PIN, 0);
   rs485_enable_termination(true);  // todo: look up in param table
 

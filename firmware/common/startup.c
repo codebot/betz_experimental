@@ -1,7 +1,9 @@
 #include <stdint.h>
+
 #include "console.h"
 #include "control.h"
 #include "comms.h"
+#include "flash.h"
 #include "param.h"
 #include "rng.h"
 #include "rs485.h"
@@ -94,6 +96,7 @@ void reset_vector()
   systime_init();
   param_init();
   uuid_init();
+  flash_init();
   rng_init();
   rs485_init();
   control_init();

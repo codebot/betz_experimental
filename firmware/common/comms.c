@@ -80,7 +80,7 @@ static uint32_t g_comms_discovery_send_time = 0;
 
 // local functions
 static void comms_rx_pkt(const uint8_t *p, const uint32_t len);
-static void comms_tx(const uint8_t *p, const uint32_t len);
+// static void comms_tx(const uint8_t *p, const uint32_t len);
 static void comms_tx_long_addr(const uint8_t *p, const uint32_t len);
 
 /////////////////////////////////////////////////////////////////////
@@ -257,7 +257,7 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
     return;  // cannot. too long.
   }
   // sanity check to make sure the address range lies in flash
-  if (read_addr < 0x08000000 || read_addr > 0x080fffff)
+  if (read_addr < 0x08000000 || read_addr > 0x0807ffff)
   {
     printf("invalid flash read: addr = 0x%08x\r\n", (unsigned)read_addr);
     return;  // cannot. outside flash.
@@ -270,15 +270,52 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
   comms_tx_long_addr(pkt, 9 + read_len);
 }
 
+void comms_write_flash(const uint8_t *data, const uint32_t len)
+{
+  if (len < 9)
+    return;  // must have >= 9 bytes in request message
+  const uint32_t write_len = len - 5;
+  uint32_t write_addr = 0;
+  memcpy(&write_addr, &data[1], sizeof(write_addr));
+  const uint8_t *write_data = &data[9];
+
+  printf(
+      "comms_write_flash(0x%08x, %u)\r\n",
+      (unsigned)write_addr,
+      (unsigned)write_len);
+
+  if (write_len > 64)
+  {
+    printf("invalid flash write: len = %d\r\n", (int)write_len);
+    return;  // cannot. too long.
+  }
+
+  // sanity check to make sure the address range lies in flash
+  if (write_addr < 0x08020000 || write_addr > 0x0807ffff)
+  {
+    printf("invalid flash write: addr = 0x%08x\r\n", (unsigned)write_addr);
+    return;  // cannot. outside flash.
+  }
+
+  // TODO: actually do the write, first erasing the sector/page (if needed)
+  if (flash_write(write_addr, write_len, write_data))
+  {
+    uint8_t pkt[9] = {0};  // length of return request
+    pkt[0] = 0xf2;
+    memcpy(&pkt[1], &write_addr, sizeof(write_addr));
+    memcpy(&pkt[5], &write_len, sizeof(write_len));
+    comms_tx_long_addr(pkt, 9);
+  }
+}
+
 void comms_discovery(const uint8_t *p, const uint32_t len)
 {
-  printf("comms_discovery()\n");
   if (len >= 3)
   {
     const uint16_t req_max_delay = (uint16_t)(p[1]) | (p[2] << 8);
     uint32_t sampled_delay = rng_read() % (uint32_t)req_max_delay;
     g_comms_discovery_send_time = systime_read() + sampled_delay;
-    printf("discovery response in %u usec\n", (unsigned)sampled_delay);
+    // printf("discovery response in %u usec\n", (unsigned)sampled_delay);
     // for now, ignore the corner cases where this equals zero or wraparound
     // we'll query multiple times on the host to enumerate anyway.
   }
@@ -307,12 +344,14 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
     case 0x01: comms_num_params(); break;
     case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_read_flash(p, len); break;
+    case 0xf2: comms_write_flash(p, len); break;
     default: 
       printf("unhandled packet id: [%02x]\n", pkt_id);
       break;
   }
 }
 
+#if 0
 void comms_tx(const uint8_t *data, const uint32_t len)
 {
   printf("comms_tx(%d)\r\n", (int)len);
@@ -345,6 +384,7 @@ void comms_tx(const uint8_t *data, const uint32_t len)
   else
     printf("woah! no raw tx fptr set\n");
 }
+#endif
 
 static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
 {

@@ -13,11 +13,53 @@
 //   application: 768 KB spanning sectors 5..10
 //   parameters: 128 KB in sector 11
 
+// stm32g474 has 128 pages of 4K bytes each (512K total)
+// flash organization:
+//   bootloader: first 128 KB
+//   application: next 256 KB
+//   parameters: last 128 KB
+
 #define NUM_SECTORS 12
 
 static void flash_unlock();
 static void flash_lock() __attribute__((unused));
 static flash_result_t flash_wait_for_idle();
+static uint32_t g_flash_size = 0;
+static uint32_t g_flash_page_size = 0;
+
+void flash_init()
+{
+  // figure out the parameters of the device we are running on
+  uint16_t size_kb = 0;
+  memcpy(&size_kb, (uint16_t *)FLASHSIZE_BASE, 2);
+  g_flash_size = (uint32_t)size_kb * 1024;
+
+  uint32_t idcode = 0;
+  memcpy(&idcode, (uint32_t *)DBGMCU_BASE, 4);
+
+  printf("flash_init()\r\n");
+
+  const uint32_t dev_id = idcode & 0xfff;
+  if (dev_id == 0x413)
+    g_flash_page_size = 0x20000;  // 128 KB flash sectors
+  else if (dev_id == 0x469)
+    g_flash_page_size = 0x1000;  // 4096 byte flash pages
+
+  printf("  flash size: %d\r\n", (int)g_flash_size);
+  printf("  idcode: 0x%08x\r\n", (int)idcode);
+  printf("  dev_id = 0x%03x\r\n", (int)dev_id);
+  printf("  flash page size = %d\r\n", (int)g_flash_page_size);
+}
+
+uint32_t flash_size()
+{
+  return g_flash_size;
+}
+
+uint32_t flash_page_size()
+{
+  return g_flash_page_size;
+}
 
 // we'll store parameters in sector 11
 flash_result_t flash_erase_sector(const uint_fast8_t sector)
@@ -134,4 +176,23 @@ void flash_read(
   if (len > 65536)
     return;  // sanity-check to avoid anything super bonkers
   memcpy(dest_addr, (const void *)read_addr, len);
+}
+
+bool flash_write(
+    const uint32_t write_addr,
+    const uint32_t write_len,
+    const uint8_t *write_data)
+{
+  if (write_addr % g_flash_page_size == 0)
+  {
+    // todo: erase page
+    if (!flash_erase_page_by_addr(write_addr))
+      return false;
+  }
+  return true;
+}
+
+bool flash_erase_page_by_addr(const uint32_t addr)
+{
+  return true;
 }
