@@ -92,6 +92,8 @@ Connection ~ 9150 3300
 Connection ~ 9150 2900
 Connection ~ 9150 3100
 Connection ~ 9150 3500
+Connection ~ 6050 1750
+Connection ~ 6050 1850
 NoConn ~ 9850 5400
 NoConn ~ 4300 3500
 NoConn ~ 4300 3600
@@ -206,11 +208,11 @@ Wire Wire Line
 Wire Wire Line
 	3000 1700 3700 1700
 Wire Wire Line
-	3650 6800 4050 6800
+	3600 6800 4050 6800
 Wire Wire Line
-	3650 7000 4050 7000
+	3600 7000 4050 7000
 Wire Wire Line
-	3650 7200 4050 7200
+	3600 7200 4050 7200
 Wire Wire Line
 	4050 6900 4050 7000
 Wire Wire Line
@@ -250,9 +252,9 @@ Wire Wire Line
 Wire Wire Line
 	5275 1550 5375 1550
 Wire Wire Line
-	5275 1750 6325 1750
+	5275 1750 6050 1750
 Wire Wire Line
-	5275 1850 6625 1850
+	5275 1850 6050 1850
 Wire Wire Line
 	5275 2050 5375 2050
 Wire Wire Line
@@ -269,6 +271,10 @@ Wire Wire Line
 	5575 1350 5975 1350
 Wire Wire Line
 	5975 1150 6325 1150
+Wire Wire Line
+	6050 1750 6325 1750
+Wire Wire Line
+	6050 1850 6625 1850
 Wire Wire Line
 	6325 1150 6625 1150
 Wire Wire Line
@@ -320,6 +326,22 @@ Wire Wire Line
 Wire Wire Line
 	7875 4225 7975 4225
 Wire Wire Line
+	7900 1700 8200 1700
+Wire Wire Line
+	7900 1800 8200 1800
+Wire Wire Line
+	7900 1900 8200 1900
+Wire Wire Line
+	7900 2000 8200 2000
+Wire Wire Line
+	7900 2100 8200 2100
+Wire Wire Line
+	7900 2200 8200 2200
+Wire Wire Line
+	7900 2300 8200 2300
+Wire Wire Line
+	7900 2400 8200 2400
+Wire Wire Line
 	7900 5000 7900 5100
 Wire Wire Line
 	7900 5000 8300 5000
@@ -327,22 +349,6 @@ Wire Wire Line
 	7900 5300 7900 5700
 Wire Wire Line
 	7900 5700 8300 5700
-Wire Wire Line
-	7950 1700 8200 1700
-Wire Wire Line
-	7950 1800 8200 1800
-Wire Wire Line
-	7950 1900 8200 1900
-Wire Wire Line
-	7950 2000 8200 2000
-Wire Wire Line
-	7950 2100 8200 2100
-Wire Wire Line
-	7950 2200 8200 2200
-Wire Wire Line
-	7950 2300 8200 2300
-Wire Wire Line
-	7950 2400 8200 2400
 Wire Wire Line
 	7950 3000 7950 3300
 Wire Wire Line
@@ -517,8 +523,6 @@ Text Notes 3575 4275 0    50   ~ 0
 SPI2
 Text Notes 9650 2300 0    50   ~ 0
 datasheet: 100n\neval board: 470n
-Text Notes 9900 6350 0    118  ~ 24
-todo:\ntest points
 Text Notes 10325 4475 2    50   ~ 0
 housing: Molex 1053081204
 Text Notes 10550 3400 2    50   ~ 0
@@ -683,6 +687,182 @@ Text Label 9525 4325 2    50   ~ 0
 RS485-
 Text Label 10025 4325 0    50   ~ 0
 RS485+
+$Comp
+L Connector:TestPoint_Small TP4
+U 1 1 5EB7C69C
+P 3600 6800
+F 0 "TP4" H 3425 6850 50  0000 L CNN
+F 1 "TestPoint_Small" H 3645 6755 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 3800 6800 50  0001 C CNN
+F 3 "~" H 3800 6800 50  0001 C CNN
+	1    3600 6800
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP5
+U 1 1 5EB80630
+P 3600 7000
+F 0 "TP5" H 3425 7050 50  0000 L CNN
+F 1 "TestPoint_Small" H 3645 6955 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 3800 7000 50  0001 C CNN
+F 3 "~" H 3800 7000 50  0001 C CNN
+	1    3600 7000
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP6
+U 1 1 5EB80FBE
+P 3600 7200
+F 0 "TP6" H 3425 7250 50  0000 L CNN
+F 1 "TestPoint_Small" H 3645 7155 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 3800 7200 50  0001 C CNN
+F 3 "~" H 3800 7200 50  0001 C CNN
+	1    3600 7200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP7
+U 1 1 5EB83435
+P 6050 1750
+F 0 "TP7" H 5875 1800 50  0000 L CNN
+F 1 "TestPoint_Small" H 6095 1705 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 6250 1750 50  0001 C CNN
+F 3 "~" H 6250 1750 50  0001 C CNN
+	1    6050 1750
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP8
+U 1 1 5EB88CDC
+P 6050 1850
+F 0 "TP8" H 5875 1900 50  0000 L CNN
+F 1 "TestPoint_Small" H 6095 1805 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 6250 1850 50  0001 C CNN
+F 3 "~" H 6250 1850 50  0001 C CNN
+	1    6050 1850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP1
+U 1 1 5EB76D05
+P 7350 3100
+F 0 "TP1" H 7175 3150 50  0000 L CNN
+F 1 "TestPoint_Small" H 7395 3055 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 7550 3100 50  0001 C CNN
+F 3 "~" H 7550 3100 50  0001 C CNN
+	1    7350 3100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP2
+U 1 1 5EB770D7
+P 7650 3200
+F 0 "TP2" H 7500 3250 50  0000 L CNN
+F 1 "TestPoint_Small" H 7695 3155 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 7850 3200 50  0001 C CNN
+F 3 "~" H 7850 3200 50  0001 C CNN
+	1    7650 3200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP16
+U 1 1 5EB93A3F
+P 7900 1700
+F 0 "TP16" H 7725 1750 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 1655 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 1700 50  0001 C CNN
+F 3 "~" H 8100 1700 50  0001 C CNN
+	1    7900 1700
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP9
+U 1 1 5EB90F6B
+P 7900 1800
+F 0 "TP9" H 7725 1850 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 1755 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 1800 50  0001 C CNN
+F 3 "~" H 8100 1800 50  0001 C CNN
+	1    7900 1800
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP10
+U 1 1 5EB8AACF
+P 7900 1900
+F 0 "TP10" H 7725 1950 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 1855 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 1900 50  0001 C CNN
+F 3 "~" H 8100 1900 50  0001 C CNN
+	1    7900 1900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP11
+U 1 1 5EB8E21B
+P 7900 2000
+F 0 "TP11" H 7725 2050 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 1955 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 2000 50  0001 C CNN
+F 3 "~" H 8100 2000 50  0001 C CNN
+	1    7900 2000
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP12
+U 1 1 5EB8E933
+P 7900 2100
+F 0 "TP12" H 7725 2150 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 2055 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 2100 50  0001 C CNN
+F 3 "~" H 8100 2100 50  0001 C CNN
+	1    7900 2100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP13
+U 1 1 5EB8F11D
+P 7900 2200
+F 0 "TP13" H 7725 2250 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 2155 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 2200 50  0001 C CNN
+F 3 "~" H 8100 2200 50  0001 C CNN
+	1    7900 2200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP14
+U 1 1 5EB8F6E3
+P 7900 2300
+F 0 "TP14" H 7725 2350 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 2255 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 2300 50  0001 C CNN
+F 3 "~" H 8100 2300 50  0001 C CNN
+	1    7900 2300
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP15
+U 1 1 5EB8FD35
+P 7900 2400
+F 0 "TP15" H 7725 2450 50  0000 L CNN
+F 1 "TestPoint_Small" H 7945 2355 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8100 2400 50  0001 C CNN
+F 3 "~" H 8100 2400 50  0001 C CNN
+	1    7900 2400
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint_Small TP3
+U 1 1 5EB77A71
+P 7950 3300
+F 0 "TP3" H 7800 3350 50  0000 L CNN
+F 1 "TestPoint_Small" H 7995 3255 50  0001 L CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 8150 3300 50  0001 C CNN
+F 3 "~" H 8150 3300 50  0001 C CNN
+	1    7950 3300
+	1    0    0    -1  
+$EndComp
 $Comp
 L power:+3V3 #PWR0109
 U 1 1 5EAEE76B
@@ -1297,10 +1477,11 @@ F 0 "C9" H 10441 1845 50  0000 L CNN
 F 1 "100u" H 10441 1755 50  0000 L CNN
 F 2 "Capacitor_THT:C_Radial_D6.3mm_H11.0mm_P2.50mm" H 10350 1800 50  0001 C CNN
 F 3 "~" H 10350 1800 50  0001 C CNN
-F 4 "Digikey" H 10350 1800 50  0001 C CNN "D1N"
-F 5 "1189-1300-ND" H 10350 1800 50  0001 C CNN "D1PN"
-F 6 "Rubycon" H 10350 1800 50  0001 C CNN "MFN"
-F 7 "35ZLH100MEFC6.3X11" H 10350 1800 50  0001 C CNN "MPN"
+F 4 "DNP" H 10350 1800 50  0001 C CNN "D1N"
+F 5 "DNP" H 10350 1800 50  0001 C CNN "D1PN"
+F 6 "DNP" H 10350 1800 50  0001 C CNN "MFN"
+F 7 "DNP" H 10350 1800 50  0001 C CNN "MPN"
+F 8 "1189-1300-ND" H 10350 1800 50  0001 C CNN "DNP_PN"
 	1    10350 1800
 	1    0    0    -1  
 $EndComp
@@ -1312,10 +1493,11 @@ F 0 "C17" H 10841 1845 50  0000 L CNN
 F 1 "100u" H 10841 1755 50  0000 L CNN
 F 2 "Capacitor_THT:C_Radial_D6.3mm_H11.0mm_P2.50mm" H 10750 1800 50  0001 C CNN
 F 3 "~" H 10750 1800 50  0001 C CNN
-F 4 "Digikey" H 10841 1945 50  0001 C CNN "D1N"
-F 5 "1189-1300-ND" H 10841 1945 50  0001 C CNN "D1PN"
-F 6 "Rubycon" H 10841 1945 50  0001 C CNN "MFN"
-F 7 "35ZLH100MEFC6.3X11" H 10750 1800 50  0001 C CNN "MPN"
+F 4 "DNP" H 10841 1945 50  0001 C CNN "D1N"
+F 5 "DNP" H 10841 1945 50  0001 C CNN "D1PN"
+F 6 "DNP" H 10841 1945 50  0001 C CNN "MFN"
+F 7 "DNP" H 10750 1800 50  0001 C CNN "MPN"
+F 8 "1189-1300-ND" H 10750 1800 50  0001 C CNN "DNP_PN"
 	1    10750 1800
 	1    0    0    -1  
 $EndComp
@@ -1990,10 +2172,10 @@ F 0 "U4" H 8675 3764 50  0000 C CNN
 F 1 "MP6540" H 8675 3673 50  0000 C CNN
 F 2 "MPS:MP6540" H 8600 3350 50  0001 C CNN
 F 3 "" H 8600 3350 50  0001 C CNN
-F 4 "checking" H 8675 3864 50  0001 C CNN "D1N"
-F 5 "checking" H 8675 3864 50  0001 C CNN "D1PN"
-F 6 "checking" H 8675 3864 50  0001 C CNN "MFN"
-F 7 "checking" H 8675 3864 50  0001 C CNN "MPN"
+F 4 "Mouser" H 8675 3864 50  0001 C CNN "D1N"
+F 5 "946-MP6540AGU-P" H 8675 3864 50  0001 C CNN "D1PN"
+F 6 "MPS" H 8675 3864 50  0001 C CNN "MFN"
+F 7 "MP6540AGU" H 8675 3864 50  0001 C CNN "MPN"
 	1    8700 2600
 	1    0    0    -1  
 $EndComp

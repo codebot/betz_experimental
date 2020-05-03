@@ -1,12 +1,10 @@
-update=Fri May  1 23:16:59 2020
+update=Sun May  3 23:48:30 2020
 last_client=kicad
 [general]
 version=1
 [PcbFrame]
 version=1
 [ModEditFrame]
-version=1
-[SchematicFrame]
 version=1
 [schematic_editor]
 version=1
@@ -31,6 +29,10 @@ ERC_CheckBusToBusConflicts=1
 ERC_CheckBusToNetConflicts=1
 [LibeditFrame]
 version=1
+[SchematicFrame]
+version=1
+[sheetnames]
+1=00000000-0000-0000-0000-00005eaed220:
 [pcbnew]
 version=1
 PageLayoutDescrFile=
@@ -279,5 +281,3 @@ uViaDrill=0.1
 dPairWidth=0.2
 dPairGap=0.25
 dPairViaGap=0.25
-[sheetnames]
-1=00000000-0000-0000-0000-00005eb434f0:
