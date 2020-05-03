@@ -6,6 +6,7 @@
 #include "enc.h"
 #include "flash.h"
 #include "param.h"
+#include "pwm.h"
 #include "rng.h"
 #include "rs485.h"
 #include "stm32f405xx.h"
@@ -98,6 +99,7 @@ void reset_vector()
   param_init();
   uuid_init();
   flash_init();
+  pwm_init();
   rng_init();
   rs485_init();
   enc_init();
