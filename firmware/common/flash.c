@@ -39,8 +39,6 @@ void flash_init()
   uint32_t idcode = 0;
   memcpy(&idcode, (uint32_t *)DBGMCU_BASE, 4);
 
-  printf("flash_init()\r\n");
-
   const uint32_t dev_id = idcode & 0xfff;
   if (dev_id == 0x413)
     g_flash_page_size = 0x20000;  // 128 KB flash sectors
@@ -49,10 +47,12 @@ void flash_init()
   else
     printf("AAAAAAHHHH! unknown dev_id!\r\n");
 
+  /*
   printf("  flash size: %d\r\n", (int)g_flash_size);
   printf("  idcode: 0x%08x\r\n", (int)idcode);
   printf("  dev_id = 0x%03x\r\n", (int)dev_id);
   printf("  flash page size = %d\r\n", (int)g_flash_page_size);
+  */
 }
 
 void flash_unlock()

@@ -25,6 +25,7 @@
 #include "packet/flash_read.h"
 #include "packet/flash_write.h"
 #include "packet/num_params.h"
+#include "packet/reset.h"
 
 using std::make_shared;
 using std::make_unique;
@@ -60,7 +61,7 @@ bool Bus::send_packet(std::unique_ptr<Packet> packet)
 // this function spins max_seconds or until packet_id arrives
 bool Bus::wait_for_packet(const double max_seconds, const uint8_t packet_id)
 {
-  ros::Rate loop_rate(1000);
+  ros::Rate loop_rate(10000);
   ros::Time t_end = ros::Time::now() + ros::Duration(max_seconds);
   static uint8_t rx_buf[1024] = {0};
   while (ros::ok())
@@ -343,11 +344,18 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
     return false;
   }
 
+  ROS_INFO("resetting drive %s", drive.uuid_str.c_str());
+  send_packet(std::make_unique<Reset>(drive));
+  ros::Duration(1.0).sleep();
+  ROS_INFO("done resetting %s", drive.uuid_str.c_str());
+
+  ROS_INFO("reading image...");
+
   bool burn_needed = false;
 
   // first make sure we actually need to do this: read back flash image
   // and bail the first time we see something is not looking right
-  const int CHUNK_LEN = 64;
+  const int CHUNK_LEN = 128;
   for (int addr = 0x08020000;
       !burn_needed && !feof(f) && addr < 0x08080000;
       addr += CHUNK_LEN)

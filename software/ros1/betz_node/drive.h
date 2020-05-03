@@ -44,6 +44,7 @@ public:
   void rx_flash_read(const Packet& packet);
   void rx_flash_write(const Packet& packet);
   void rx_discovery(const Packet& packet);
+  void rx_boot(const Packet& packet);
 
   Drive();
   ~Drive();

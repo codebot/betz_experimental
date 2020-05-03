@@ -19,12 +19,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bootloader.h"
 #include "comms.h"
 #include "flash.h"
 #include "param.h"
 #include "rng.h"
 #include "rs485.h"
+#include "sys.h"
 #include "systime.h"
 #include "uuid.h"
 
@@ -75,9 +75,10 @@ static bool g_comms_parser_long_address = false;
 static bool g_comms_parser_ignore_pkt = false;
 static uint8_t g_comms_parser_addr[COMMS_LONG_ADDR_LEN] = {0};
 static uint8_t g_comms_id = 0;
-static uint8_t g_comms_is_bootloader = 0;
+static bool g_comms_is_bootloader = false;
 
 static uint32_t g_comms_discovery_send_time = 0;
+static bool g_comms_init_complete = false;
 
 // local functions
 static void comms_rx_pkt(const uint8_t *p, const uint32_t len);
@@ -86,14 +87,27 @@ static void comms_tx_long_addr(const uint8_t *p, const uint32_t len);
 
 /////////////////////////////////////////////////////////////////////
 
-void comms_init(const uint8_t is_bootloader)
+void comms_init(void (*tx_fptr)(const uint8_t *, const uint32_t))
 {
-  g_comms_is_bootloader = is_bootloader;
+  printf("comms_init()\r\n");
   g_comms_parser_state = PS_PREAMBLE;
+  g_comms_raw_tx_fptr = tx_fptr;
 }
 
 void comms_tick()
 {
+  if (!g_comms_init_complete)
+  {
+    g_comms_init_complete = true;
+
+    if (!g_comms_is_bootloader)
+    {
+      uint8_t pkt[1] = {1};
+      pkt[0] = 0xf3;
+      comms_tx_long_addr(pkt, 1);
+    }
+  }
+
   if (g_comms_discovery_send_time)
   {
     const uint32_t t = systime_read();
@@ -106,14 +120,6 @@ void comms_tick()
       comms_tx_long_addr(pkt, 2);
     }
   }
-
-  // todo: if this is the first tick and we're not in bootloader mode,
-  // send a "boot" packet
-}
-
-void comms_set_raw_tx_fptr(void (*fptr)(const uint8_t *, const uint32_t))
-{
-  g_comms_raw_tx_fptr = fptr;
 }
 
 static inline uint16_t comms_crc_byte(const uint16_t crc, const uint8_t b)
@@ -276,6 +282,9 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
 
 void comms_write_flash(const uint8_t *data, const uint32_t len)
 {
+  if (!g_comms_is_bootloader)
+    return;
+
   if (len < 9)
     return;  // must have >= 9 bytes in request message
   const uint32_t write_len = len - 5;
@@ -290,7 +299,7 @@ void comms_write_flash(const uint8_t *data, const uint32_t len)
       (unsigned)write_len);
   */
 
-  if (write_len > 64)
+  if (write_len > 128)
   {
     printf("invalid flash write: len = %d\r\n", (int)write_len);
     return;  // cannot. too long.
@@ -330,9 +339,18 @@ void comms_boot()
 {
   printf("comms_boot()\r\n");
   if (!g_comms_is_bootloader)
+  {
+    printf("not in bootloader!\r\n");
     return;
+  }
 
-  bootloader_run_application();  // this function never returns!
+  sys_run_application();  // this isn't really a function, more a JUMP
+}
+
+void comms_reset()
+{
+  printf("comms_reset()\r\n");
+  sys_reset();  // buh bye
 }
 
 void comms_num_params()
@@ -360,6 +378,7 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
     case 0xf1: comms_read_flash(p, len); break;
     case 0xf2: comms_write_flash(p, len); break;
     case 0xf3: comms_boot(); break;
+    case 0xf4: comms_reset(); break;
     default: 
       printf("unhandled packet id: [%02x]\n", pkt_id);
       break;
@@ -425,5 +444,10 @@ static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
   if (g_comms_raw_tx_fptr)
     g_comms_raw_tx_fptr(framed_pkt, len + 17);
   else
-    printf("woah! no raw tx fptr set\n");
+    printf("woah! no raw tx fptr set\r\n");
+}
+
+void comms_set_bootloader_mode()
+{
+  g_comms_is_bootloader = true;
 }

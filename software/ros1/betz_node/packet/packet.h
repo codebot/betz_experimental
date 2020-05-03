@@ -61,6 +61,7 @@ public:
     ID_FLASH_READ = 0xf1,
     ID_FLASH_WRITE = 0xf2,
     ID_BOOT = 0xf3,
+    ID_RESET = 0xf4,
   };
 
   void clear();

@@ -6,6 +6,7 @@
 
 int main(int argc, char **argv)
 {
+  comms_set_bootloader_mode();
   status_led_off();
   uint32_t t_blink = systime_read();
   while (1)

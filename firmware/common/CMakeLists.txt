@@ -1,5 +1,4 @@
 add_library(common
-  bootloader.c
   comms.c
   console.c
   control.c
@@ -14,6 +13,7 @@ add_library(common
   status_led.c
   stm32f4_vectors.c
   stubs.c
+  sys.c
   systime.c
   uuid.c
 )

@@ -15,17 +15,13 @@
  *
 */
 
-#include "bootloader.h"
-#include "stm32f405xx.h"
+#include "reset.h"
+using betz::Reset;
+using betz::Packet;
 
-void bootloader_run_application()
+Reset::Reset(const Drive& drive)
 {
-  __disable_irq();
-  SCB->VTOR = 0x20000;  // move the vector table offset
-  // next, we do some extreme low level action and load the new stack
-  // pointer, set the PC to the application, and brace for impact
-  __asm volatile("ldr r0, =0x08020000 \n"
-                 "ldr sp, [r0]        \n"
-                 "ldr pc, [r0, #4]    \n");
-  // BOOM we have now teleported into the application
+  flags = FLAG_SENTINEL | FLAG_ADDR_UUID;
+  uuid = drive.uuid;
+  payload.push_back(ID_RESET);
 }

@@ -18,6 +18,7 @@ function(betzdrive_raw_executable stem)
     -Wl,-Map=${CMAKE_CURRENT_BINARY_DIR}/map,--cref \
     -T ${PROJECT_SOURCE_DIR}/common/stm32f405_bl.ld \
 ")
+  target_compile_definitions(${stem}.elf PUBLIC IS_BOOTLOADER)
   target_link_libraries(${stem}.elf common)
   add_custom_command(TARGET ${stem}.elf POST_BUILD
       COMMAND arm-none-eabi-objcopy -O binary ${stem}.elf ${stem}.bin

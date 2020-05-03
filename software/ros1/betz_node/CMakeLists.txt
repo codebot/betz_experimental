@@ -36,11 +36,12 @@ add_executable(betz_node
   packet/boot.cpp
   packet/crc.cpp
   packet/discovery.cpp
+  packet/flash_read.cpp
+  packet/flash_write.cpp
   packet/num_params.cpp
   packet/param_name.cpp
   packet/param_value.cpp
-  packet/flash_read.cpp
-  packet/flash_write.cpp
+  packet/reset.cpp
   packet/packet.cpp
   transport_serial.cpp
   transport_multicast.cpp)

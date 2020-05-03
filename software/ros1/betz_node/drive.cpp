@@ -70,6 +70,11 @@ void Drive::rx_flash_write(const Packet& packet)
   // a successful write
 }
 
+void Drive::rx_boot(const Packet& packet)
+{
+  is_bootloader = false;
+}
+
 void Drive::rx_packet(const Packet& packet)
 {
   if (packet.payload.size() == 0)
@@ -86,6 +91,7 @@ void Drive::rx_packet(const Packet& packet)
     case Packet::ID_DISCOVERY:   rx_discovery(packet); break;
     case Packet::ID_FLASH_READ:  rx_flash_read(packet); break;
     case Packet::ID_FLASH_WRITE: rx_flash_write(packet); break;
+    case Packet::ID_BOOT:        rx_boot(packet); break;
     default:
       ROS_INFO(
           "unrecognized packet ID: %02x",

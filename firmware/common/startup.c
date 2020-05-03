@@ -100,12 +100,9 @@ void reset_vector()
   rng_init();
   rs485_init();
   control_init();
-
-  comms_init(1);
-  comms_set_raw_tx_fptr(rs485_tx);
+  comms_init(rs485_tx);
 
   __enable_irq();
   main(); // jump to application main()
   while (1) { } // hopefully we never get here...
 }
-

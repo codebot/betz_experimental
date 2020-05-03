@@ -15,4 +15,10 @@
  *
 */
 
-void bootloader_run_application();
+#ifndef SYS_H
+#define SYS_H
+
+void sys_run_application();
+void sys_reset();
+
+#endif
