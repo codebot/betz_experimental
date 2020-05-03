@@ -188,9 +188,12 @@ int BetzNode::burn_firmware(const string& filename)
     return 1;
   }
   else
-  {
     ROS_INFO("firmware burn completed");
-    return 0;
+
+  if (!bus.boot_all_drives())
+  {
+    ROS_FATAL("unable to boot all drives");
+    return 1;
   }
 }
 

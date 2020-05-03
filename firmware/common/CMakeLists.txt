@@ -3,6 +3,7 @@ add_library(common
   console.c
   control.c
   delay.c
+  enc.c
   flash.c
   param.c
   pin.c

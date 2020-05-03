@@ -3,6 +3,7 @@
 #include "console.h"
 #include "control.h"
 #include "comms.h"
+#include "enc.h"
 #include "flash.h"
 #include "param.h"
 #include "rng.h"
@@ -99,6 +100,7 @@ void reset_vector()
   flash_init();
   rng_init();
   rs485_init();
+  enc_init();
   control_init();
   comms_init(rs485_tx);
 

@@ -32,7 +32,7 @@ function(betzdrive_raw_executable stem)
       VERBATIM)
   add_custom_target(${stem}.gdb
       DEPENDS ${stem}.elf
-      COMMAND arm-none-eabi-gdb ${stem}.elf -x ${PROJECT_SOURCE_DIR}/common/gdb_init_commands
+      COMMAND gdb-multiarch ${stem}.elf -x ${PROJECT_SOURCE_DIR}/common/gdb_init_commands
       VERBATIM)
 endfunction()
 
@@ -53,7 +53,7 @@ function(betzdrive_application stem)
       COMMENT "disassembling ${stem}.elf")
   add_custom_target(${stem}.gdb
       DEPENDS ${stem}.elf
-      COMMAND arm-none-eabi-gdb ${stem}.elf -x ${PROJECT_SOURCE_DIR}/common/gdb_init_commands
+      COMMAND gdb-multiarch ${stem}.elf -x ${PROJECT_SOURCE_DIR}/common/gdb_init_commands
       VERBATIM)
 endfunction()
 
@@ -80,3 +80,4 @@ add_subdirectory(test_uuid)
 add_subdirectory(test_rng)
 
 add_subdirectory(app_blink)
+add_subdirectory(app_test_enc)

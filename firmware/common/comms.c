@@ -89,7 +89,6 @@ static void comms_tx_long_addr(const uint8_t *p, const uint32_t len);
 
 void comms_init(void (*tx_fptr)(const uint8_t *, const uint32_t))
 {
-  printf("comms_init()\r\n");
   g_comms_parser_state = PS_PREAMBLE;
   g_comms_raw_tx_fptr = tx_fptr;
 }
@@ -337,19 +336,14 @@ void comms_discovery(const uint8_t *p, const uint32_t len)
 
 void comms_boot()
 {
-  printf("comms_boot()\r\n");
   if (!g_comms_is_bootloader)
-  {
-    printf("not in bootloader!\r\n");
     return;
-  }
 
   sys_run_application();  // this isn't really a function, more a JUMP
 }
 
 void comms_reset()
 {
-  printf("comms_reset()\r\n");
   sys_reset();  // buh bye
 }
 

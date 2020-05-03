@@ -34,5 +34,6 @@ void sys_run_application()
 
 void sys_reset()
 {
+  printf("sys_reset()\r\n");
   NVIC_SystemReset();  // BOOM
 }
