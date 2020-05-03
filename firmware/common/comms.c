@@ -106,6 +106,9 @@ void comms_tick()
       comms_tx_long_addr(pkt, 2);
     }
   }
+
+  // todo: if this is the first tick and we're not in bootloader mode,
+  // send a "boot" packet
 }
 
 void comms_set_raw_tx_fptr(void (*fptr)(const uint8_t *, const uint32_t))
@@ -323,8 +326,9 @@ void comms_discovery(const uint8_t *p, const uint32_t len)
   }
 }
 
-void comms_run_application()
+void comms_boot()
 {
+  printf("comms_boot()\r\n");
   if (!g_comms_is_bootloader)
     return;
 
@@ -333,7 +337,7 @@ void comms_run_application()
 
 void comms_num_params()
 {
-  printf("comms_num_params()\n");
+  printf("comms_num_params()\r\n");
   uint8_t pkt[5] = {0};
   pkt[0] = 0x01;
   const uint32_t num_params = param_count();
@@ -355,7 +359,7 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
     case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_read_flash(p, len); break;
     case 0xf2: comms_write_flash(p, len); break;
-    case 0xf3: comms_run_application(); break;
+    case 0xf3: comms_boot(); break;
     default: 
       printf("unhandled packet id: [%02x]\n", pkt_id);
       break;

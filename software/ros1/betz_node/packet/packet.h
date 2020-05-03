@@ -60,8 +60,8 @@ public:
     ID_DISCOVERY  = 0xf0,
     ID_FLASH_READ = 0xf1,
     ID_FLASH_WRITE = 0xf2,
+    ID_BOOT = 0xf3,
   };
-  //static const uint8_t 
 
   void clear();
   size_t size() const;

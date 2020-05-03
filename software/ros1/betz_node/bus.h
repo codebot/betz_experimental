@@ -99,6 +99,7 @@ public:
   void enumeration_tick();
 
   bool burn_firmware(const std::string& firmware_filename);
+  bool boot_all_drives();
 
 private:
   uint8_t rx_buf[4096] = {0};

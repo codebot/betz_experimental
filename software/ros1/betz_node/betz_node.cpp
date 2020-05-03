@@ -169,7 +169,13 @@ int BetzNode::init(int argc, char **argv)
 int BetzNode::run()
 {
   ROS_INFO("run()");
-  // todo: if the drive was discovered in bootloader state, tell it to boot
+  // no harm in asking an already-running drive to boot; it just ignores it
+  if (!bus.boot_all_drives())
+  {
+    ROS_FATAL("unable to boot all drives");
+    return 1;
+  }
+  // todo: enumerate and stuff
   return 0;
 }
 

@@ -20,6 +20,7 @@
 #include "bus.h"
 #include "ros/ros.h"
 #include "transport_serial.h"
+#include "packet/boot.h"
 #include "packet/discovery.h"
 #include "packet/flash_read.h"
 #include "packet/flash_write.h"
@@ -401,8 +402,6 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
   ROS_INFO("proceeding with burn...");
   rewind(f);
 
-  const int FLASH_PAGE_LEN = 4096;  //0x20000;
-  const int FLASH_NUM_PAGES = 128;
   // highest flash address: 0x0807_ffff (end of page 127)
 
   for (int addr = 0x08020000;
@@ -437,5 +436,19 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
 
   // todo: verify
 
+  return true;
+}
+
+bool Bus::boot_all_drives()
+{
+  for (auto drive : drives)
+  {
+    send_packet(std::make_unique<Boot>(*drive));
+    if (!wait_for_packet(1.0, Packet::ID_BOOT))
+    {
+      ROS_ERROR("couldn't boot drive %s", drive->uuid_str.c_str());
+      return false;
+    }
+  }
   return true;
 }

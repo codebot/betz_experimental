@@ -33,6 +33,7 @@ add_executable(betz_node
   drive.cpp
   lightweightserial.cpp
   main.cpp
+  packet/boot.cpp
   packet/crc.cpp
   packet/discovery.cpp
   packet/num_params.cpp
