@@ -17,7 +17,8 @@ int main(int argc, char **argv)
   uuid_init();
   param_init();
   control_init();
-  comms_set_raw_tx_fptr(multicast_tx);
+  comms_init(multicast_tx);
+  comms_set_bootloader_mode(true);
 
   while (true)
   {

@@ -441,7 +441,7 @@ static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
     printf("woah! no raw tx fptr set\r\n");
 }
 
-void comms_set_bootloader_mode()
+void comms_set_bootloader_mode(const bool is_bootloader)
 {
-  g_comms_is_bootloader = true;
+  g_comms_is_bootloader = is_bootloader;
 }

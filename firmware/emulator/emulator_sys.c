@@ -15,9 +15,19 @@
  *
 */
 
-#include "bootloader.h"
+#include <stdio.h>
 
-void bootloader_run_application()
+#include "comms.h"
+#include "sys.h"
+
+void sys_run_application()
 {
-  return;  // this is a no-op for now in the comms emulator
+  printf("sys_run_application()\n");
+  comms_set_bootloader_mode(false);
+}
+
+void sys_reset()
+{
+  printf("sys_reset()\n");
+  comms_set_bootloader_mode(true);
 }
