@@ -20,6 +20,7 @@
 
 #include <QMainWindow>
 #include "bus.h"
+#include "packet/packet.h"
 #include <ros/ros.h>
 
 namespace Ui {
@@ -42,12 +43,10 @@ public slots:
 public:
   betz::Bus bus;
   ros::NodeHandle ros_node;
+  void packet_received(const betz::Packet& packet);
 
 private:
   Ui::MainWindow *ui;
-
-  betz::Bus::DiscoveryState previous_discovery_state =
-      betz::Bus::DiscoveryState::PROBING;
 };
 
 #endif

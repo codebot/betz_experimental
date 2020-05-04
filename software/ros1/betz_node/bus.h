@@ -18,6 +18,7 @@
 #ifndef BUS_H
 #define BUS_H
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <stdint.h>
@@ -37,6 +38,7 @@ class Bus
 public:
   std::unique_ptr<Transport> transport;
   std::vector<std::shared_ptr<Drive>> drives;
+  std::function<void(const Packet&)> packet_listener;
 
   enum class ParserState
   {
@@ -99,6 +101,18 @@ public:
   int discovery_broadcast_count = 0;
   ros::Time discovery_time;
 
+  enum class EnumerationState
+  {
+    IDLE,
+    DISCOVERY,
+    NUM_PARAMS,
+    PARAM_NAMES,
+    PARAM_VALUES
+  };
+  EnumerationState enumeration_state = EnumerationState::IDLE;
+  int enumeration_drive_idx = 0;
+  int enumeration_param_idx = 0;
+  void enumeration_begin();
   void enumeration_tick();
 
   bool burn_firmware(const std::string& firmware_filename);

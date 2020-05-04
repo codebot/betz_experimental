@@ -238,6 +238,9 @@ bool Bus::spin_once(const uint8_t watch_packet_id)
       if (rx_byte(b, packet) && (packet.flags & Packet::FLAG_DIR_PERIPH_HOST))
       {
         // printf("received packet from peripheral\n");
+        if (packet_listener)
+          packet_listener(packet);
+
         shared_ptr<Drive> drive = drive_by_uuid(packet.uuid);
         drive->rx_packet(packet);
         if (watch_packet_id && (watch_packet_id == packet.packet_id()))
@@ -257,8 +260,9 @@ void Bus::discovery_begin()
   printf("Bus::discovery_begin()\n");
   discovery_time = ros::Time::now();
   discovery_state = DiscoveryState::PROBING;
+  enumeration_state = EnumerationState::DISCOVERY;
   discovery_broadcast_count = 0;
-  // default is a random response time between 0 and 500 milliseconds
+  // default is a random response time between 0 and 100 milliseconds
   send_packet(std::make_unique<Discovery>());
 }
 
@@ -268,7 +272,7 @@ void Bus::discovery_tick()
   if (discovery_state == DiscoveryState::PROBING)
   {
     // send out broadcast discovery requests to learn drive UUID's
-    if (elapsed > 0.5)
+    if (elapsed > 0.1)
     {
       discovery_broadcast_count++;
       if (discovery_broadcast_count < 3)
@@ -284,10 +288,9 @@ void Bus::discovery_tick()
 
 void Bus::enumeration_tick()
 {
-#if 0
-  switch (discovery_state)
+  switch (enumeration_state)
   {
-    case DiscoveryState::NUM_PARAMS:
+    case EnumerationState::NUM_PARAMS:
     {
       bool all_done = true;
       for (auto& drive : drives)
@@ -299,14 +302,16 @@ void Bus::enumeration_tick()
           return;
         }
       }
+      /*
       if (all_done)
       {
         discovery_state = DiscoveryState::RETRIEVE_PARAM_NAMES;
         break;
       }
+      */
       break;
     }
-
+#if 0
     case DiscoveryState::RETRIEVE_IDS:
     {
       bool all_done = true;
@@ -316,12 +321,11 @@ void Bus::enumeration_tick()
       }
       break;
     }
-
+#endif
     default:
-      printf("unhandled discovery state\n");
+      //printf("unhandled discovery state\n");
       break;
   }
-#endif
 }
 
 bool Bus::burn_firmware(const std::string& firmware_filename)
@@ -487,4 +491,10 @@ bool Bus::use_multicast_transport()
   }
   set_transport(std::move(transport));
   return true;
+}
+
+void Bus::enumeration_begin()
+{
+  printf("Bus::enumeration_begin()\n");
+  enumeration_state = EnumerationState::NUM_PARAMS;
 }
