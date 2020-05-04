@@ -22,7 +22,6 @@
 #include "betz_node/SetIntParam.h"
 #include "betz_node/GetIntParam.h"
 #include "bus.h"
-#include <vector>
 
 namespace betz {
 

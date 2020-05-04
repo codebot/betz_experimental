@@ -25,8 +25,6 @@
 #include "betz_node.h"
 #include "bus.h"
 #include "drive.h"
-#include "transport_serial.h"
-#include "transport_multicast.h"
 
 using betz::BetzNode;
 using std::string;
@@ -112,26 +110,13 @@ int BetzNode::init(int argc, char **argv)
   {
     string device_name;
     nh_private.param<std::string>("device", device_name, "/dev/ttyUSB0");
-  
-    auto transport = make_unique<TransportSerial>();
-    if (!transport->open_device(device_name))
-    {
-      ROS_FATAL("couldn't open serial device");
+    if (!bus.use_serial_transport(device_name))
       return 1;
-    }
-    ROS_INFO("opened %s", device_name.c_str());
-    bus.set_transport(std::move(transport));
   }
   else if (transport_name == "multicast")
   {
-    ROS_INFO("opening multicast transport...");
-    auto transport = make_unique<TransportMulticast>();
-    if (!transport->init())
-    {
-      ROS_FATAL("couldn't init multicast transport");
+    if (!bus.use_multicast_transport())
       return 1;
-    }
-    bus.set_transport(std::move(transport));
   }
   else
   {
@@ -142,7 +127,7 @@ int BetzNode::init(int argc, char **argv)
   bus.discovery_begin();
 
   ros::Rate rate(100);
-  while (ros::ok() && !bus.discovery_complete)
+  while (ros::ok() && (bus.discovery_state != Bus::DiscoveryState::COMPLETE))
   {
     bus.spin_once();
     rate.sleep();

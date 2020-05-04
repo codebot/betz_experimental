@@ -7,6 +7,11 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
 generate_dynamic_reconfigure_options(cfg/Betz.cfg)
 
 add_service_files(FILES
@@ -27,12 +32,10 @@ catkin_package(
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-add_executable(betz_node
-  betz_node.cpp
+add_library(betz
   bus.cpp
   drive.cpp
   lightweightserial.cpp
-  main.cpp
   packet/boot.cpp
   packet/crc.cpp
   packet/discovery.cpp
@@ -46,17 +49,35 @@ add_executable(betz_node
   transport_serial.cpp
   transport_multicast.cpp)
 
+add_executable(betz_node
+  betz_node.cpp
+  cli_main.cpp
+)
+
 add_dependencies(betz_node
   betz_node_gencfg
+  betz
   ${betz_node_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS})
-target_link_libraries(betz_node ${catkin_LIBRARIES})
+target_link_libraries(betz_node betz ${catkin_LIBRARIES})
+
+
+add_executable(betz_gui
+  gui_main.cpp
+  main_window.cpp
+)
+add_dependencies(betz_gui
+  betz)
+target_link_libraries(betz_gui
+  betz
+  Qt5::Widgets
+  ${catkin_LIBRARIES})
 
 #############
 ## Install ##
 #############
 
-install(TARGETS betz_node
+install(TARGETS betz_node betz_gui
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

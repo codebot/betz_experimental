@@ -15,20 +15,39 @@
  *
 */
 
-#ifndef PACKET_DISCOVERY_H
-#define PACKET_DISCOVERY_H
+#ifndef MAIN_WINDOW_H
+#define MAIN_WINDOW_H
 
-#include <stdint.h>
-#include "packet.h"
+#include <QMainWindow>
+#include "bus.h"
+#include <ros/ros.h>
 
-namespace betz {
-
-class Discovery : public Packet
-{
-public:
-  Discovery(const uint16_t max_ms = 100);
+namespace Ui {
+  class MainWindow;
 };
 
-}  // namespace betz
+class MainWindow : public QMainWindow
+{
+  Q_OBJECT
+
+public:
+  explicit MainWindow(QWidget *parent = nullptr);
+
+  virtual ~MainWindow();
+
+public slots:
+  void discover();
+  void tick();
+
+public:
+  betz::Bus bus;
+  ros::NodeHandle ros_node;
+
+private:
+  Ui::MainWindow *ui;
+
+  betz::Bus::DiscoveryState previous_discovery_state =
+      betz::Bus::DiscoveryState::PROBING;
+};
 
 #endif

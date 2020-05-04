@@ -62,6 +62,9 @@ public:
 
   void set_transport(std::unique_ptr<Transport> transport);
 
+  bool use_serial_transport(const std::string& device_name);
+  bool use_multicast_transport();
+
   bool send_packet(std::unique_ptr<Packet> packet);
 
   bool wait_for_packet(const double max_seconds, const uint8_t packet_id);
@@ -85,14 +88,14 @@ public:
 
   enum class DiscoveryState
   {
+    IDLE,
     PROBING,
     COMPLETE
   };
-  DiscoveryState discovery_state = DiscoveryState::PROBING;
+  DiscoveryState discovery_state = DiscoveryState::IDLE;
 
   void discovery_begin();
   void discovery_tick();
-  bool discovery_complete = false;
   int discovery_broadcast_count = 0;
   ros::Time discovery_time;
 

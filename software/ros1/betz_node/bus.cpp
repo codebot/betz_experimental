@@ -19,7 +19,9 @@
 
 #include "bus.h"
 #include "ros/ros.h"
+#include "transport_multicast.h"
 #include "transport_serial.h"
+
 #include "packet/boot.h"
 #include "packet/discovery.h"
 #include "packet/flash_read.h"
@@ -244,7 +246,7 @@ bool Bus::spin_once(const uint8_t watch_packet_id)
     }
   }
 
-  if (!discovery_complete)
+  if (discovery_state != DiscoveryState::COMPLETE)
     discovery_tick();
 
   return false;
@@ -254,7 +256,7 @@ void Bus::discovery_begin()
 {
   printf("Bus::discovery_begin()\n");
   discovery_time = ros::Time::now();
-  discovery_complete = false;
+  discovery_state = DiscoveryState::PROBING;
   discovery_broadcast_count = 0;
   // default is a random response time between 0 and 500 milliseconds
   send_packet(std::make_unique<Discovery>());
@@ -275,7 +277,7 @@ void Bus::discovery_tick()
         send_packet(std::make_unique<Discovery>());
       }
       else
-        discovery_complete = true;
+        discovery_state = DiscoveryState::COMPLETE;
     }
   }
 }
@@ -458,5 +460,31 @@ bool Bus::boot_all_drives()
       return false;
     }
   }
+  return true;
+}
+
+bool Bus::use_serial_transport(const std::string& device_name)
+{
+  auto transport = make_unique<TransportSerial>();
+  if (!transport->open_device(device_name))
+  {
+    ROS_FATAL("couldn't open serial device");
+    return false;
+  }
+  ROS_INFO("opened %s", device_name.c_str());
+  set_transport(std::move(transport));
+  return true;
+}
+
+bool Bus::use_multicast_transport()
+{
+  ROS_INFO("opening multicast transport...");
+  auto transport = make_unique<TransportMulticast>();
+  if (!transport->init())
+  {
+    ROS_FATAL("couldn't init multicast transport");
+    return false;
+  }
+  set_transport(std::move(transport));
   return true;
 }
