@@ -107,9 +107,11 @@ void MainWindow::rx_param_name_value(const betz::Packet& packet)
       printf("WOAH param_idx not in drive!\n");
       return;
     }
-    printf("drive %s param %d name [%s]\n",
+    printf("drive %s (%d params) param %d type %d name [%s]\n",
         drive->uuid.to_string().c_str(),
+        (int)drive->params.size(),
         (int)param_idx,
+        static_cast<int>(drive->params[param_idx].type),
         drive->params[param_idx].name.c_str());
 
     ui->param_table->setItem(

@@ -76,7 +76,7 @@ public:
   void append(const uint16_t s);
   void append(const uint32_t i);
 
-  void print() const;
+  virtual void print() const;
 };
 
 }  // namespace betz

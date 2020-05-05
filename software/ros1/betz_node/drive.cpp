@@ -78,7 +78,6 @@ void Drive::rx_boot(const Packet& packet)
 
 void Drive::rx_param_name_value(const Packet& packet)
 {
-  packet.print();
   Param param;
   memcpy(&param.idx, &packet.payload[1], sizeof(param.idx));
   param.type = static_cast<Param::Type>(packet.payload[5]);
@@ -88,7 +87,9 @@ void Drive::rx_param_name_value(const Packet& packet)
     ROS_ERROR("bogus param name+value packet!");
     return;
   }
-  param.name = string(packet.payload[7], name_len);
+  param.name = string(
+      packet.payload.begin() + 7,
+      packet.payload.begin() + 7 + name_len);
   const int value_pos = 7 + name_len;
   if (param.type == Param::Type::INT)
   {
@@ -102,7 +103,20 @@ void Drive::rx_param_name_value(const Packet& packet)
     memcpy(&v, &packet.payload[value_pos], sizeof(v));
     param.f_value = v;
   }
-  params.push_back(param);
+
+  printf(
+      "  param.idx = %d   param.type = %d  name_len = %d name = [%s]\n",
+      param.idx,
+      static_cast<int>(param.type),
+      name_len,
+      param.name.c_str());
+
+  if (param.idx >= static_cast<int>(params.size()))
+  {
+    ROS_ERROR("WOAH unexpected param idx!");
+    return;
+  }
+  params[param.idx] = param;
 }
 
 void Drive::rx_packet(const Packet& packet)
