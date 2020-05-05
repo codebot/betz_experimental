@@ -42,12 +42,14 @@ add_library(betz
   packet/flash_read.cpp
   packet/flash_write.cpp
   packet/num_params.cpp
-  packet/param_name.cpp
+  packet/param_name_value.cpp
   packet/param_value.cpp
   packet/reset.cpp
   packet/packet.cpp
+  param.cpp
   transport_serial.cpp
-  transport_multicast.cpp)
+  transport_multicast.cpp
+  uuid.cpp)
 
 add_executable(betz_node
   betz_node.cpp

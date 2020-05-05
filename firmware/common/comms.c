@@ -349,12 +349,40 @@ void comms_reset()
 
 void comms_num_params()
 {
-  printf("comms_num_params()\r\n");
+  // printf("comms_num_params()\r\n");
   uint8_t pkt[5] = {0};
   pkt[0] = 0x01;
   const uint32_t num_params = param_count();
   memcpy(&pkt[1], &num_params, 4);
   comms_tx_long_addr(pkt, 5);
+}
+
+void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
+{
+  if (rx_len < 5)
+    return; // too short
+
+  uint8_t tx_pkt[100] = {0};
+  tx_pkt[0] = 0x02;
+  uint32_t param_idx = 0;
+  memcpy(&param_idx, &rx_pkt[1], sizeof(param_idx));
+  if (param_idx >= param_count())
+    return;  // invalid
+
+  memcpy(&tx_pkt[1], &param_idx, sizeof(param_idx));
+  int tx_name_len = strlen(param_get_name(param_idx));
+  if (tx_name_len > sizeof(tx_pkt) - 10)
+    tx_name_len = sizeof(tx_pkt) - 10;
+
+  tx_pkt[5] = (uint8_t)param_get_type(param_idx);
+  tx_pkt[6] = tx_name_len;
+  strncpy(&tx_pkt[7], param_get_name(param_idx), tx_name_len);
+
+  const int val_pos = 7 + tx_name_len;
+  memcpy(&tx_pkt[val_pos], (void *)param_get_ptr(param_idx), 4);
+  const int tx_len = val_pos + 4;
+
+  comms_tx_long_addr(tx_pkt, tx_len);
 }
 
 void comms_rx_pkt(const uint8_t* p, const uint32_t len)
@@ -368,6 +396,7 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
   switch (pkt_id)
   {
     case 0x01: comms_num_params(); break;
+    case 0x02: comms_param_name_value(p, len); break;
     case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_read_flash(p, len); break;
     case 0xf2: comms_write_flash(p, len); break;

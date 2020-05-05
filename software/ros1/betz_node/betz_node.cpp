@@ -127,7 +127,7 @@ int BetzNode::init(int argc, char **argv)
   bus.discovery_begin();
 
   ros::Rate rate(100);
-  while (ros::ok() && (bus.discovery_state != Bus::DiscoveryState::COMPLETE))
+  while (ros::ok() && (bus.discovery_state != Bus::DiscoveryState::DONE))
   {
     bus.spin_once();
     rate.sleep();

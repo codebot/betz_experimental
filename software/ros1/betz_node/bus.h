@@ -86,34 +86,25 @@ public:
   // void add_drive_id(const uint8_t drive_id);
   //Drive *find_drive_by_id(const uint8_t drive_id);
 
-  std::shared_ptr<Drive> drive_by_uuid(const std::vector<uint8_t>& uuid);
+  std::shared_ptr<Drive> drive_by_uuid(const UUID& uuid);
+  std::shared_ptr<Drive> drive_by_uuid_str(const std::string& uuid_str);
 
   enum class DiscoveryState
   {
     IDLE,
     PROBING,
-    COMPLETE
+    NUM_PARAMS,
+    PARAMS,
+    DONE
   };
   DiscoveryState discovery_state = DiscoveryState::IDLE;
 
   void discovery_begin();
   void discovery_tick();
-  int discovery_broadcast_count = 0;
+  int discovery_attempt = 0;
+  size_t discovery_drive_idx = 0;
+  size_t discovery_param_idx = 0;
   ros::Time discovery_time;
-
-  enum class EnumerationState
-  {
-    IDLE,
-    DISCOVERY,
-    NUM_PARAMS,
-    PARAM_NAMES,
-    PARAM_VALUES
-  };
-  EnumerationState enumeration_state = EnumerationState::IDLE;
-  int enumeration_drive_idx = 0;
-  int enumeration_param_idx = 0;
-  void enumeration_begin();
-  void enumeration_tick();
 
   bool burn_firmware(const std::string& firmware_filename);
   bool boot_all_drives();

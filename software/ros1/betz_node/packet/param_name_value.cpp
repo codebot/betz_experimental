@@ -15,11 +15,11 @@
  *
 */
 
-#include "param_name.h"
-using betz::ParamName;
+#include "param_name_value.h"
+using betz::ParamNameValue;
 using betz::Packet;
 
-ParamName::ParamName(
+ParamNameValue::ParamNameValue(
     const Drive& drive,
     const uint32_t param_idx,
     const bool force_long_addr)
@@ -33,6 +33,6 @@ ParamName::ParamName(
   else
     drive_id = drive.id;
 
-  payload.push_back(ID_PARAM_NAME);
+  payload.push_back(ID_PARAM_NAME_VALUE);
   append(param_idx);
 }

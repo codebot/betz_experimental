@@ -27,6 +27,7 @@
 #include "packet/flash_read.h"
 #include "packet/flash_write.h"
 #include "packet/num_params.h"
+#include "packet/param_name_value.h"
 #include "packet/reset.h"
 
 using std::make_shared;
@@ -117,8 +118,8 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
       parser_crc.add_byte(b);
       if (parser_packet.flags & Packet::FLAG_ADDR_UUID)
       {
-        parser_packet.uuid.push_back(b);
-        if (parser_packet.uuid.size() == Packet::UUID_LEN)
+        parser_packet.uuid.bytes.push_back(b);
+        if (parser_packet.uuid.bytes.size() == UUID::UUID_LEN)
           parser_state = ParserState::LENGTH;
       }
       else
@@ -156,6 +157,7 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
       parser_packet.rx_csum |= (b << 8);
       if (parser_packet.rx_csum == parser_crc.get_crc())
       {
+        parser_packet.uuid.generate_string();
         rx_pkt = parser_packet;
         return true;
       }
@@ -187,18 +189,31 @@ bool Bus::set_led(const uint8_t drive_id, const bool on)
 }
 #endif
 
-shared_ptr<Drive> Bus::drive_by_uuid(const std::vector<uint8_t>& uuid)
+shared_ptr<Drive> Bus::drive_by_uuid(const UUID& uuid)
 {
   for (auto drive : drives)
-    if (drive->uuid_equals(uuid))
+    if (drive->uuid == uuid)
       return drive;
 
   // if we get here, that means we didn't find this UUID. create a new one.
+
+  // todo: sort by ID and UUID during insertion
   shared_ptr<Drive> drive = make_shared<Drive>();
-  drive->set_uuid(uuid);
+  drive->uuid = uuid;
   drives.push_back(drive);
 
   return drive;
+}
+
+// drive_by_uuid_str() is used by the GUI. It does not create a new drive
+// if one doesn't match the requested UUID string
+shared_ptr<Drive> Bus::drive_by_uuid_str(const string& uuid_str)
+{
+  for (auto drive : drives)
+    if (drive->uuid.to_string() == uuid_str)
+      return drive;
+
+  return nullptr;
 }
 
 /*
@@ -238,18 +253,20 @@ bool Bus::spin_once(const uint8_t watch_packet_id)
       if (rx_byte(b, packet) && (packet.flags & Packet::FLAG_DIR_PERIPH_HOST))
       {
         // printf("received packet from peripheral\n");
-        if (packet_listener)
-          packet_listener(packet);
 
         shared_ptr<Drive> drive = drive_by_uuid(packet.uuid);
         drive->rx_packet(packet);
+
+        if (packet_listener)
+          packet_listener(packet);
+
         if (watch_packet_id && (watch_packet_id == packet.packet_id()))
           return true;
       }
     }
   }
 
-  if (discovery_state != DiscoveryState::COMPLETE)
+  if (discovery_state != DiscoveryState::DONE)
     discovery_tick();
 
   return false;
@@ -260,8 +277,7 @@ void Bus::discovery_begin()
   printf("Bus::discovery_begin()\n");
   discovery_time = ros::Time::now();
   discovery_state = DiscoveryState::PROBING;
-  enumeration_state = EnumerationState::DISCOVERY;
-  discovery_broadcast_count = 0;
+  discovery_attempt = 0;
   // default is a random response time between 0 and 100 milliseconds
   send_packet(std::make_unique<Discovery>());
 }
@@ -269,62 +285,89 @@ void Bus::discovery_begin()
 void Bus::discovery_tick()
 {
   const double elapsed = (ros::Time::now() - discovery_time).toSec();
-  if (discovery_state == DiscoveryState::PROBING)
+  switch (discovery_state)
   {
-    // send out broadcast discovery requests to learn drive UUID's
-    if (elapsed > 0.1)
-    {
-      discovery_broadcast_count++;
-      if (discovery_broadcast_count < 3)
+    case DiscoveryState::PROBING:
+      // send out broadcast discovery requests to retrieve drive UUID's
+      if (elapsed > 0.1)
       {
-        discovery_time = ros::Time::now();
-        send_packet(std::make_unique<Discovery>());
-      }
-      else
-        discovery_state = DiscoveryState::COMPLETE;
-    }
-  }
-}
-
-void Bus::enumeration_tick()
-{
-  switch (enumeration_state)
-  {
-    case EnumerationState::NUM_PARAMS:
-    {
-      bool all_done = true;
-      for (auto& drive : drives)
-      {
-        if (drive->num_params == 0)
+        discovery_attempt++;
+        if (discovery_attempt < 3)
         {
-          all_done = false;
-          send_packet(std::make_unique<NumParams>(*drive));
-          return;
+          discovery_time = ros::Time::now();
+          send_packet(std::make_unique<Discovery>());
+        }
+        else
+        {
+          discovery_state = DiscoveryState::NUM_PARAMS;
+          discovery_attempt = 0;
         }
       }
-      /*
-      if (all_done)
+      break;
+
+    case DiscoveryState::NUM_PARAMS:
+      if (elapsed > 0.1)
       {
-        discovery_state = DiscoveryState::RETRIEVE_PARAM_NAMES;
+        bool all_done = true;
+        for (auto& drive : drives)
+        {
+          if (drive->num_params == 0)
+          {
+            all_done = false;
+            send_packet(std::make_unique<NumParams>(*drive));
+            discovery_time = ros::Time::now();
+            break;  // only send a single request packet each time
+          }
+        }
+        if (all_done)
+        {
+          discovery_state = DiscoveryState::PARAMS;
+          discovery_attempt = 0;
+          discovery_drive_idx = 0;
+          discovery_param_idx = 0;
+        }
+      }
+      break;
+
+    case DiscoveryState::PARAMS:
+      if (elapsed > 0.1)
+      {
+        if (discovery_drive_idx >= drives.size() ||
+            discovery_param_idx >= drives[discovery_drive_idx]->params.size())
+        {
+          // something messed up. let's bail before crashing.
+          ROS_ERROR("WOAH invalid drive or param idx in discovery");
+          discovery_state = DiscoveryState::DONE;
+          break;
+        }
+        
+        const Drive& drive = *drives[discovery_drive_idx];
+        if (drive.params[discovery_param_idx].is_valid())
+        {
+          discovery_param_idx++;
+          if (discovery_param_idx >= drive.params.size())
+          {
+            discovery_drive_idx++;
+            if (discovery_drive_idx >= drives.size())
+            {
+              discovery_state = DiscoveryState::DONE;
+              ROS_INFO("discovery complete");
+              break;
+            }
+          }
+        }
+        //if (drives[discovery_drive_idx].params[
+        send_packet(
+            std::make_unique<ParamNameValue>(
+                drive,
+                discovery_param_idx));
+        discovery_time = ros::Time::now();
         break;
       }
-      */
       break;
-    }
-#if 0
-    case DiscoveryState::RETRIEVE_IDS:
-    {
-      bool all_done = true;
-      for (auto& drive : drives)
-      {
-        // todo: request ID parameter (the single-byte ID for this board)
-      }
-      break;
-    }
-#endif
-    default:
-      //printf("unhandled discovery state\n");
-      break;
+
+      default:
+        break;
   }
 }
 
@@ -341,7 +384,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
   ROS_INFO(
       "burning firmware [%s] to drive %s",
       firmware_filename.c_str(),
-      drive.uuid_str.c_str());
+      drive.uuid.to_string().c_str());
 
   FILE *f = fopen(firmware_filename.c_str(), "r");
   if (!f)
@@ -350,10 +393,10 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
     return false;
   }
 
-  ROS_INFO("resetting drive %s", drive.uuid_str.c_str());
+  ROS_INFO("resetting drive %s", drive.uuid.to_string().c_str());
   send_packet(std::make_unique<Reset>(drive));
   ros::Duration(1.0).sleep();
-  ROS_INFO("done resetting %s", drive.uuid_str.c_str());
+  ROS_INFO("done resetting %s", drive.uuid.to_string().c_str());
 
   ROS_INFO("reading image...");
 
@@ -378,7 +421,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
     {
       ROS_ERROR(
           "couldn't read drive %s addr 0x%08x",
-          drive.uuid_str.c_str(),
+          drive.uuid.to_string().c_str(),
           static_cast<unsigned>(addr));
       return false;
     }
@@ -441,7 +484,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
     {
       ROS_ERROR(
           "couldn't write drive %s addr 0x%08x",
-          drive.uuid_str.c_str(),
+          drive.uuid.to_string().c_str(),
           static_cast<unsigned>(addr));
       return false;
     }
@@ -460,7 +503,7 @@ bool Bus::boot_all_drives()
     send_packet(std::make_unique<Boot>(*drive));
     if (!wait_for_packet(1.0, Packet::ID_BOOT))
     {
-      ROS_ERROR("couldn't boot drive %s", drive->uuid_str.c_str());
+      ROS_ERROR("couldn't boot drive %s", drive->uuid.to_string().c_str());
       return false;
     }
   }
@@ -491,10 +534,4 @@ bool Bus::use_multicast_transport()
   }
   set_transport(std::move(transport));
   return true;
-}
-
-void Bus::enumeration_begin()
-{
-  printf("Bus::enumeration_begin()\n");
-  enumeration_state = EnumerationState::NUM_PARAMS;
 }

@@ -22,7 +22,9 @@
 #include <string>
 
 #include "packet/packet.h"
+#include "param.h"
 #include "transport.h"
+#include "uuid.h"
 
 namespace betz {
 
@@ -30,17 +32,20 @@ class Drive
 {
 public:
   uint8_t id = 0;
-  std::vector<uint8_t> uuid;
-  std::string uuid_str;  // for printing messages to console
+  UUID uuid;
 
   std::vector<uint8_t> flash_last_read;
   uint32_t flash_last_addr;
+  std::vector<Param> params;
 
   bool is_bootloader = false;
   int num_params = 0;
 
   void rx_packet(const Packet& packet);
+
   void rx_num_params(const Packet& packet);
+  void rx_param_name_value(const Packet& packet);
+
   void rx_flash_read(const Packet& packet);
   void rx_flash_write(const Packet& packet);
   void rx_discovery(const Packet& packet);
@@ -50,7 +55,7 @@ public:
   ~Drive();
 
   bool uuid_equals(const std::vector<uint8_t>& _uuid) const;
-  void set_uuid(const std::vector<uint8_t>& _uuid);
+  void set_uuid(const UUID& _uuid);
   void print() const;
 };
 

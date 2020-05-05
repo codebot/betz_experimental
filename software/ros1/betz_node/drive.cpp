@@ -40,6 +40,7 @@ void Drive::rx_num_params(const Packet& packet)
   }
   memcpy(&num_params, &packet.payload[1], 4);
   printf("num_params = %u\n", num_params);
+  params.resize(num_params);
 }
 
 void Drive::rx_flash_read(const Packet& packet)
@@ -75,6 +76,35 @@ void Drive::rx_boot(const Packet& packet)
   is_bootloader = false;
 }
 
+void Drive::rx_param_name_value(const Packet& packet)
+{
+  packet.print();
+  Param param;
+  memcpy(&param.idx, &packet.payload[1], sizeof(param.idx));
+  param.type = static_cast<Param::Type>(packet.payload[5]);
+  const int name_len = packet.payload[6];
+  if (name_len > packet.payload.size() - 11)
+  {
+    ROS_ERROR("bogus param name+value packet!");
+    return;
+  }
+  param.name = string(packet.payload[7], name_len);
+  const int value_pos = 7 + name_len;
+  if (param.type == Param::Type::INT)
+  {
+    int32_t v = 0;
+    memcpy(&v, &packet.payload[value_pos], sizeof(v));
+    param.i_value = v;
+  }
+  else if (param.type == Param::Type::FLOAT)
+  {
+    float v = 0;
+    memcpy(&v, &packet.payload[value_pos], sizeof(v));
+    param.f_value = v;
+  }
+  params.push_back(param);
+}
+
 void Drive::rx_packet(const Packet& packet)
 {
   if (packet.payload.size() == 0)
@@ -87,11 +117,12 @@ void Drive::rx_packet(const Packet& packet)
   const uint8_t packet_id = packet.payload[0];
   switch(packet_id)
   {
-    case Packet::ID_NUM_PARAMS:  rx_num_params(packet); break;
-    case Packet::ID_DISCOVERY:   rx_discovery(packet); break;
-    case Packet::ID_FLASH_READ:  rx_flash_read(packet); break;
-    case Packet::ID_FLASH_WRITE: rx_flash_write(packet); break;
-    case Packet::ID_BOOT:        rx_boot(packet); break;
+    case Packet::ID_NUM_PARAMS:       rx_num_params(packet); break;
+    case Packet::ID_PARAM_NAME_VALUE: rx_param_name_value(packet); break;
+    case Packet::ID_DISCOVERY:        rx_discovery(packet); break;
+    case Packet::ID_FLASH_READ:       rx_flash_read(packet); break;
+    case Packet::ID_FLASH_WRITE:      rx_flash_write(packet); break;
+    case Packet::ID_BOOT:             rx_boot(packet); break;
     default:
       ROS_INFO(
           "unrecognized packet ID: %02x",
@@ -99,37 +130,9 @@ void Drive::rx_packet(const Packet& packet)
   }
 }
 
-bool Drive::uuid_equals(const std::vector<uint8_t>& _uuid) const
-{
-  for (size_t i = 0; i < uuid.size() && i < _uuid.size(); i++)
-    if (uuid[i] != _uuid[i])
-      return false;
-  return true;
-}
-
-void Drive::set_uuid(const std::vector<uint8_t>& _uuid)
-{
-  uuid.resize(_uuid.size());
-  uuid_str = string();
-  for (size_t i = 0; i < _uuid.size(); i++)
-  {
-    uuid[i] = _uuid[i];
-
-    char byte_buf[10] = {0};
-    snprintf(
-        byte_buf,
-        sizeof(byte_buf),
-        "%02x",
-        static_cast<unsigned>(_uuid[i]));
-    uuid_str += string(byte_buf);
-    if (i % 4 == 3 && i != 11)
-      uuid_str += ":";
-  }
-}
-
 void Drive::rx_discovery(const Packet& packet)
 {
-  ROS_INFO("discovered %s", uuid_str.c_str());
+  ROS_INFO("discovered %s", uuid.to_string().c_str());
   if (packet.payload.size() != 2)
   {
     ROS_ERROR("unexpected payload len: %zu", packet.payload.size());

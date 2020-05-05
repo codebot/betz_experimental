@@ -18,8 +18,10 @@
 #ifndef PACKET_PACKET_H
 #define PACKET_PACKET_H
 
-#include <stdint.h>
+#include <cstdint>
+#include <string>
 #include <vector>
+#include "../uuid.h"
 
 namespace betz {
 
@@ -34,10 +36,10 @@ public:
   uint8_t expected_length = 0;
   uint16_t rx_csum = 0;
 
-  static const size_t UUID_LEN = 12;
-
-  std::vector<uint8_t> uuid;
+  UUID uuid;
   std::vector<uint8_t> payload;
+
+  std::string uuid_str() const;  // returns the uuid as a string
 
   static const uint8_t FLAG_DIR = 0x1;
   static const uint8_t FLAG_DIR_HOST_PERIPH = 0x0;
@@ -54,7 +56,7 @@ public:
   enum
   {
     ID_NUM_PARAMS = 0x01,
-    ID_PARAM_NAME = 0x02,
+    ID_PARAM_NAME_VALUE = 0x02,
     ID_PARAM_VALUE = 0x03,
 
     ID_DISCOVERY  = 0xf0,
@@ -73,6 +75,8 @@ public:
   void append(const uint8_t b);
   void append(const uint16_t s);
   void append(const uint32_t i);
+
+  void print() const;
 };
 
 }  // namespace betz

@@ -15,22 +15,32 @@
  *
 */
 
-#ifndef PARAM_NAME_H
-#define PARAM_NAME_H
+#ifndef PARAM_H
+#define PARAM_H
 
-#include <stdint.h>
-#include "../drive.h"
-#include "packet.h"
+#include <string>
+#include "packet/packet.h"
 
 namespace betz {
 
-class ParamName : public Packet
+class Param
 {
 public:
-  ParamName(
-      const Drive& drive,
-      const uint32_t param_idx,
-      const bool force_long_addr = false);
+  enum class Type
+  {
+    INVALID = 0,
+    INT = 1,
+    FLOAT = 2
+  };
+  Type type = Type::INVALID;
+
+  std::string name;
+  int i_value = 0;
+  float f_value = 0.0;
+  int idx = 0;  // index in the MCU's param table
+
+  std::string value_to_string() const;
+  bool is_valid() const;
 };
 
 }  // namespace betz

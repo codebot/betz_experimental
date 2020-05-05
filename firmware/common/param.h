@@ -5,9 +5,9 @@
 
 typedef enum
 {
-  PARAM_TYPE_INVALID,
-  PARAM_TYPE_INT,
-  PARAM_TYPE_FLOAT
+  PARAM_TYPE_INVALID = 0,
+  PARAM_TYPE_INT = 1,
+  PARAM_TYPE_FLOAT = 2
 } param_type_t;
 
 void param_init();

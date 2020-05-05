@@ -15,43 +15,37 @@
  *
 */
 
-#ifndef MAIN_WINDOW_H
-#define MAIN_WINDOW_H
+#ifndef BETZ_UUID_H
+#define BETZ_UUID_H
 
-#include <QMainWindow>
-#include "bus.h"
-#include "packet/packet.h"
-#include <ros/ros.h>
+// just a utility function to convert UUID's to string
+#include <string>
+#include <vector>
+#include <cstdint>
 
-namespace Ui {
-  class MainWindow;
-};
+namespace betz {
 
-class MainWindow : public QMainWindow
+class UUID
 {
-  Q_OBJECT
-
 public:
-  explicit MainWindow(QWidget *parent = nullptr);
+  UUID();
+  UUID(const std::vector<uint8_t>& _bytes);
 
-  virtual ~MainWindow();
+  std::vector<uint8_t> bytes;
+  static const size_t UUID_LEN = 12;
 
-public slots:
-  void discover();
-  void tick();
+  bool operator==(const UUID& rhs);
+  UUID& operator=(const UUID& rhs);
 
-public:
-  betz::Bus bus;
-  ros::NodeHandle ros_node;
+  void clear();
+  bool is_valid() const;
+  std::string to_string() const { return s; };
+  std::string generate_string();
 
 private:
-  Ui::MainWindow *ui;
-  void rx_packet(const betz::Packet& packet);
-  void rx_discovery(const betz::Packet& packet);
-  void rx_num_params(const betz::Packet& packet);
-  void rx_param_name_value(const betz::Packet& packet);
-
-  std::string selected_uuid;
+  std::string s;
 };
+
+}  // namespace betz
 
 #endif

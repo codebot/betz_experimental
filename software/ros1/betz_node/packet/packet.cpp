@@ -58,13 +58,13 @@ int Packet::serialize(uint8_t *buffer, size_t buffer_len) const
   {
     if (flags & FLAG_ADDR_UUID)
     {
-      if (uuid.size() != UUID_LEN)
+      if (!uuid.is_valid())
       {
         printf("ERROR: requested long address, but was not provided.\n");
         return -1;
       }
-      for (size_t i = 0; i < UUID_LEN; i++)
-        buffer[wr_idx++] = uuid[i];
+      for (size_t i = 0; i < UUID::UUID_LEN; i++)
+        buffer[wr_idx++] = uuid.bytes[i];
     }
     else
       buffer[wr_idx++] = drive_id;
@@ -110,4 +110,12 @@ void Packet::append(const uint32_t i)
   payload.push_back((i >> 8) & 0xff);
   payload.push_back((i >> 16) & 0xff);
   payload.push_back((i >> 24) & 0xff);
+}
+
+void Packet::print() const
+{
+  for (size_t i = 0; i < payload.size(); i++)
+  {
+    printf("%3d: 0x%02x\r\n", (int)i, (unsigned)payload[i]);
+  }
 }
