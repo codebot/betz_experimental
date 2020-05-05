@@ -74,7 +74,7 @@ static bool g_comms_parser_broadcast = false;
 static bool g_comms_parser_long_address = false;
 static bool g_comms_parser_ignore_pkt = false;
 static uint8_t g_comms_parser_addr[COMMS_LONG_ADDR_LEN] = {0};
-static uint8_t g_comms_id = 0;
+static int g_comms_id = 0;
 static bool g_comms_is_bootloader = false;
 
 static uint32_t g_comms_discovery_send_time = 0;
@@ -91,6 +91,7 @@ void comms_init(void (*tx_fptr)(const uint8_t *, const uint32_t))
 {
   g_comms_parser_state = PS_PREAMBLE;
   g_comms_raw_tx_fptr = tx_fptr;
+  param_int("id", &g_comms_id, 0, PARAM_PERSISTENT);
 }
 
 void comms_tick()
@@ -370,15 +371,16 @@ void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
     return;  // invalid
 
   memcpy(&tx_pkt[1], &param_idx, sizeof(param_idx));
-  int tx_name_len = strlen(param_get_name(param_idx));
-  if (tx_name_len > sizeof(tx_pkt) - 10)
-    tx_name_len = sizeof(tx_pkt) - 10;
 
   tx_pkt[5] = (uint8_t)param_get_type(param_idx);
-  tx_pkt[6] = tx_name_len;
-  strncpy(&tx_pkt[7], param_get_name(param_idx), tx_name_len);
+  tx_pkt[6] = (uint8_t)param_get_storage(param_idx);
 
-  const int val_pos = 7 + tx_name_len;
+  const int tx_name_len =
+      strnlen(param_get_name(param_idx), sizeof(tx_pkt) - 12);
+  tx_pkt[7] = tx_name_len;
+  strncpy(&tx_pkt[8], param_get_name(param_idx), tx_name_len);
+
+  const int val_pos = 8 + tx_name_len;
   memcpy(&tx_pkt[val_pos], (void *)param_get_ptr(param_idx), 4);
   const int tx_len = val_pos + 4;
 

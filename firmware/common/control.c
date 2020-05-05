@@ -19,9 +19,6 @@
 #include "param.h"
 #include <stdio.h>
 
-int joint_idx = 0;
-
 void control_init()
 {
-  param_add("joint_id", PARAM_TYPE_INT, &joint_idx);
 }

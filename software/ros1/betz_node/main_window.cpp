@@ -20,8 +20,9 @@
 #include <QTimer>
 #include <functional>
 
-using betz::Packet;
 using betz::Drive;
+using betz::Packet;
+using betz::Param;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -107,18 +108,64 @@ void MainWindow::rx_param_name_value(const betz::Packet& packet)
       printf("WOAH param_idx not in drive!\n");
       return;
     }
+
+    const Param& param = drive->params[param_idx];
     printf("drive %s (%d params) param %d type %d name [%s]\n",
         drive->uuid.to_string().c_str(),
         (int)drive->params.size(),
         (int)param_idx,
-        static_cast<int>(drive->params[param_idx].type),
-        drive->params[param_idx].name.c_str());
+        static_cast<int>(param.type),
+        param.name.c_str());
 
     ui->param_table->setItem(
         param_idx,
         0,
-        new QTableWidgetItem(
-            QString::fromStdString(drive->params[param_idx].name)));
+        new QTableWidgetItem(QString::fromStdString(param.name)));
+
+    if (param.type == Param::Type::INT)
+    {
+      ui->param_table->setItem(
+          param_idx,
+          1,
+          new QTableWidgetItem(
+              QString::fromStdString(std::to_string(param.i_value))));
+    }
+    else if (param.type == Param::Type::FLOAT)
+    {
+      ui->param_table->setItem(
+          param_idx,
+          1,
+          new QTableWidgetItem(
+              QString::fromStdString(std::to_string(param.f_value))));
+    }
+    else
+      ROS_ERROR("WOAH unknown type of param idx %d", (int)param_idx);
+
+  }
+    
+  // the 'id' parameter is magic, so we special-case it here.
+  // always render it if we get it, no matter what drive is selected
+  if (packet.payload[5] == static_cast<uint8_t>(Param::Type::INT) &&
+      packet.payload[6] == static_cast<uint8_t>(Param::Storage::PERSISTENT) &&
+      packet.payload[7] == 2 &&
+      packet.payload[8] == 'i' &&
+      packet.payload[9] == 'd' &&
+      packet.payload.size() == 14)
+  {
+    int32_t id = 0;
+    memcpy(&id, &packet.payload[10], 4);
+    std::shared_ptr<Drive> drive = bus.drive_by_uuid_str(selected_uuid);
+    for (size_t drive_idx = 0; drive_idx < bus.drives.size(); drive_idx++)
+    {
+      if (bus.drives[drive_idx]->uuid == packet.uuid)
+      {
+        ui->drive_table->setItem(
+            drive_idx,
+            0,
+            new QTableWidgetItem(
+                QString::fromStdString(std::to_string(id))));
+      }
+    }
   }
 }
 
@@ -136,4 +183,8 @@ void MainWindow::rx_packet(const Packet& packet)
     case Packet::ID_PARAM_NAME_VALUE: rx_param_name_value(packet); break;
     default: break;
   }
+}
+
+void MainWindow::update_drive_id_ui(const std::string& uuid, const int id)
+{
 }

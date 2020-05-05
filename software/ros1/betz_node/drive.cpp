@@ -81,16 +81,17 @@ void Drive::rx_param_name_value(const Packet& packet)
   Param param;
   memcpy(&param.idx, &packet.payload[1], sizeof(param.idx));
   param.type = static_cast<Param::Type>(packet.payload[5]);
-  const int name_len = packet.payload[6];
-  if (name_len > packet.payload.size() - 11)
+  param.storage = static_cast<Param::Storage>(packet.payload[6]);
+  const int name_len = packet.payload[7];
+  if (name_len > packet.payload.size() - 12)
   {
     ROS_ERROR("bogus param name+value packet!");
     return;
   }
   param.name = string(
-      packet.payload.begin() + 7,
-      packet.payload.begin() + 7 + name_len);
-  const int value_pos = 7 + name_len;
+      packet.payload.begin() + 8,
+      packet.payload.begin() + 8 + name_len);
+  const int value_pos = 8 + name_len;
   if (param.type == Param::Type::INT)
   {
     int32_t v = 0;

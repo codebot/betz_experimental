@@ -34,6 +34,13 @@ public:
   };
   Type type = Type::INVALID;
 
+  enum class Storage
+  {
+    PERSISTENT = 0,
+    TRANSIENT = 1
+  };
+  Storage storage = Storage::TRANSIENT;
+
   std::string name;
   int i_value = 0;
   float f_value = 0.0;
