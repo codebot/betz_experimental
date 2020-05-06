@@ -9,12 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
-#find_library(QWT
-#    NAMES qwt
-#    REQUIRED)
-#
-#include_directories(qwt)
-
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -76,11 +70,17 @@ add_executable(betz_gui
   gui_main.cpp
   main_window.cpp
 )
+
 add_dependencies(betz_gui
   betz)
+
+target_include_directories(betz_gui
+  PUBLIC /usr/include/qwt)
+
 target_link_libraries(betz_gui
   betz
   Qt5::Widgets
+  qwt-qt5
   ${catkin_LIBRARIES})
 
 #############
