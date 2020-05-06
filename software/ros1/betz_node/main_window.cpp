@@ -46,8 +46,23 @@ MainWindow::MainWindow(QWidget *parent)
       &QTableWidget::cellChanged,
       [this](int row, int col) { this->param_changed(row); });
 
+  ui->data_table->horizontalHeader()->setSectionResizeMode(
+      0,
+      QHeaderView::ResizeToContents);
+
+  ui->data_table->horizontalHeader()->setSectionResizeMode(
+      1,
+      QHeaderView::ResizeToContents);
+
   bus.packet_listener =
       [this](const Packet& p) { this->rx_packet(p); };
+
+  connect(
+      ui->actionStream,
+      &QAction::toggled,
+      [this](bool checked) { this->stream = checked; } );
+
+  stream_elapsed_timer.start();
 
   QTimer *timer = new QTimer(this);
   connect(timer, &QTimer::timeout, [this]() { tick(); });
@@ -70,6 +85,11 @@ void MainWindow::discover()
 void MainWindow::tick()
 {
   bus.spin_once();
+  if (stream && stream_elapsed_timer.elapsed() > 500)
+  {
+    stream_elapsed_timer.restart();
+    // todo: send "verbose state poll" packet
+  }
 }
 
 void MainWindow::rx_discovery(const Packet& packet)
@@ -150,7 +170,7 @@ void MainWindow::rx_param_name_value(const betz::Packet& packet)
 
     ui->param_table->item(param_idx, 0)->setText(
         QString::fromStdString(param.name));
-    
+
     auto value_item = ui->param_table->item(param_idx, 1);
     if (param.type == Param::Type::INT)
       value_item->setText(QString::number(param.i_value));
@@ -161,7 +181,7 @@ void MainWindow::rx_param_name_value(const betz::Packet& packet)
 
     ui->param_table->blockSignals(false);
   }
-    
+
   // the 'id' parameter is magic, so we special-case it here.
   // always render it if we get it, no matter what drive is selected
   if (packet.payload[5] == static_cast<uint8_t>(Param::Type::INT) &&

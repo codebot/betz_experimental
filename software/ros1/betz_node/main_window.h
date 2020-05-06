@@ -19,6 +19,7 @@
 #define MAIN_WINDOW_H
 
 #include <QMainWindow>
+#include <QElapsedTimer>
 #include "bus.h"
 #include "packet/packet.h"
 #include <ros/ros.h>
@@ -54,6 +55,9 @@ private:
   void param_changed(const int param_idx);
 
   std::string selected_uuid;
+
+  bool stream = false;
+  QElapsedTimer stream_elapsed_timer;
 };
 
 #endif
