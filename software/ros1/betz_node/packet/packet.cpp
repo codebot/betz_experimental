@@ -16,6 +16,7 @@
 */
 
 #include <cstdio>
+#include <cstring>
 #include "crc.h"
 #include "packet.h"
 using betz::Packet;
@@ -106,6 +107,24 @@ void Packet::append(const uint32_t i)
 {
   // little-endian. I'm sure there is a faster way someday, but it's nice
   // to be explicit also
+  payload.push_back(i & 0xff);
+  payload.push_back((i >> 8) & 0xff);
+  payload.push_back((i >> 16) & 0xff);
+  payload.push_back((i >> 24) & 0xff);
+}
+
+void Packet::append(const int32_t i)
+{
+  payload.push_back(i & 0xff);
+  payload.push_back((i >> 8) & 0xff);
+  payload.push_back((i >> 16) & 0xff);
+  payload.push_back((i >> 24) & 0xff);
+}
+
+void Packet::append(const float f)
+{
+  uint32_t i = 0;
+  memcpy(&i, &f, 4);
   payload.push_back(i & 0xff);
   payload.push_back((i >> 8) & 0xff);
   payload.push_back((i >> 16) & 0xff);

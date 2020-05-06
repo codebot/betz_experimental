@@ -387,7 +387,38 @@ void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
   comms_tx_long_addr(tx_pkt, tx_len);
 }
 
-void comms_rx_pkt(const uint8_t* p, const uint32_t len)
+void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
+{
+  if (len < 9)
+    return; // too short, something must be wrong
+
+  uint32_t param_idx = 0;
+  memcpy(&param_idx, &rx_pkt[1], sizeof(param_idx));
+  if (param_idx >= param_count())
+    return;  // invalid
+  
+  volatile void *ptr = param_get_ptr(param_idx);
+  if (!ptr)
+    return;  // shouldn't be possible, but... let's always check anyway
+
+  const param_type_t type = param_get_type(param_idx);
+  if (type == PARAM_TYPE_INT)
+  {
+    int i = 0;
+    memcpy(&i, &rx_pkt[5], 4);
+    *(int *)ptr = i;
+  }
+  else if (type == PARAM_TYPE_FLOAT)
+  {
+    float f = 0;
+    memcpy(&f, &rx_pkt[5], 4);
+    *(float *)ptr = f;
+  }
+  
+  // todo: someday send confirmation back, if requested?
+}
+
+void comms_rx_pkt(const uint8_t *p, const uint32_t len)
 {
   //printf("comms_rx_pkt() received %d bytes\r\n", (int)len);
   if (len == 0)
@@ -399,6 +430,7 @@ void comms_rx_pkt(const uint8_t* p, const uint32_t len)
   {
     case 0x01: comms_num_params(); break;
     case 0x02: comms_param_name_value(p, len); break;
+    case 0x03: comms_param_set_value(p, len); break;
     case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_read_flash(p, len); break;
     case 0xf2: comms_write_flash(p, len); break;

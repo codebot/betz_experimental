@@ -82,7 +82,18 @@ param_storage_t param_get_storage(const uint32_t param_idx)
   return params[param_idx].storage;
 }
 
-//void param_set_int(const char *param_name, const uint32_t value)
+void param_set_int(const char *param_name, const int value)
+{
+  for (uint32_t i = 0; i < num_params; i++)
+  {
+    struct param *p = &params[i];
+    if (p->t == PARAM_TYPE_INT && !strcmp(p->n, param_name))
+    {
+      *((int *)p->p) = value;
+      break;
+    }
+  }
+}
 
 void param_set_float(const char *param_name, const float value)
 {

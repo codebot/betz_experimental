@@ -42,7 +42,7 @@ public:
   Storage storage = Storage::TRANSIENT;
 
   std::string name;
-  int i_value = 0;
+  int32_t i_value = 0;
   float f_value = 0.0;
   int idx = 0;  // index in the MCU's param table
 

@@ -57,7 +57,7 @@ public:
   {
     ID_NUM_PARAMS = 0x01,
     ID_PARAM_NAME_VALUE = 0x02,
-    ID_PARAM_VALUE = 0x03,
+    ID_PARAM_SET_VALUE = 0x03,
 
     ID_DISCOVERY  = 0xf0,
     ID_FLASH_READ = 0xf1,
@@ -75,6 +75,8 @@ public:
   void append(const uint8_t b);
   void append(const uint16_t s);
   void append(const uint32_t i);
+  void append(const int32_t i);
+  void append(const float f);
 
   virtual void print() const;
 };

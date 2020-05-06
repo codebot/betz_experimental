@@ -15,13 +15,16 @@
  *
 */
 
-#include "param_value.h"
-using betz::ParamValue;
-using betz::Packet;
+#include "param_set_value.h"
 
-ParamValue::ParamValue(
+using betz::Packet;
+using betz::ParamSetValue;
+using betz::Param;
+
+
+ParamSetValue::ParamSetValue(
     const Drive& drive,
-    const uint32_t param_idx,
+    const Param& param,
     const bool force_long_addr)
 {
   flags = FLAG_SENTINEL;
@@ -33,6 +36,12 @@ ParamValue::ParamValue(
   else
     drive_id = drive.id;
 
-  payload.push_back(ID_PARAM_VALUE);
-  append(param_idx);
+  payload.push_back(ID_PARAM_SET_VALUE);
+  append(static_cast<uint32_t>(param.idx));
+  if (param.type == Param::Type::INT)
+    append(param.i_value);
+  else if (param.type == Param::Type::FLOAT)
+    append(param.f_value);
+  else
+    printf("WOAH invalid param type in ParamSetValue\n");
 }

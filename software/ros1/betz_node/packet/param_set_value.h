@@ -15,8 +15,8 @@
  *
 */
 
-#ifndef PARAM_VALUE_H
-#define PARAM_VALUE_H
+#ifndef PARAM_SET_VALUE_H
+#define PARAM_SET_VALUE_H
 
 #include <stdint.h>
 #include "../drive.h"
@@ -24,12 +24,12 @@
 
 namespace betz {
 
-class ParamValue : public Packet
+class ParamSetValue : public Packet
 {
 public:
-  ParamValue(
+  ParamSetValue(
       const Drive& drive,
-      const uint32_t param_idx,
+      const Param& param,
       const bool force_long_addr = false);
 };
 

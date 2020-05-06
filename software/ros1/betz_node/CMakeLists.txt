@@ -7,10 +7,18 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+
+#find_library(QWT
+#    NAMES qwt
+#    REQUIRED)
+#
+#include_directories(qwt)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_CXX_STANDARD 14)
 
 generate_dynamic_reconfigure_options(cfg/Betz.cfg)
 
@@ -43,7 +51,7 @@ add_library(betz
   packet/flash_write.cpp
   packet/num_params.cpp
   packet/param_name_value.cpp
-  packet/param_value.cpp
+  packet/param_set_value.cpp
   packet/reset.cpp
   packet/packet.cpp
   param.cpp

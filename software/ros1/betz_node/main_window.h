@@ -50,7 +50,8 @@ private:
   void rx_discovery(const betz::Packet& packet);
   void rx_num_params(const betz::Packet& packet);
   void rx_param_name_value(const betz::Packet& packet);
-  void update_drive_id_ui(const std::string& uuid, const int id);
+  void set_selected_drive(const std::string& uuid);
+  void param_changed(const int param_idx);
 
   std::string selected_uuid;
 };

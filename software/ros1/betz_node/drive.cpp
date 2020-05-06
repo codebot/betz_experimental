@@ -39,7 +39,6 @@ void Drive::rx_num_params(const Packet& packet)
     return;
   }
   memcpy(&num_params, &packet.payload[1], 4);
-  printf("num_params = %u\n", num_params);
   params.resize(num_params);
 }
 
