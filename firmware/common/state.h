@@ -15,37 +15,19 @@
  *
 */
 
-#include <stdio.h>
+#ifndef STATE_H
+#define STATE_H
 
-#include "control.h"
-#include "param.h"
+#include <stdint.h>
 
-#ifndef EMULATOR
-#include "stm32f405xx.h"
-#endif
-
-static int g_tick_count = 0;
-
-void control_init()
+struct state_t
 {
-}
+  uint32_t t;  // systime at instant of PWM cycle start
+  float enc;  // encoder (radians)
+};
 
-#ifndef EMULATOR
-// todo: consider using the ramfunc section
-void tim1_up_tim10_vector()
-{
-  TIM1->SR &= ~TIM_SR_UIF;  // clear the interrupt flag that got us here
-  if (TIM1->CR1 & TIM_CR1_DIR)
-  {
-    // all shunts are ready to measure
-    g_tick_count++;
-    if (g_tick_count % 20000 == 0)
-    {
-    }
-  }
-  else
-  {
-    // we're at the top of the cycle, might as well kick off an encoder read
-  }
-}
+extern struct state_t g_state;
+
+void state_init();
+
 #endif

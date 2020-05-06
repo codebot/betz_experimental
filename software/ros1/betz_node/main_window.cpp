@@ -18,15 +18,19 @@
 #include "ui_mainwindow.h"
 #include "main_window.h"
 #include "packet/param_set_value.h"
+#include "packet/state_poll.h"
 
 #include <QTimer>
 #include <functional>
 #include <memory>
 
+using std::make_unique;
+
 using betz::Drive;
 using betz::Packet;
 using betz::Param;
 using betz::ParamSetValue;
+using betz::StatePoll;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -88,7 +92,9 @@ void MainWindow::tick()
   if (stream && stream_elapsed_timer.elapsed() > 500)
   {
     stream_elapsed_timer.restart();
-    // todo: send "verbose state poll" packet
+    auto drive = bus.drive_by_uuid_str(selected_uuid);
+    if (drive)
+      bus.send_packet(make_unique<StatePoll>(*drive, 1, true));
   }
 }
 
@@ -271,5 +277,5 @@ void MainWindow::param_changed(const int param_idx)
     ROS_ERROR("woah! unknown param type");
     return;
   }
-  bus.send_packet(std::make_unique<ParamSetValue>(*drive, param));
+  bus.send_packet(make_unique<ParamSetValue>(*drive, param));
 }

@@ -59,6 +59,8 @@ public:
     ID_PARAM_NAME_VALUE = 0x02,
     ID_PARAM_SET_VALUE = 0x03,
 
+    ID_STATE_POLL = 0x10,
+
     ID_DISCOVERY  = 0xf0,
     ID_FLASH_READ = 0xf1,
     ID_FLASH_WRITE = 0xf2,

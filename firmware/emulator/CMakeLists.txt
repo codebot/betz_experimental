@@ -13,9 +13,12 @@ add_executable(comms_emulator
   ../common/comms.c
   ../common/control.c
   ../common/param.c
+  ../common/state.c
   emulator_flash.c
   emulator_rng.c
   emulator_sys.c
   emulator_systime.c
   emulator_uuid.c
   multicast.c)
+
+target_compile_definitions(comms_emulator PUBLIC EMULATOR)

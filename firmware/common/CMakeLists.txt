@@ -12,6 +12,7 @@ add_library(common
   rs485.c
   stack.c
   startup.c
+  state.c
   status_led.c
   stm32f4_vectors.c
   stubs.c

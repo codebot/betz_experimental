@@ -15,37 +15,12 @@
  *
 */
 
-#include <stdio.h>
+#include <state.h>
+#include <string.h>
 
-#include "control.h"
-#include "param.h"
+struct state_t g_state;
 
-#ifndef EMULATOR
-#include "stm32f405xx.h"
-#endif
-
-static int g_tick_count = 0;
-
-void control_init()
+void state_init()
 {
+  memset(&g_state, 0, sizeof(g_state));
 }
-
-#ifndef EMULATOR
-// todo: consider using the ramfunc section
-void tim1_up_tim10_vector()
-{
-  TIM1->SR &= ~TIM_SR_UIF;  // clear the interrupt flag that got us here
-  if (TIM1->CR1 & TIM_CR1_DIR)
-  {
-    // all shunts are ready to measure
-    g_tick_count++;
-    if (g_tick_count % 20000 == 0)
-    {
-    }
-  }
-  else
-  {
-    // we're at the top of the cycle, might as well kick off an encoder read
-  }
-}
-#endif

@@ -24,6 +24,7 @@
 #include "param.h"
 #include "rng.h"
 #include "rs485.h"
+#include "state.h"
 #include "sys.h"
 #include "systime.h"
 #include "uuid.h"
@@ -81,7 +82,11 @@ static uint32_t g_comms_discovery_send_time = 0;
 static bool g_comms_init_complete = false;
 
 // local functions
-static void comms_rx_pkt(const uint8_t *p, const uint32_t len);
+static void comms_rx_pkt(
+    const uint8_t *p,
+    const uint32_t len,
+    const bool long_address);
+
 // static void comms_tx(const uint8_t *p, const uint32_t len);
 static void comms_tx_long_addr(const uint8_t *p, const uint32_t len);
 
@@ -237,7 +242,10 @@ void comms_rx_byte(const uint8_t b)
           // printf("ignoring packet\r\n");
           break;
         }
-        comms_rx_pkt(g_comms_parser_pkt, g_comms_parser_expected_length);
+        comms_rx_pkt(
+            g_comms_parser_pkt,
+            g_comms_parser_expected_length,
+            g_comms_parser_long_address);
       }
       else
       {
@@ -378,7 +386,7 @@ void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
   const int tx_name_len =
       strnlen(param_get_name(param_idx), sizeof(tx_pkt) - 12);
   tx_pkt[7] = tx_name_len;
-  strncpy(&tx_pkt[8], param_get_name(param_idx), tx_name_len);
+  strncpy((char *)&tx_pkt[8], param_get_name(param_idx), tx_name_len);
 
   const int val_pos = 8 + tx_name_len;
   memcpy(&tx_pkt[val_pos], (void *)param_get_ptr(param_idx), 4);
@@ -418,7 +426,52 @@ void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
   // todo: someday send confirmation back, if requested?
 }
 
-void comms_rx_pkt(const uint8_t *p, const uint32_t len)
+void comms_state_poll(
+    const uint8_t *p,
+    const uint32_t len,
+    const bool long_address)
+{
+  printf("comms_state_poll()\r\n");
+  if (len < 2)
+    return;  // too short
+
+  // todo: remove this; just for testing... state will be filled in
+  // by normal controller ticks via TIM1
+
+  const uint8_t verbosity = p[1];
+
+  if (verbosity == 1)
+  {
+    uint8_t tx_pkt[40] __attribute__((aligned(4))) = {0};
+    tx_pkt[0] = 0x10;
+    tx_pkt[1] = 0x00;  // padding, for future use by flags and stuff
+    tx_pkt[2] = 0x00;  // padding, for future use by flags and stuff
+    tx_pkt[3] = 0x00;  // padding, for future use by flags and stuff
+  
+    // Now that we're sure to be 32-bit aligned, we can just copy stuff in.
+    // To avoid some compiler warnings about breaking aliasing rules, we'll
+    // do it in 2 steps. We know this is safe, and this is a performance
+    // critical block, so avoiding the memcpy() calls is important.
+
+    uint32_t *t_dest = (uint32_t *)&tx_pkt[4];
+    *t_dest = g_state.t;
+
+    float *enc_dest = (float *)&tx_pkt[8];
+    *enc_dest = g_state.enc;
+
+    // todo: match the poll for short/long address
+    comms_tx_long_addr(tx_pkt, 12);
+  }
+  else
+  {
+    printf("unhandled state verbosity level: %d!\r\n", (int)verbosity);
+  }
+}
+
+void comms_rx_pkt(
+    const uint8_t *p,
+    const uint32_t len,
+    const bool long_address)
 {
   //printf("comms_rx_pkt() received %d bytes\r\n", (int)len);
   if (len == 0)
@@ -431,13 +484,14 @@ void comms_rx_pkt(const uint8_t *p, const uint32_t len)
     case 0x01: comms_num_params(); break;
     case 0x02: comms_param_name_value(p, len); break;
     case 0x03: comms_param_set_value(p, len); break;
+    case 0x10: comms_state_poll(p, len, long_address); break;
     case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_read_flash(p, len); break;
     case 0xf2: comms_write_flash(p, len); break;
     case 0xf3: comms_boot(); break;
     case 0xf4: comms_reset(); break;
     default: 
-      printf("unhandled packet id: [%02x]\n", pkt_id);
+      printf("unhandled packet id: 0x%02x\n", pkt_id);
       break;
   }
 }

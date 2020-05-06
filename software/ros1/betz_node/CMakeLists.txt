@@ -38,6 +38,10 @@ add_library(betz
   bus.cpp
   drive.cpp
   lightweightserial.cpp
+  param.cpp
+  transport_serial.cpp
+  transport_multicast.cpp
+  uuid.cpp
   packet/boot.cpp
   packet/crc.cpp
   packet/discovery.cpp
@@ -48,10 +52,7 @@ add_library(betz
   packet/param_set_value.cpp
   packet/reset.cpp
   packet/packet.cpp
-  param.cpp
-  transport_serial.cpp
-  transport_multicast.cpp
-  uuid.cpp)
+  packet/state_poll.cpp)
 
 add_executable(betz_node
   betz_node.cpp

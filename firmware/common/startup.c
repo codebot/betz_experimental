@@ -12,6 +12,7 @@
 #include "stm32f405xx.h"
 #include "startup.h"
 #include "stack.h"
+#include "state.h"
 #include "status_led.h"
 #include "systime.h"
 #include "uuid.h"
@@ -96,6 +97,7 @@ void reset_vector()
   status_led_init();
   console_init();
   systime_init();
+  state_init();
   param_init();
   uuid_init();
   flash_init();

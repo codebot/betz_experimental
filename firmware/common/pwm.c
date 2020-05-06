@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 
+#include "control.h"
 #include "pin.h"
 #include "pwm.h"
 #include "stm32f405xx.h"
@@ -71,21 +72,18 @@ void pwm_init()
       TIM_CCER_CC2E |  // enable compare output 2
       TIM_CCER_CC3E ;  // enable compare output 3
 
+  TIM1->EGR = TIM_EGR_UG;  // generate update event to load registers
+  TIM1->DIER |= TIM_DIER_UIE;  // fire interrupt at top and bottom
+
   TIM1->CR1 =
       TIM_CR1_CMS_0 |  // enable center-aligned PWM mode
       TIM_CR1_ARPE  |  // enable auto-reload preload (buffered)
       TIM_CR1_CEN   ;  // enable counter
 
-  TIM1->EGR = TIM_EGR_UG;  // generate update event to load registers
   TIM1->BDTR = TIM_BDTR_MOE;  // master output enable
 
-
-#if 0
-  // todo: TIM1->DIER |= TIM_DIER_UIE;  (??)
-  // todo: NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 1); // lower than comms
-  // todo: NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
-#endif
-
+  NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 1); // lower than comms
+  NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
 }
 
 void pwm_set(const uint32_t a, const uint32_t b, const uint32_t c)

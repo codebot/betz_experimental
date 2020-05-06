@@ -7,6 +7,7 @@
 #include "multicast.h"
 #include "param.h"
 #include "rng.h"
+#include "state.h"
 #include "uuid.h"
 
 int main(int argc, char **argv)
@@ -15,6 +16,7 @@ int main(int argc, char **argv)
   rng_init();
   multicast_init();
   uuid_init();
+  state_init();
   param_init();
   control_init();
   comms_init(multicast_tx);
