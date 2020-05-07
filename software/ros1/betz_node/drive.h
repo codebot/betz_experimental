@@ -46,6 +46,8 @@ public:
   void rx_num_params(const Packet& packet);
   void rx_param_name_value(const Packet& packet);
 
+  void rx_state_poll(const Packet& packet);
+
   void rx_flash_read(const Packet& packet);
   void rx_flash_write(const Packet& packet);
   void rx_discovery(const Packet& packet);

@@ -18,16 +18,26 @@
 #include <stdio.h>
 
 #include "control.h"
+#include "enc.h"
 #include "param.h"
+#include "systime.h"
+#include "state.h"
+#include "status_led.h"
 
 #ifndef EMULATOR
 #include "stm32f405xx.h"
 #endif
 
 static int g_tick_count = 0;
+bool g_control_request_enc = false;
 
 void control_init()
 {
+}
+
+void control_tick()
+{
+  g_state.t = systime_read();
 }
 
 #ifndef EMULATOR
@@ -38,14 +48,18 @@ void tim1_up_tim10_vector()
   if (TIM1->CR1 & TIM_CR1_DIR)
   {
     // all shunts are ready to measure
+    g_state.t = systime_read();
     g_tick_count++;
-    if (g_tick_count % 20000 == 0)
-    {
-    }
   }
   else
   {
-    // we're at the top of the cycle, might as well kick off an encoder read
+    // we're at the top of the cycle. Time to talk to the encoder.
+    // do this in low-priority "main loop" time. Just set a flag here.
+    // these transfers are pretty fast and require a decent amount of CPU
+    // to sequence, so (for now at least) we'll just do it blocking. If
+    // it matters in the future we can get all fancy and do this with DMA
+    // g_control_request_enc = true;
+    enc_start_nonblocking_read_to_state();
   }
 }
 #endif

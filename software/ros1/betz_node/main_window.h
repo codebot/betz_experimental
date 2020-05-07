@@ -51,8 +51,13 @@ private:
   void rx_discovery(const betz::Packet& packet);
   void rx_num_params(const betz::Packet& packet);
   void rx_param_name_value(const betz::Packet& packet);
+  void rx_state_poll(const betz::Packet& packet);
+
   void set_selected_drive(const std::string& uuid);
   void param_changed(const int param_idx);
+
+  void set_data_table_item(const int row, const int32_t value); 
+  void set_data_table_item(const int row, const float value); 
 
   std::string selected_uuid;
 

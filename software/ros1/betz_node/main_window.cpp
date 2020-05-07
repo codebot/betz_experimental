@@ -89,7 +89,7 @@ void MainWindow::discover()
 void MainWindow::tick()
 {
   bus.spin_once();
-  if (stream && stream_elapsed_timer.elapsed() > 500)
+  if (stream && stream_elapsed_timer.elapsed() > 100)
   {
     stream_elapsed_timer.restart();
     auto drive = bus.drive_by_uuid_str(selected_uuid);
@@ -120,24 +120,73 @@ void MainWindow::rx_discovery(const Packet& packet)
 
 void MainWindow::rx_num_params(const betz::Packet& packet)
 {
-  if (selected_uuid == packet.uuid.to_string())
+  if (selected_uuid != packet.uuid.to_string())
+    return;
+
+  const size_t num_params = 
+      bus.drive_by_uuid_str(selected_uuid)->params.size();
+
+  ui->param_table->blockSignals(true);
+
+  ui->param_table->setRowCount(num_params);
+
+  for (int i = 0; i < num_params; i++)
   {
-    const size_t num_params = 
-        bus.drive_by_uuid_str(selected_uuid)->params.size();
+    auto name_item = new QTableWidgetItem("?");
+    name_item->setFlags(name_item->flags() & ~Qt::ItemIsEditable);
+    ui->param_table->setItem(i, 0, name_item);
 
-    ui->param_table->setRowCount(num_params);
+    auto value_item = new QTableWidgetItem("");
+    ui->param_table->setItem(i, 1, value_item);
+  }
+  ui->param_table->blockSignals(false);
+}
 
-    ui->param_table->blockSignals(true);
-    for (int i = 0; i < num_params; i++)
-    {
-      auto name_item = new QTableWidgetItem("?");
-      name_item->setFlags(name_item->flags() & ~Qt::ItemIsEditable);
-      ui->param_table->setItem(i, 0, name_item);
+void MainWindow::rx_state_poll(const betz::Packet& packet)
+{
+  if (selected_uuid != packet.uuid.to_string())
+    return;
 
-      auto value_item = new QTableWidgetItem("");
-      ui->param_table->setItem(i, 1, value_item);
-    }
-    ui->param_table->blockSignals(false);
+  if (packet.payload.size() < 12)
+  {
+    ROS_ERROR("state packet too short: %d\n", (int)packet.payload.size());
+    return;
+  }
+
+  int32_t t = 0;
+  memcpy(&t, &packet.payload[4], 4);
+  set_data_table_item(0, t);
+
+  float enc = 0;
+  memcpy(&enc, &packet.payload[8], 4);
+  set_data_table_item(1, enc);
+}
+
+void MainWindow::set_data_table_item(const int row, const int32_t value)
+{
+  QTableWidgetItem *item = ui->data_table->item(row, 2);
+  if (item)
+  {
+    item->setText(QString::number(value));
+  }
+  else
+  {
+    item = new QTableWidgetItem(QString::number(value));
+    ui->data_table->setItem(row, 2, item);
+  }
+}
+
+void MainWindow::set_data_table_item(const int row, const float value)
+{
+  QTableWidgetItem *item = ui->data_table->item(row, 2);
+  if (item)
+  {
+    item->setText(QString::number(value));
+  }
+  else
+  {
+    item = new QTableWidgetItem(QString::number(value));
+    ui->data_table->setItem(row, 2, item);
   }
 }
 
@@ -218,6 +267,7 @@ void MainWindow::rx_packet(const Packet& packet)
     case Packet::ID_DISCOVERY:        rx_discovery(packet); break;
     case Packet::ID_NUM_PARAMS:       rx_num_params(packet); break;
     case Packet::ID_PARAM_NAME_VALUE: rx_param_name_value(packet); break;
+    case Packet::ID_STATE_POLL:       rx_state_poll(packet); break;
     default: break;
   }
 }

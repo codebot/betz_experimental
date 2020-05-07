@@ -431,7 +431,6 @@ void comms_state_poll(
     const uint32_t len,
     const bool long_address)
 {
-  printf("comms_state_poll()\r\n");
   if (len < 2)
     return;  // too short
 

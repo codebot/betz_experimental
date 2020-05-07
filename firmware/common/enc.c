@@ -33,10 +33,13 @@
 #define ENC_MOSI_PIN 12
 
 #include <stdio.h>
+#include <math.h>
+
+#include "stm32f405xx.h"
 
 #include "enc.h"
 #include "pin.h"
-#include "stm32f405xx.h"
+#include "state.h"
 
 void enc_init()
 {
@@ -64,12 +67,18 @@ void enc_init()
       SPI_CR1_SSI  ;  // assert software SSI pin
 
   // todo: set interrupts, if we care in the future...
+  ENC_SPI->CR2 =
+      SPI_CR2_RXNEIE;  // enable receive interrupt
 
   ENC_SPI->CR1 |= SPI_CR1_SPE;  // enable SPI
+
+  NVIC_SetPriority(SPI3_IRQn, 2);  // lower than PWM and comms priority
+  NVIC_EnableIRQ(SPI3_IRQn);
 }
 
 uint16_t enc_read_pos_blocking()
 {
+  NVIC_DisableIRQ(SPI3_IRQn);
   pin_set_output_low(ENC_CS_GPIO, ENC_CS_PIN);
 
   ENC_SPI->DR;  // flush RX with a dummy read
@@ -78,5 +87,27 @@ uint16_t enc_read_pos_blocking()
 
   pin_set_output_high(ENC_CS_GPIO, ENC_CS_PIN);
 
-  return ENC_SPI->DR & 0x3fff;  // returns the _previous_ read, not current!
+  uint16_t reading = ENC_SPI->DR & 0x3fff;  // returns the _previous_ read
+
+  NVIC_EnableIRQ(SPI3_IRQn);
+
+  return reading;
+}
+
+void enc_blocking_read_to_state()
+{
+  g_state.enc = enc_read_pos_blocking();
+}
+
+void enc_start_nonblocking_read_to_state()
+{
+  pin_set_output_low(ENC_CS_GPIO, ENC_CS_PIN);
+  ENC_SPI->DR = 0xffff;
+}
+
+void spi3_vector()
+{
+  pin_set_output_high(ENC_CS_GPIO, ENC_CS_PIN);
+  uint16_t reading = ENC_SPI->DR & 0x3fff;  // returns the _previous_ read
+  g_state.enc = reading * (float)(2.0 * M_PI / 16384.0);
 }

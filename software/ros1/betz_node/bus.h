@@ -99,12 +99,13 @@ public:
   };
   DiscoveryState discovery_state = DiscoveryState::IDLE;
 
-  void discovery_begin();
+  void discovery_begin(const bool _enumerate_params = true);
   void discovery_tick();
   int discovery_attempt = 0;
   size_t discovery_drive_idx = 0;
   size_t discovery_param_idx = 0;
   ros::Time discovery_time;
+  bool enumerate_params = true;
 
   bool burn_firmware(const std::string& firmware_filename);
   bool boot_all_drives();

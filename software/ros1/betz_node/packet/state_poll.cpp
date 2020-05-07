@@ -15,14 +15,24 @@
  *
 */
 
-#ifndef CONTROL_H
-#define CONTROL_H
+#include "state_poll.h"
+using betz::StatePoll;
+using betz::Packet;
 
-#include <stdbool.h>
+StatePoll::StatePoll(
+    const Drive& drive,
+    const uint8_t verbosity,
+    const bool force_long_addr)
+{
+  flags = FLAG_SENTINEL;
+  if (drive.id == 0 || force_long_addr)
+  {
+    flags |= FLAG_ADDR_UUID;
+    uuid = drive.uuid;
+  }
+  else
+    drive_id = drive.id;
 
-void control_init();
-void control_tick();
-
-// extern bool g_control_request_enc;
-
-#endif
+  payload.push_back(ID_STATE_POLL);
+  append(verbosity);
+}

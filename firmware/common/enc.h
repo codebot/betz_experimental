@@ -22,5 +22,7 @@
 
 void enc_init();
 uint16_t enc_read_pos_blocking();
+void enc_blocking_read_to_state();
+void enc_start_nonblocking_read_to_state();
 
 #endif

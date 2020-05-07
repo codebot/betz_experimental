@@ -55,7 +55,11 @@ void rs485_init()
   RS485_USART->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE;
 
   RS485_USART->CR1 |= USART_CR1_UE;
-  NVIC_SetPriority(USART1_IRQn, 1);
+
+  // Unfortunately, we have to set the highest prirority to the comms RX
+  // interrupt handler because there is only a 1-byte RX buffer. Otherwise
+  // we might drop inbound bytes. This handler has to be super super fast.
+  NVIC_SetPriority(USART1_IRQn, 0);  // highest priority (!)
   NVIC_EnableIRQ(USART1_IRQn);
 }
 

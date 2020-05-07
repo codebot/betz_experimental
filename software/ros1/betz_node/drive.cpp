@@ -119,6 +119,11 @@ void Drive::rx_param_name_value(const Packet& packet)
   params[param.idx] = param;
 }
 
+void Drive::rx_state_poll(const Packet& packet)
+{
+  // nothing to do (yet)
+}
+
 void Drive::rx_packet(const Packet& packet)
 {
   if (packet.payload.size() == 0)
@@ -137,6 +142,7 @@ void Drive::rx_packet(const Packet& packet)
     case Packet::ID_FLASH_READ:       rx_flash_read(packet); break;
     case Packet::ID_FLASH_WRITE:      rx_flash_write(packet); break;
     case Packet::ID_BOOT:             rx_boot(packet); break;
+    case Packet::ID_STATE_POLL:       rx_state_poll(packet); break;
     default:
       ROS_INFO(
           "unrecognized packet ID: %02x",

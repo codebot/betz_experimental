@@ -124,17 +124,17 @@ int BetzNode::init(int argc, char **argv)
     return 1;
   }
 
-  bus.discovery_begin();
+  bus.discovery_begin(false);
 
   ros::Rate rate(100);
-  while (ros::ok() && (bus.discovery_state != Bus::DiscoveryState::DONE))
+  while (ros::ok() && (bus.discovery_state < Bus::DiscoveryState::NUM_PARAMS))
   {
     bus.spin_once();
     rate.sleep();
   }
 
   ROS_INFO("discovery complete. found %zu drives.", bus.drives.size());
-  
+
   const string verb(argv[1]);
   if (verb == "run")
     return run();

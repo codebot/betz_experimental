@@ -15,14 +15,24 @@
  *
 */
 
-#ifndef CONTROL_H
-#define CONTROL_H
+#ifndef STATE_POLL_H
+#define STATE_POLL_H
 
-#include <stdbool.h>
+#include <stdint.h>
+#include "../drive.h"
+#include "packet.h"
 
-void control_init();
-void control_tick();
+namespace betz {
 
-// extern bool g_control_request_enc;
+class StatePoll : public Packet
+{
+public:
+  StatePoll(
+      const Drive& drive,
+      const uint8_t verbosity = 0,
+      const bool force_long_addr = false);
+};
+
+}  // namespace betz
 
 #endif

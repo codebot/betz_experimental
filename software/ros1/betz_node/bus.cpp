@@ -272,13 +272,16 @@ bool Bus::spin_once(const uint8_t watch_packet_id)
   return false;
 }
 
-void Bus::discovery_begin()
+void Bus::discovery_begin(const bool _enumerate_params)
 {
   printf("Bus::discovery_begin()\n");
+
   discovery_time = ros::Time::now();
   discovery_state = DiscoveryState::PROBING;
   discovery_attempt = 0;
-  // default is a random response time between 0 and 100 milliseconds
+  enumerate_params = _enumerate_params;
+
+  // default args create a random response time between 0 and 100 milliseconds
   send_packet(std::make_unique<Discovery>());
 }
 
@@ -299,8 +302,16 @@ void Bus::discovery_tick()
         }
         else
         {
-          discovery_state = DiscoveryState::NUM_PARAMS;
-          discovery_attempt = 0;
+          if (enumerate_params)
+          {
+            discovery_state = DiscoveryState::NUM_PARAMS;
+            discovery_attempt = 0;
+          }
+          else
+          {
+            discovery_state = DiscoveryState::DONE;
+            ROS_INFO("discovery complete");
+          }
         }
       }
       break;
