@@ -21,6 +21,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// 84e6 / 4200 = 20 kHz
+#define PWM_MAX 4200  
+
 void pwm_init();
 void pwm_set(const uint32_t a, const uint32_t b, const uint32_t c);
 uint32_t pwm_max();

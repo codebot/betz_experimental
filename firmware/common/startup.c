@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "adc.h"
 #include "console.h"
 #include "control.h"
 #include "comms.h"
@@ -101,6 +102,7 @@ void reset_vector()
   param_init();
   uuid_init();
   flash_init();
+  adc_init();
   pwm_init();
   rng_init();
   rs485_init();

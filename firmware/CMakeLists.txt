@@ -80,6 +80,7 @@ add_subdirectory(test_uuid)
 add_subdirectory(test_rng)
 
 add_subdirectory(app_blink)
+add_subdirectory(app_test_adc)
 add_subdirectory(app_test_enc)
 add_subdirectory(app_test_pwm)
 add_subdirectory(app_bldc)

@@ -21,6 +21,14 @@
 #include <stdint.h>
 
 void systime_init();
+
+#ifdef EMULATOR
 uint32_t systime_read();
+#else
+
+#include "stm32f405xx.h"
+#define systime_read() ( TIM2 -> CNT )
+
+#endif
 
 #endif

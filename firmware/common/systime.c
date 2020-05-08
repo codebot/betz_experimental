@@ -30,8 +30,3 @@ void systime_init()
   TIM2->EGR = TIM_EGR_UG; // load the PSC register immediately
   TIM2->CR1 = TIM_CR1_CEN; // start counter
 }
-
-uint32_t systime_read()
-{
-  return TIM2->CNT;
-}

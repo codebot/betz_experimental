@@ -25,6 +25,12 @@ void param_int(
     const int default_value,
     const param_storage_t param_storage);
 
+void param_float(
+    const char *name,
+    volatile float *ptr,
+    const float default_value,
+    const param_storage_t param_storage);
+
 const char *param_get_name(const uint32_t param_idx);
 param_type_t param_get_type(const uint32_t param_idx);
 param_storage_t param_get_storage(const uint32_t param_idx);

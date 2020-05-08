@@ -46,12 +46,40 @@ void param_int(
   params[num_params].storage = storage;
   num_params++;
 
+  *ptr = default_value;
+  /*
   if (storage == PARAM_PERSISTENT)
   {
     // todo: load from flash if it's there
     // otherwise, set to default value
-    *ptr = default_value;
   }
+  */
+}
+
+void param_float(
+    const char *name,
+    volatile float *ptr,
+    const float default_value,
+    const param_storage_t storage)
+{
+  if (num_params >= MAX_PARAMS) {
+    printf("out of param storage; can't add param [%s]\n", name);
+    return;  // no more room. sorry
+  }
+  params[num_params].n = name;
+  params[num_params].t = PARAM_TYPE_FLOAT;
+  params[num_params].p = ptr;
+  params[num_params].storage = storage;
+  num_params++;
+
+  *ptr = default_value;
+  /*
+  if (storage == PARAM_PERSISTENT)
+  {
+    // todo: load from flash if it's there
+    // otherwise, set to default value
+  }
+  */
 }
 
 const char *param_get_name(const uint32_t param_idx)

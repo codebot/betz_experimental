@@ -33,8 +33,6 @@
 // PWM_PWMB = PA9   TIM1_CH2 via AF1
 // PWM_PWMC = PA8   TIM1_CH1 via AF1
 
-static const uint32_t MAX_PWM = 4200;  // 84e6 / 4200 = 20 kHz
-
 void pwm_init()
 {
   printf("pwm_init()\r\n");
@@ -49,10 +47,10 @@ void pwm_init()
   pin_set_alternate_function(GPIOA, 9, 1);
   pin_set_alternate_function(GPIOA, 10, 1);
   TIM1->PSC = 0;  // timer frequency = sysclock/2 = 168 / 2 = 84 MHz
-  TIM1->ARR = MAX_PWM;
-  TIM1->CCR1 = MAX_PWM / 2;
-  TIM1->CCR2 = MAX_PWM / 2;
-  TIM1->CCR3 = MAX_PWM / 2;
+  TIM1->ARR = PWM_MAX;
+  TIM1->CCR1 = PWM_MAX / 2;
+  TIM1->CCR2 = PWM_MAX / 2;
+  TIM1->CCR3 = PWM_MAX / 2;
 
   TIM1->CCMR1 =
       TIM_CCMR1_OC1M_1 |  // PWM mode on output compare 1 (OC1)
@@ -82,7 +80,7 @@ void pwm_init()
 
   TIM1->BDTR = TIM_BDTR_MOE;  // master output enable
 
-  NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 1); // lower than comms
+  NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 2); // lower than comms and ADC
   NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
 }
 
@@ -96,7 +94,7 @@ void pwm_set(const uint32_t a, const uint32_t b, const uint32_t c)
 uint32_t pwm_max()
 {
   // in the future, this could become a parameter, I suppose.
-  return MAX_PWM;
+  return PWM_MAX;
 }
 
 void pwm_enable(const bool enable)

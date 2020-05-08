@@ -24,6 +24,8 @@ struct state_t
 {
   uint32_t t;  // systime at instant of PWM cycle start
   float enc;  // encoder (radians)
+  uint16_t raw_adc[3];
+  float phase_currents[3];
 };
 
 extern struct state_t g_state;

@@ -83,6 +83,7 @@ void rs485_tx(const uint8_t *data, const uint32_t len)
   pin_set_output_low(RS485_DIR_GPIO, RS485_DIR_PIN);  // disable transmitter
 }
 
+// void usart1_vector() __attribute__((section(".ramfunc")));
 void usart1_vector()
 {
   volatile uint8_t __attribute__((unused)) sr = USART1->SR;  // clear errors

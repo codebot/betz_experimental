@@ -147,11 +147,13 @@ void MainWindow::rx_state_poll(const betz::Packet& packet)
   if (selected_uuid != packet.uuid.to_string())
     return;
 
-  if (packet.payload.size() < 12)
+  if (packet.payload.size() < 24)
   {
     ROS_ERROR("state packet too short: %d\n", (int)packet.payload.size());
     return;
   }
+
+  packet.print();
 
   int32_t t = 0;
   memcpy(&t, &packet.payload[4], 4);
@@ -160,6 +162,14 @@ void MainWindow::rx_state_poll(const betz::Packet& packet)
   float enc = 0;
   memcpy(&enc, &packet.payload[8], 4);
   set_data_table_item(1, enc);
+
+  float phase_currents[3] = {0};
+  memcpy(&phase_currents[0], &packet.payload[12], 4);
+  memcpy(&phase_currents[1], &packet.payload[16], 4);
+  memcpy(&phase_currents[2], &packet.payload[20], 4);
+  set_data_table_item(2, phase_currents[0]);
+  set_data_table_item(3, phase_currents[1]);
+  set_data_table_item(4, phase_currents[2]);
 }
 
 void MainWindow::set_data_table_item(const int row, const int32_t value)

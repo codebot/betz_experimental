@@ -23,6 +23,8 @@
 void control_init();
 void control_tick();
 
-// extern bool g_control_request_enc;
+#define CONTROL_MODE_IDLE     0
+#define CONTROL_MODE_VOLTAGE  1
+#define CONTROL_MODE_POSITION 2
 
 #endif

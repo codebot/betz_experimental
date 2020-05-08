@@ -19,6 +19,7 @@ int main(int argc, char **argv)
   {
     rs485_tick();
     comms_tick();
+    control_tick();
 
     if (systime_read() > t_next)
     {

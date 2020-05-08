@@ -458,8 +458,15 @@ void comms_state_poll(
     float *enc_dest = (float *)&tx_pkt[8];
     *enc_dest = g_state.enc;
 
+    float *currents_dest = (float *)&tx_pkt[12];
+    *currents_dest = g_state.phase_currents[0];
+    currents_dest++;
+    *currents_dest = g_state.phase_currents[1];
+    currents_dest++;
+    *currents_dest = g_state.phase_currents[2];
+
     // todo: match the poll for short/long address
-    comms_tx_long_addr(tx_pkt, 12);
+    comms_tx_long_addr(tx_pkt, 24);
   }
   else
   {

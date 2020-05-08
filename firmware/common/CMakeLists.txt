@@ -1,4 +1,5 @@
 add_library(common
+  adc.c
   comms.c
   console.c
   control.c
