@@ -50,6 +50,7 @@ add_library(betz
   packet/num_params.cpp
   packet/param_name_value.cpp
   packet/param_set_value.cpp
+  packet/param_write_flash.cpp
   packet/reset.cpp
   packet/packet.cpp
   packet/state_poll.cpp)

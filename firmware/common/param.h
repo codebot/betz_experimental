@@ -38,4 +38,7 @@ volatile void *param_get_ptr(const uint32_t param_idx);
 void param_set_float(const char *param_name, const float value);
 void param_set_int(const char *param_name, const int value);
 
+void param_load_from_flash();
+void param_save_to_flash();
+
 #endif

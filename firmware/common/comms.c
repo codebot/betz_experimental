@@ -426,6 +426,12 @@ void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
   // todo: someday send confirmation back, if requested?
 }
 
+void comms_param_write_flash(const uint8_t *rx_pkt, const uint32_t len)
+{
+  param_save_to_flash();
+  // todo: someday send confirmation back?
+}
+
 void comms_state_poll(
     const uint8_t *p,
     const uint32_t len,
@@ -490,7 +496,10 @@ void comms_rx_pkt(
     case 0x01: comms_num_params(); break;
     case 0x02: comms_param_name_value(p, len); break;
     case 0x03: comms_param_set_value(p, len); break;
+    case 0x04: comms_param_write_flash(p, len); break;
+
     case 0x10: comms_state_poll(p, len, long_address); break;
+
     case 0xf0: comms_discovery(p, len); break;
     case 0xf1: comms_read_flash(p, len); break;
     case 0xf2: comms_write_flash(p, len); break;

@@ -70,3 +70,14 @@ bool flash_write(
 
   return true;
 }
+
+bool flash_erase_page_by_addr(const uint32_t addr)
+{
+  printf("erase page at 0x%08x\r\n", (unsigned)addr);
+  return true;
+}
+
+uint32_t flash_get_param_table_base_addr()
+{
+  return 0x000e0000;
+}

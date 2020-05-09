@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+
+#include "flash.h"
 #include "param.h"
 
 struct param
@@ -134,4 +136,20 @@ void param_set_float(const char *param_name, const float value)
       break;
     }
   }
+}
+
+void param_load_from_flash()
+{
+  printf("param_load_from_flash()\r\n");
+  printf("done\r\n");
+}
+
+void param_save_to_flash()
+{
+  printf("param_save_to_flash()\r\n");
+  // todo: be smart, pre-calculate the flash table size, and erase
+  // enough pages to get that all done before writing starts.
+  // for now, stm32f405 has huge 128 KB pages so we only need a single erase
+  flash_erase_page_by_addr(flash_get_param_table_base_addr());
+  printf("done\r\n");
 }

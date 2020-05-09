@@ -58,6 +58,7 @@ public:
     ID_NUM_PARAMS = 0x01,
     ID_PARAM_NAME_VALUE = 0x02,
     ID_PARAM_SET_VALUE = 0x03,
+    ID_PARAM_WRITE_FLASH = 0x04,
 
     ID_STATE_POLL = 0x10,
 

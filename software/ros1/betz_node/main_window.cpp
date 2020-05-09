@@ -18,6 +18,7 @@
 #include "ui_mainwindow.h"
 #include "main_window.h"
 #include "packet/param_set_value.h"
+#include "packet/param_write_flash.h"
 #include "packet/state_poll.h"
 
 #include <QTimer>
@@ -29,8 +30,6 @@ using std::make_unique;
 using betz::Drive;
 using betz::Packet;
 using betz::Param;
-using betz::ParamSetValue;
-using betz::StatePoll;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -60,6 +59,11 @@ MainWindow::MainWindow(QWidget *parent)
 
   bus.packet_listener =
       [this](const Packet& p) { this->rx_packet(p); };
+
+  connect(
+      ui->actionWriteParameters,
+      &QAction::triggered,
+      [this]() { write_parameters(); } );
 
   connect(
       ui->actionStream,
@@ -94,7 +98,7 @@ void MainWindow::tick()
     stream_elapsed_timer.restart();
     auto drive = bus.drive_by_uuid_str(selected_uuid);
     if (drive)
-      bus.send_packet(make_unique<StatePoll>(*drive, 1, true));
+      bus.send_packet(make_unique<betz::StatePoll>(*drive, 1, true));
   }
 }
 
@@ -337,5 +341,17 @@ void MainWindow::param_changed(const int param_idx)
     ROS_ERROR("woah! unknown param type");
     return;
   }
-  bus.send_packet(make_unique<ParamSetValue>(*drive, param));
+  bus.send_packet(make_unique<betz::ParamSetValue>(*drive, param));
+}
+
+void MainWindow::write_parameters()
+{
+  printf("write_parameters()\n");
+  auto drive = bus.drive_by_uuid_str(selected_uuid);
+  if (!drive)
+  {
+    ROS_ERROR("woah! couldn't find drive to flash params");
+    return;
+  }
+  bus.send_packet(make_unique<betz::ParamWriteFlash>(*drive));
 }

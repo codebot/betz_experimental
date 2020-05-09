@@ -47,6 +47,7 @@ public:
 
 private:
   Ui::MainWindow *ui;
+
   void rx_packet(const betz::Packet& packet);
   void rx_discovery(const betz::Packet& packet);
   void rx_num_params(const betz::Packet& packet);
@@ -55,6 +56,8 @@ private:
 
   void set_selected_drive(const std::string& uuid);
   void param_changed(const int param_idx);
+
+  void write_parameters();
 
   void set_data_table_item(const int row, const int32_t value); 
   void set_data_table_item(const int row, const float value); 

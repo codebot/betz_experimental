@@ -26,7 +26,6 @@ static void flash_lock() __attribute__((unused));
 static bool flash_wait_for_idle();
 static uint32_t g_flash_size = 0;
 static uint32_t g_flash_page_size = 0;
-static bool flash_erase_page_by_addr(const uint32_t addr);
 static bool flash_program_word(const uint32_t addr, const uint32_t data);
 
 void flash_init()
@@ -181,4 +180,10 @@ bool flash_erase_page_by_addr(const uint32_t addr)
         (unsigned)g_flash_page_size);
     return false;
   }
+}
+
+uint32_t flash_get_param_table_base_addr()
+{
+  // todo: branch based on MCU type and flash size
+  return 0x080e0000;
 }

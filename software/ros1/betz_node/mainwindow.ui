@@ -226,6 +226,7 @@
    </attribute>
    <addaction name="actionDiscover"/>
    <addaction name="actionStream"/>
+   <addaction name="actionWriteParameters"/>
   </widget>
   <action name="actionQuit">
    <property name="text">
@@ -261,6 +262,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionWriteParameters">
+   <property name="text">
+    <string>Write Parameters</string>
    </property>
   </action>
  </widget>
