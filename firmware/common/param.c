@@ -151,5 +151,7 @@ void param_save_to_flash()
   // enough pages to get that all done before writing starts.
   // for now, stm32f405 has huge 128 KB pages so we only need a single erase
   flash_erase_page_by_addr(flash_get_param_table_base_addr());
+
+  uint8_t *flash_write_addr = (uint8_t *)flash_get_param_table_base_addr();
   printf("done\r\n");
 }
