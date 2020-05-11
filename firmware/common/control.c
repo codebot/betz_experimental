@@ -34,7 +34,7 @@
 
 static float g_control_position_target = 0;
 static float g_control_voltage_target = 0;
-static float g_control_pole_count = 21;
+static int g_control_pole_count = 21;
 static int g_control_mode = 0;
 
 void control_init()
@@ -57,7 +57,7 @@ void control_init()
       0,
       PARAM_TRANSIENT);
 
-  param_float(
+  param_int(
       "pole_count",
       &g_control_pole_count,
       12,
@@ -118,7 +118,7 @@ void tim1_up_tim10_vector()
     {
       const float deg120 = (float)(M_PI * 2.0f / 3.0f);
       const float elec_angle =
-          fmodf(g_state.enc * g_control_pole_count, 2.0f * M_PI);
+          fmodf(g_state.enc * (float)g_control_pole_count, 2.0f * M_PI);
       v_a = g_control_voltage_target * sinf(elec_angle);
       v_b = g_control_voltage_target * sinf(elec_angle + deg120);
       v_c = g_control_voltage_target * sinf(elec_angle + 2.0f * deg120);

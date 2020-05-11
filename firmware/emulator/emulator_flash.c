@@ -4,10 +4,11 @@
 #include "flash.h"
 
 
-#define FLASH_LEN (512 * 1024)
+#define FLASH_LEN (1024 * 1024)
 #define FLASH_IMAGE_FILENAME "emulator_flash.bin"
 
 static uint8_t flash_image[FLASH_LEN] = {0};
+static bool flash_emulator_image_flush_to_disk();
 
 void flash_init()
 {
@@ -54,6 +55,11 @@ bool flash_write(
 
   memcpy(&flash_image[offset], write_data, write_len);
 
+  return flash_emulator_image_flush_to_disk();
+}
+
+bool flash_emulator_image_flush_to_disk()
+{
   // flush to disk
   FILE *f = fopen(FLASH_IMAGE_FILENAME, "w");
   if (!f)
@@ -67,17 +73,56 @@ bool flash_write(
     return false;
   }
   fclose(f);
-
   return true;
 }
 
 bool flash_erase_page_by_addr(const uint32_t addr)
 {
+  printf("flash_erase_page_by_addr(0x%08x)\n", (unsigned)addr);
+
+  // todo: test out various page sizes...
+  const int page_size = 0x20000;  // 128 KB flash page (stm32f4xx)
+
   printf("erase page at 0x%08x\r\n", (unsigned)addr);
-  return true;
+  const int offset = addr - FLASH_START;
+  if (offset + page_size > FLASH_LEN)
+  {
+    printf("AHHHH invalid write address!!!\n");
+    return false;
+  }
+
+  // todo: verify this addr is a page boundary
+
+  memset(&flash_image[offset], 0xff, page_size);
+
+  return flash_emulator_image_flush_to_disk();
 }
 
 uint32_t flash_get_param_table_base_addr()
 {
-  return 0x000e0000;
+  return FLASH_START + 0x000e0000;
+}
+
+bool flash_program_word(const uint32_t addr, const uint32_t data)
+{
+  const int offset = addr - FLASH_START;
+  if (offset + 4 > FLASH_LEN)
+  {
+    printf("AHHHH invalid write address!!!\n");
+    return false;
+  }
+  memcpy(&flash_image[offset], &data, 4);
+  return flash_emulator_image_flush_to_disk();
+}
+
+bool flash_program_byte(const uint32_t addr, const uint8_t data)
+{
+  const int offset = addr - FLASH_START;
+  if (offset >= FLASH_LEN)
+  {
+    printf("AHHHH invalid write address!!!\n");
+    return false;
+  }
+  flash_image[offset] = data;
+  return flash_emulator_image_flush_to_disk();
 }

@@ -26,7 +26,6 @@ static void flash_lock() __attribute__((unused));
 static bool flash_wait_for_idle();
 static uint32_t g_flash_size = 0;
 static uint32_t g_flash_page_size = 0;
-static bool flash_program_word(const uint32_t addr, const uint32_t data);
 
 void flash_init()
 {
@@ -102,6 +101,20 @@ bool flash_program_word(const uint32_t addr, const uint32_t data)
   FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE to get ready to set it
   FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
   *((volatile uint32_t *)addr) = data;
+  const bool result = flash_wait_for_idle();
+  FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
+  //flash_lock();
+  return result;
+}
+
+bool flash_program_byte(const uint32_t addr, const uint8_t byte)
+{
+  flash_unlock();
+  if (!flash_wait_for_idle())
+    return false;
+  FLASH->CR |= FLASH_CR_PG; // set the programming bit
+  FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE=0 for byte writes
+  *((volatile uint8_t *)addr) = byte;
   const bool result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
