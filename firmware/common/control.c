@@ -37,6 +37,8 @@ static float g_control_voltage_target = 0;
 static int g_control_pole_count = 21;
 static int g_control_mode = 0;
 static float g_control_bus_voltage = 24.0;
+static float g_control_position_kp = 0;
+static float g_control_max_voltage = 0;
 
 void control_init()
 {
@@ -68,6 +70,18 @@ void control_init()
       "bus_voltage",
       &g_control_bus_voltage,
       24.0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "position_kp",
+      &g_control_position_kp,
+      0.0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "max_voltage",
+      &g_control_max_voltage,
+      1.0,
       PARAM_PERSISTENT);
 
 #ifndef EMULATOR
@@ -118,7 +132,20 @@ void tim1_up_tim10_vector()
 
     if (g_control_mode == CONTROL_MODE_POSITION)
     {
+      float pos_error = g_control_position_target - g_state.enc;
+      if (pos_error > (float)(M_PI))
+        pos_error -= (float)(2.0f * M_PI);
+      else if (pos_error < (float)(-M_PI))
+        pos_error += (float)(2.0f * M_PI);
+
+      g_control_voltage_target = g_control_position_kp * pos_error;
     }
+
+    // clamp voltage target to the parameterized range
+    if (g_control_voltage_target > g_control_max_voltage)
+      g_control_voltage_target = g_control_max_voltage;
+    else if (g_control_voltage_target < -g_control_max_voltage)
+      g_control_voltage_target = -g_control_max_voltage;
 
     if (g_control_mode == CONTROL_MODE_VOLTAGE ||
         g_control_mode == CONTROL_MODE_POSITION)
@@ -147,7 +174,7 @@ void tim1_up_tim10_vector()
       int32_t pwm_c =
           (int32_t)(v_c * PWM_MID / g_control_bus_voltage + PWM_MID);
 
-      // clamp to sane values
+      // clamp pwm to sane values
       const int32_t PWM_TOO_LOW = 100;  // preserve "quiet time" at top/bottom
       const int32_t PWM_TOO_HIGH = PWM_MAX - PWM_TOO_LOW;
 
@@ -158,7 +185,8 @@ void tim1_up_tim10_vector()
       pwm_a = pwm_a >= PWM_TOO_HIGH ? PWM_TOO_HIGH : pwm_a;
       pwm_b = pwm_b >= PWM_TOO_HIGH ? PWM_TOO_HIGH : pwm_b;
       pwm_c = pwm_c >= PWM_TOO_HIGH ? PWM_TOO_HIGH : pwm_c;
-      
+
+     
       pwm_set(pwm_a, pwm_b, pwm_c);
     }
 
