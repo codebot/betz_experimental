@@ -16,6 +16,20 @@ struct param
 static struct param g_param_params[MAX_PARAMS];
 static uint32_t g_param_num_params = 0;
 
+typedef union
+{
+  uint32_t u32;
+  int32_t i;
+  float f;
+} param_value_t;
+
+static bool param_find_flash_value(
+    const char *name,
+    const int type,
+    param_value_t *value);
+
+/////////////////////////////////////////////////////////////
+
 void param_init()
 {
   g_param_num_params = 0;
@@ -49,13 +63,20 @@ void param_int(
   g_param_num_params++;
 
   *ptr = default_value;
-  /*
+
   if (storage == PARAM_PERSISTENT)
   {
-    // todo: load from flash if it's there
-    // otherwise, set to default value
+    param_value_t value;
+    if (param_find_flash_value(name, PARAM_TYPE_INT, &value))
+    {
+      printf("found param [%s] in flash: %d\r\n", name, (int)value.i);
+      *ptr = value.i;
+    }
+    else
+    {
+      printf("couldn't find param [%s] in flash\r\n", name);
+    }
   }
-  */
 }
 
 void param_float(
@@ -75,13 +96,20 @@ void param_float(
   g_param_num_params++;
 
   *ptr = default_value;
-  /*
+
   if (storage == PARAM_PERSISTENT)
   {
-    // todo: load from flash if it's there
-    // otherwise, set to default value
+    param_value_t value;
+    if (param_find_flash_value(name, PARAM_TYPE_FLOAT, &value))
+    {
+      printf("found param [%s] in flash: %f\r\n", name, value.f);
+      *ptr = value.f;
+    }
+    else
+    {
+      printf("couldn't find param [%s] in flash\r\n", name);
+    }
   }
-  */
 }
 
 const char *param_get_name(const uint32_t param_idx)
@@ -212,4 +240,75 @@ void param_save_to_flash()
   }
 
   printf("done\r\n");
+}
+
+bool param_find_flash_value(
+    const char *name,
+    const int type,
+    param_value_t *value)
+{
+  if (!value || !name)  // come on, man
+    return false;
+
+  const size_t name_len = strlen(name);
+  if (name_len == 0)  // come on, man
+    return false;
+
+  // walk through the param table and see if we can find this param
+  uint32_t flash_read_addr = flash_get_param_table_base_addr();
+
+  uint32_t num_persistent_params = flash_read_word(flash_read_addr);
+  if (num_persistent_params > 0xffff)  // empty param table... it's nonsense
+    return false;
+
+  flash_read_addr += 4;
+
+  for (int param_idx = 0; param_idx < num_persistent_params; param_idx++)
+  {
+    const uint8_t type_byte = flash_read_byte(flash_read_addr);
+    flash_read_addr++;
+    
+    bool found = true;
+    for (int name_char_idx = 0; name_char_idx < name_len; name_char_idx++)
+    {
+      const char flash_name_char =
+          flash_read_byte(flash_read_addr + name_char_idx);
+      if (flash_name_char != name[name_char_idx])
+      {
+        found = false;
+        break;
+      }
+    }
+
+    // ensure the flash has a NULL at the right place (same length string)
+    if (flash_read_byte(flash_read_addr + name_len) != 0)
+      found = false;
+
+    // advance the read pointer up to the NULL char in flash
+    while (true)
+    {
+      const uint8_t name_char = flash_read_byte(flash_read_addr);
+      flash_read_addr++;
+      if (name_char == 0)
+        break;
+    }
+
+    if (type_byte != type)
+      found = false;
+
+    if (!found)
+    {
+      flash_read_addr += 4;
+      continue;  // this wasn't it. move on to the next stored param
+    }
+
+    value->u32 =
+        (flash_read_byte(flash_read_addr + 0) <<  0) |
+        (flash_read_byte(flash_read_addr + 1) <<  8) |
+        (flash_read_byte(flash_read_addr + 2) << 16) |
+        (flash_read_byte(flash_read_addr + 3) << 24) ;
+
+    return true;
+  }
+  return false;
 }

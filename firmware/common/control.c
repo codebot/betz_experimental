@@ -36,6 +36,7 @@ static float g_control_position_target = 0;
 static float g_control_voltage_target = 0;
 static int g_control_pole_count = 21;
 static int g_control_mode = 0;
+static float g_control_bus_voltage = 24.0;
 
 void control_init()
 {
@@ -61,6 +62,12 @@ void control_init()
       "pole_count",
       &g_control_pole_count,
       12,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "bus_voltage",
+      &g_control_bus_voltage,
+      24.0,
       PARAM_PERSISTENT);
 
 #ifndef EMULATOR
@@ -131,10 +138,14 @@ void tim1_up_tim10_vector()
     }
     else
     {
-      const float BUS_VOLTAGE = 24.0f;
-      int32_t pwm_a = (int32_t)(v_a * PWM_MID / BUS_VOLTAGE + PWM_MID);
-      int32_t pwm_b = (int32_t)(v_b * PWM_MID / BUS_VOLTAGE + PWM_MID);
-      int32_t pwm_c = (int32_t)(v_c * PWM_MID / BUS_VOLTAGE + PWM_MID);
+      int32_t pwm_a =
+          (int32_t)(v_a * PWM_MID / g_control_bus_voltage + PWM_MID);
+
+      int32_t pwm_b =
+          (int32_t)(v_b * PWM_MID / g_control_bus_voltage + PWM_MID);
+
+      int32_t pwm_c =
+          (int32_t)(v_c * PWM_MID / g_control_bus_voltage + PWM_MID);
 
       // clamp to sane values
       const int32_t PWM_TOO_LOW = 100;  // preserve "quiet time" at top/bottom

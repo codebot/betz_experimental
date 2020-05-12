@@ -124,11 +124,25 @@ bool flash_program_byte(const uint32_t addr, const uint8_t byte)
 void flash_read(
     const uint32_t read_addr,
     const uint32_t len,
-    uint8_t *dest_addr)
+    void *dest_addr)
 {
   if (len >= 65536)
     return;  // sanity-check to avoid anything super bonkers
   memcpy(dest_addr, (const void *)read_addr, len);
+}
+
+uint32_t flash_read_word(const uint32_t addr)
+{
+  uint32_t word = 0;
+  flash_read(addr, 4, &word);
+  return word;
+}
+
+uint8_t flash_read_byte(const uint32_t addr)
+{
+  uint8_t byte = 0;
+  flash_read(addr, 1, &byte);
+  return byte;
 }
 
 bool flash_write(

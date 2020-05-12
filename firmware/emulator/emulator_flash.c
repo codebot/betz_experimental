@@ -26,7 +26,7 @@ void flash_init()
 void flash_read(
     const uint32_t read_addr,
     const uint32_t len,
-    uint8_t *dest_addr)
+    void *dest_addr)
 {
   printf("flash_read(0x%08x, %d)\n", read_addr, len);
   const int offset = read_addr - FLASH_START;
@@ -36,6 +36,20 @@ void flash_read(
     return;
   }
   memcpy(dest_addr, &flash_image[offset], len);
+}
+
+uint32_t flash_read_word(const uint32_t addr)
+{
+  uint32_t word = 0;
+  flash_read(addr, 4, &word);
+  return word;
+}
+
+uint8_t flash_read_byte(const uint32_t addr)
+{
+  uint8_t byte = 0;
+  flash_read(addr, 1, &byte);
+  return byte;
 }
 
 bool flash_write(
