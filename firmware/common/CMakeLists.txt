@@ -1,4 +1,4 @@
-add_library(common
+betz_add_library(common
   adc.c
   comms.c
   console.c
@@ -21,5 +21,3 @@ add_library(common
   systime.c
   uuid.c
 )
-
-target_link_libraries(common m)

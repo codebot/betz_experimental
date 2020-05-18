@@ -8,9 +8,22 @@ the STM32, without an OS or platform library of any sort.
  * MCU: STM32F405RG
 
 # getting ready
+Because the `betz_mini` board is designed around STM32G4, it needs the
+latest `openocd`, rather than what is distributed with Ubuntu 18.04. To
+build `openocd` and install it into `/usr/local` :
 ```
-sudo apt install gcc-arm-none-eabi openocd
+sudo apt install gcc-arm-none-eabi
+
+mkdir ~/tools
+cd ~/tools
+git clone git://repo.or.cz/openocd.git
+cd openocd
+./bootstrap
+./configure
+make
+sudo make install
 ```
+
 If you want to flash firmware directly to the board, and you don't have
 a udev rule set up yet for your SWD programmer, you'll need something
 like this (the VID/PID is for the Olimex USB-TINY-H programmer):

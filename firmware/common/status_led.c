@@ -1,9 +1,18 @@
 #include "status_led.h"
 #include "pin.h"
-#include "stm32f405xx.h"
 
+#if defined(BOARD_blue)
+#include "stm32f405xx.h"
 #define LED_GPIO GPIOB
 #define LED_PIN  8
+#elif defined(BOARD_mini)
+#include "stm32g474xx.h"
+// TODO: NOT THIS
+#define LED_GPIO GPIOA
+#define LED_PIN 0
+#else
+#error AHHHH no board in status_led.c
+#endif
 
 void status_led_init()
 {
