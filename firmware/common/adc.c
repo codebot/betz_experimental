@@ -20,7 +20,7 @@
 #include "state.h"
 #include "status_led.h"
 
-#include "stm32f405xx.h"
+#include "soc.h"
 
 // PC0 = ISENSE_C = ADC123_IN10
 // PC1 = ISENSE_B = ADC123_IN11
@@ -31,6 +31,7 @@ volatile bool g_adc_read_complete = false;
 
 void adc_init()
 {
+#if defined(BOARD_blue)
   // turn on ADC clock trees
   RCC->APB2ENR |=
       RCC_APB2ENR_ADC1EN |
@@ -65,26 +66,37 @@ void adc_init()
   ADC1->CR1 |= ADC_CR1_EOCIE;  // enable end-of-conversion interrupt
   NVIC_SetPriority(ADC_IRQn, 1);  // must be higher priority than PWM
   NVIC_EnableIRQ(ADC_IRQn);
+#elif defined(BOARD_mini)
+#endif
 }
 
 void adc_start_nonblocking_read()
 {
+#if defined(BOARD_blue)
   ADC1->CR2 |= ADC_CR2_SWSTART;
   g_adc_read_complete = false;
+#elif defined(BOARD_mini)
+#endif
 }
 
 void adc_vector()
 {
+#if defined(BOARD_blue)
   // clear the flag that got us here
   ADC1->SR &= ~ADC_SR_EOC;
   g_adc_read_complete = true;
+#elif defined(BOARD_mini)
+#endif
 }
 
 void adc_blocking_read()
 {
+#if defined(BOARD_blue)
   ADC1->CR2 |= ADC_CR2_SWSTART;
   while (!(ADC1->SR & ADC_SR_EOC)) { }  // spin until it's done
   g_state.raw_adc[0] = ADC1->DR;
   g_state.raw_adc[1] = ADC2->DR;
   g_state.raw_adc[2] = ADC3->DR;
+#elif defined(BOARD_mini)
+#endif
 }

@@ -2,7 +2,7 @@
 #define PIN_H
 
 #include <stdbool.h>
-#include "stm32f405xx.h"
+#include "soc.h"
 
 #define PIN_OUTPUT_TYPE_PUSH_PULL  0
 #define PIN_OUTPUT_TYPE_OPEN_DRAIN 1

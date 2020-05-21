@@ -20,7 +20,9 @@
 #include "control.h"
 #include "pin.h"
 #include "pwm.h"
-#include "stm32f405xx.h"
+#include "soc.h"
+
+#if defined(BOARD_blue)
 
 // PWM_FAULT = PC6 (open-drain)
 // PWM_OCTW = PB15 (open-drain)
@@ -33,9 +35,14 @@
 // PWM_PWMB = PA9   TIM1_CH2 via AF1
 // PWM_PWMC = PA8   TIM1_CH1 via AF1
 
+#elif defined(BOARD_mini)
+
+#endif
+
 void pwm_init()
 {
   printf("pwm_init()\r\n");
+#if defined(BOARD_blue)
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
 
   // drive NRESET pins low to disable the drivers
@@ -82,13 +89,20 @@ void pwm_init()
 
   NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 2); // lower than comms and ADC
   NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }
 
 void pwm_set(const uint32_t a, const uint32_t b, const uint32_t c)
 {
+#if defined(BOARD_blue)
   TIM1->CCR1 = a;
   TIM1->CCR2 = b;
   TIM1->CCR3 = c;
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }
 
 uint32_t pwm_max()
@@ -99,6 +113,7 @@ uint32_t pwm_max()
 
 void pwm_enable(const bool enable)
 {
+#if defined(BOARD_blue)
   if (enable)
   {
     // drive NRESET pins high to enable the drivers
@@ -113,4 +128,7 @@ void pwm_enable(const bool enable)
     pin_set_output(GPIOC, 8, 0);
     pin_set_output(GPIOC, 9, 0);
   }
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }

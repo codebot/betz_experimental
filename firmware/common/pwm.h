@@ -21,6 +21,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+// TODO: revisit for stm32g4
+
 // 84e6 / 4200 = 20 kHz
 #define PWM_MAX 4200  
 

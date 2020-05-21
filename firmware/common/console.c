@@ -1,5 +1,5 @@
 #include "console.h"
-#include "stm32f405xx.h"
+#include "soc.h"
 #include "pin.h"
 
 // pin connections
@@ -7,14 +7,19 @@
 // for debugging the temp sensor IC and the R9 pullup resistor were tossed.
 // PB10 = usart3 TX on AF7
 
-#define USART_TX_PIN 10
-#define USART_AF_NUM 7
+
+#if defined(BOARD_blue)
+#  define USART_TX_PIN 10
+#  define USART_AF_NUM 7
+static volatile USART_TypeDef * const s_console_usart = USART3;
+#elif defined(BOARD_mini)
+#endif
 
 static volatile bool s_console_init_complete = false;
-static volatile USART_TypeDef * const s_console_usart = USART3;
 
 void console_init()
 {
+#if defined(BOARD_blue)
   s_console_init_complete = true;
   RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
   pin_set_alternate_function(GPIOB, USART_TX_PIN, USART_AF_NUM);
@@ -25,17 +30,21 @@ void console_init()
   // then baud rate = 42 MHz / 2.625 = 1 MHz
   s_console_usart->BRR  = (((uint16_t)2) << 4) | 10;
   s_console_usart->CR1 |=  USART_CR1_UE;
+#elif defined(BOARD_mini)
+#endif
 }
 
 void console_send_block(const uint8_t *buf, uint32_t len)
 {
+#if defined(BOARD_blue)
   if (!s_console_init_complete)
     console_init();
   for (uint32_t i = 0; i < len; i++)
   {
-    while (!(s_console_usart->SR & USART_SR_TXE)) { } // wait for tx buffer to clear
+    while (!(s_console_usart->SR & USART_SR_TXE)) { } // wait for tx to clear
     s_console_usart->DR = buf[i];
   }
   while (!(s_console_usart->SR & USART_SR_TC)) { } // wait for TX to finish
+#elif defined(BOARD_mini)
+#endif
 }
-

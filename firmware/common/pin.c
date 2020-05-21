@@ -3,6 +3,7 @@
 
 void pin_enable_gpio(GPIO_TypeDef *gpio)
 {
+#if defined(BOARD_blue)
   if (gpio == GPIOA)
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
   else if (gpio == GPIOB)
@@ -21,6 +22,9 @@ void pin_enable_gpio(GPIO_TypeDef *gpio)
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;
   else if (gpio == GPIOI)
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN;
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }
 
 void pin_set_output_type(GPIO_TypeDef *gpio, 

@@ -30,7 +30,7 @@ function(betzdrive_board_raw_executable board stem)
       COMMENT "disassembling ${stem}.${board}.elf")
   add_custom_target(${stem}.${board}.flash_swd
       DEPENDS ${stem}.${board}.elf
-      COMMAND ${openocd_preamble} -c "init; sleep 100; halt; sleep 100; flash write_image erase ${stem}.${board}.bin 0x08000000; verify_image ${stem}.${board}.bin 0x08000000; sleep 100; reset run; sleep 100; shutdown"
+      COMMAND ${${board}_openocd_preamble} -c "init; sleep 100; halt; sleep 100; flash write_image erase ${stem}.${board}.bin 0x08000000; verify_image ${stem}.${board}.bin 0x08000000; sleep 100; reset run; sleep 100; shutdown"
       VERBATIM)
   add_custom_target(${stem}.${board}.gdb
       DEPENDS ${stem}.${board}.elf
@@ -77,9 +77,11 @@ function(betz_board_add_library board stem)
   target_compile_definitions(${stem}.${board} PUBLIC "BOARD_${board}")
 endfunction()
 
+# currently there is only a single library, so we'll manually add the
+# lowest-level ISR vector init files here also.
 function(betz_add_library stem)
-  betz_board_add_library(blue ${stem} ${ARGN})
-  betz_board_add_library(mini ${stem} ${ARGN})
+  betz_board_add_library(blue ${stem} stm32f4_vectors.c ${ARGN})
+  betz_board_add_library(mini ${stem} stm32g4_vectors.c ${ARGN})
 endfunction()
 
 add_custom_target(reset_mcu.mini

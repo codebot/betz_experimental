@@ -2,10 +2,12 @@
 #include <string.h>
 
 #include "flash.h"
-#include "stm32f405xx.h"
+#include "soc.h"
 #include "systime.h"
 //#include "watchdog.h"
 
+
+#if defined(BOARD_blue)
 
 // stm32f405 has 12 flash pages
 // flash organization:
@@ -13,17 +15,25 @@
 //   application: 768 KB spanning sectors 5..10
 //   parameters: 128 KB in sector 11
 
+#define NUM_SECTORS 12
+
+#elif defined(BOARD_mini)
+
 // stm32g474 has 128 pages of 4K bytes each (512K total)
 // flash organization:
 //   bootloader: first 128 KB
 //   application: next 256 KB
 //   parameters: last 128 KB
 
-#define NUM_SECTORS 12
+#endif
 
+// temporary
+#if defined(BOARD_blue)
 static void flash_unlock();
 static void flash_lock() __attribute__((unused));
 static bool flash_wait_for_idle();
+#endif
+
 static uint32_t g_flash_size = 0;
 static uint32_t g_flash_page_size = 0;
 
@@ -70,6 +80,8 @@ void flash_lock()
   FLASH->CR |= FLASH_CR_LOCK;
 }
 
+// temporary
+#if defined(BOARD_blue)
 bool flash_wait_for_idle()
 {
   // uint32_t t_start = SYSTIME;
@@ -91,9 +103,11 @@ bool flash_wait_for_idle()
   }
   return true;
 }
+#endif
 
 bool flash_program_word(const uint32_t addr, const uint32_t data)
 {
+#if defined(BOARD_blue)
   flash_unlock();
   if (!flash_wait_for_idle())
     return false;
@@ -105,10 +119,15 @@ bool flash_program_word(const uint32_t addr, const uint32_t data)
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
   return result;
+#elif defined(BOARD_mini)
+  // TODO
+  return false;
+#endif
 }
 
 bool flash_program_byte(const uint32_t addr, const uint8_t byte)
 {
+#if defined(BOARD_blue)
   flash_unlock();
   if (!flash_wait_for_idle())
     return false;
@@ -119,6 +138,10 @@ bool flash_program_byte(const uint32_t addr, const uint8_t byte)
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
   return result;
+#elif defined(BOARD_mini)
+  // TODO
+  return false;
+#endif
 }
 
 void flash_read(
@@ -161,7 +184,8 @@ bool flash_write(
   {
     uint32_t word = 0;
     memcpy(&word, &write_data[i], sizeof(word));
-    flash_program_word(write_addr + i, word);
+    if (!flash_program_word(write_addr + i, word))
+      return false;
   }
 
   return true;
@@ -169,6 +193,7 @@ bool flash_write(
 
 bool flash_erase_page_by_addr(const uint32_t addr)
 {
+#if defined(BOARD_blue)
   printf("erase page at 0x%08x\r\n", (unsigned)addr);
   if (g_flash_page_size == 0x20000)
   {
@@ -207,6 +232,10 @@ bool flash_erase_page_by_addr(const uint32_t addr)
         (unsigned)g_flash_page_size);
     return false;
   }
+#elif defined(BOARD_mini)
+  // TODO
+  return false;
+#endif
 }
 
 uint32_t flash_get_param_table_base_addr()

@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "stm32f405xx.h"
+#include "soc.h"
 
 #include "enc.h"
 #include "param.h"
@@ -59,6 +59,7 @@ void enc_init()
       1,
       PARAM_PERSISTENT);
 
+#if defined(BOARD_blue)
   RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
 
   pin_set_output(ENC_CS_GPIO, ENC_CS_PIN, 1);
@@ -90,10 +91,14 @@ void enc_init()
 
   NVIC_SetPriority(SPI3_IRQn, 3);  // lower than PWM and comms priority
   NVIC_EnableIRQ(SPI3_IRQn);
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }
 
 uint16_t enc_read_pos_blocking()
 {
+#if defined(BOARD_blue)
   NVIC_DisableIRQ(SPI3_IRQn);
   pin_set_output_low(ENC_CS_GPIO, ENC_CS_PIN);
 
@@ -110,6 +115,10 @@ uint16_t enc_read_pos_blocking()
   NVIC_EnableIRQ(SPI3_IRQn);
 
   return reading;
+#elif defined(BOARD_mini)
+  // TODO
+  return 42;
+#endif
 }
 
 void enc_blocking_read_to_state()
@@ -119,13 +128,21 @@ void enc_blocking_read_to_state()
 
 void enc_start_nonblocking_read_to_state()
 {
+#if defined(BOARD_blue)
   pin_set_output_low(ENC_CS_GPIO, ENC_CS_PIN);
   ENC_SPI->DR = 0xffff;
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }
 
+#if defined(BOARD_blue)
 void spi3_vector()
 {
   pin_set_output_high(ENC_CS_GPIO, ENC_CS_PIN);
   uint16_t position = ENC_SPI->DR & 0x3fff;  // returns the _previous_ read
   g_state.enc = (position + g_encoder_offset) * (float)(2.0 * M_PI / 16384.0);
 }
+#elif defined(BOARD_mini)
+  // TODO
+#endif

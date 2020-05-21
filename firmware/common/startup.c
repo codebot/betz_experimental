@@ -10,7 +10,7 @@
 #include "pwm.h"
 #include "rng.h"
 #include "rs485.h"
-#include "stm32f405xx.h"
+#include "soc.h"
 #include "startup.h"
 #include "stack.h"
 #include "state.h"
@@ -47,6 +47,17 @@ void reset_vector()
   __libc_init_array() ;
   SCB->CPACR |= ((3UL << (10*2)) | (3UL << (11*2))); // activate the FPU
 
+#if defined(BOARD_blue)
+  // we need to set 5 wait states on the flash controller to go 168 MHz
+  FLASH->ACR = 0; // ensure the caches are turned off, so we can reset them
+  FLASH->ACR = FLASH_ACR_DCRST | FLASH_ACR_ICRST; // flush the cache
+  FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
+               FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS; // re-enable the caches
+#elif defined(BOARD_mini)
+  // TODO: set up stm32g4 flash wait states
+#endif
+
+#if defined(BOARD_blue)
   // set up the clocking scheme
   RCC->CR |= 0x1; // ensure the HSI (internal) oscillator is on
   RCC->CFGR = 0; // ensure the HSI oscillator is the clock source
@@ -63,18 +74,13 @@ void reset_vector()
   if (!(RCC->CR & RCC_CR_HSERDY))
     startup_clock_init_fail(); // go there and spin forever. BUH BYE
 
-  // we need to set 5 wait states on the flash controller to go 168 MHz
-  FLASH->ACR = 0; // ensure the caches are turned off, so we can reset them
-  FLASH->ACR = FLASH_ACR_DCRST | FLASH_ACR_ICRST; // flush the cache
-  FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
-               FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS; // re-enable the caches
-
   RCC->APB1ENR |= RCC_APB1ENR_PWREN; // clock up the power controller
   PWR->CR |= PWR_CR_VOS; // ensure the voltage regulator is at max beef
                          // this will let us run at 168 MHz without overdrive
   RCC->CFGR |= RCC_CFGR_HPRE_DIV1; // set HCLK (AHB clock) to sysclock
   RCC->CFGR |= RCC_CFGR_PPRE2_DIV2; // set APB high-speed clock to sysclock/2
   RCC->CFGR |= RCC_CFGR_PPRE1_DIV4; // set APB  low-speed clock to sysclock/4
+
 
   #define CRYSTAL_MHZ 8000000
   #define PLL_M (CRYSTAL_MHZ/2000000)
@@ -94,6 +100,12 @@ void reset_vector()
   RCC->CFGR |= RCC_CFGR_SW_PLL; // select PLL as clock source
   while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) { } // wait for it...
   // hooray we're done! we're now running at 168 MHz.
+
+#elif defined(BOARD_mini)
+
+  // TODO: set up stm32g4 clocks
+
+#endif
 
   status_led_init();
   console_init();

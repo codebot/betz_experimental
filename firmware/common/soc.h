@@ -15,26 +15,10 @@
  *
 */
 
-#ifndef SYSTIME_H
-#define SYSTIME_H
-
-#include <stdint.h>
-
-void systime_init();
-
-#ifdef EMULATOR
-uint32_t systime_read();
-#else
-
-#include "soc.h"
-
 #if defined(BOARD_blue)
-#  define systime_read() ( TIM2 -> CNT )
+#  include "stm32f405xx.h"
 #elif defined(BOARD_mini)
-// TODO: not this
-#  define systime_read() ( 42 )
-#endif
-
-#endif
-
+#  include "stm32g474xx.h"
+#else
+#  error AHHHH no board in soc.h
 #endif

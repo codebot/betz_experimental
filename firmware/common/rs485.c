@@ -1,9 +1,28 @@
+/*
+ * Copyright (C) 2020 Open Source Robotics Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+*/
+
 #include <stdio.h>
 #include "comms.h"
 #include "status_led.h"
 #include "pin.h"
 #include "rs485.h"
-#include "stm32f405xx.h"
+#include "soc.h"
+
+#if defined(BOARD_blue)
 
 // pin connections
 // PB6 = usart1 TX
@@ -21,13 +40,18 @@
 #define RS485_TERM_GPIO GPIOA
 #define RS485_TERM_PIN 12
 
+#elif defined(BOARD_mini)
+  // TODO
+#endif
+
 #define RS485_RX_RING_LEN 512
 static volatile uint8_t g_rs485_rx_ring[RS485_RX_RING_LEN];
-static volatile uint32_t g_rs485_rx_ring_rpos = 0, g_rs485_rx_ring_wpos = 0;
-uint8_t g_rs485_id = 42;
+static volatile uint32_t g_rs485_rx_ring_rpos = 0;
+static volatile uint32_t g_rs485_rx_ring_wpos = 0;
 
 void rs485_init()
 {
+#if defined(BOARD_blue)
   pin_set_output(RS485_TERM_GPIO, RS485_TERM_PIN, 0);
   rs485_enable_termination(true);  // todo: look up in param table
 
@@ -61,8 +85,12 @@ void rs485_init()
   // we might drop inbound bytes. This handler has to be super super fast.
   NVIC_SetPriority(USART1_IRQn, 0);  // highest priority (!)
   NVIC_EnableIRQ(USART1_IRQn);
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }
 
+#if defined(BOARD_blue)
 void rs485_enable_termination(const bool enable)
 {
   if (enable)
@@ -70,9 +98,11 @@ void rs485_enable_termination(const bool enable)
   else
     pin_set_output_low(RS485_TERM_GPIO, RS485_TERM_PIN);
 }
+#endif
 
 void rs485_tx(const uint8_t *data, const uint32_t len)
 {
+#if defined(BOARD_blue)
   pin_set_output_high(RS485_DIR_GPIO, RS485_DIR_PIN);  // enable transmitter
   for (uint32_t i = 0; i < len; i++)
   {
@@ -81,8 +111,12 @@ void rs485_tx(const uint8_t *data, const uint32_t len)
   }
   while (!(RS485_USART->SR & USART_SR_TC)) { } // wait for TX to finish
   pin_set_output_low(RS485_DIR_GPIO, RS485_DIR_PIN);  // disable transmitter
+#elif defined(BOARD_mini)
+  // TODO
+#endif
 }
 
+#if defined(BOARD_blue)
 // void usart1_vector() __attribute__((section(".ramfunc")));
 void usart1_vector()
 {
@@ -92,6 +126,7 @@ void usart1_vector()
   if (++g_rs485_rx_ring_wpos >= RS485_RX_RING_LEN)
     g_rs485_rx_ring_wpos = 0;
 }
+#endif
 
 void rs485_tick()
 {

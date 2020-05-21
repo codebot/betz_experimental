@@ -29,7 +29,7 @@
 
 #ifndef EMULATOR
 #include "pin.h"
-#include "stm32f405xx.h"
+#include "soc.h"
 #endif
 
 static float g_control_position_target = 0;
@@ -84,8 +84,10 @@ void control_init()
       1.0,
       PARAM_PERSISTENT);
 
-#ifndef EMULATOR
+#if defined(BOARD_blue)
   pin_set_output(GPIOA, 3, 0);
+#elif defined(BOARD_mini)
+  // TODO
 #endif
 }
 
@@ -93,7 +95,7 @@ void control_tick()
 {
 }
 
-#ifndef EMULATOR
+#if defined(BOARD_blue)
 // strangely, ramfunc seems to result in slightly higher jitter and no
 // real improvement in speed (?)
 // void tim1_up_tim10_vector() __attribute__((section(".ramfunc")));
@@ -198,4 +200,7 @@ void tim1_up_tim10_vector()
     enc_start_nonblocking_read_to_state();
   }
 }
+
+#elif defined(BOARD_mini)
+// TODO
 #endif
