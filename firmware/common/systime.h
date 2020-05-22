@@ -23,17 +23,13 @@
 void systime_init();
 
 #ifdef EMULATOR
+
 uint32_t systime_read();
+
 #else
 
 #include "soc.h"
-
-#if defined(BOARD_blue)
-#  define systime_read() ( TIM2 -> CNT )
-#elif defined(BOARD_mini)
-// TODO: not this
-#  define systime_read() ( 42 )
-#endif
+#define systime_read() ( TIM2 -> CNT )
 
 #endif
 

@@ -173,19 +173,19 @@ void reset_vector()
 
   status_led_init();
   console_init();
+  systime_init();
+  state_init();
+  rs485_init();
   main();
 
   // TODO: move stuff up as it's verified...
 
-  systime_init();
-  state_init();
   param_init();
   uuid_init();
   flash_init();
   adc_init();
   pwm_init();
   rng_init();
-  rs485_init();
   enc_init();
   control_init();
   comms_init(rs485_tx);

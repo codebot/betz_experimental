@@ -24,7 +24,10 @@
 void rs485_init();
 void rs485_tick();
 
+#if defined(BOARD_blue)
 void rs485_enable_termination(const bool enable);
+#endif
+
 void rs485_tx(const uint8_t *data, const uint32_t len);
 
 #endif

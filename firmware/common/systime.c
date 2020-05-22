@@ -20,18 +20,26 @@
 
 void systime_init()
 {
-#if defined(BOARD_blue)
-
   // use TIM2 since it's a 32-bit counter. just have it count
   // microseconds since powerup.
+
+#if defined(BOARD_blue)
+
   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
   // APB1 speed is sysclock/4 = 42 MHz
   // surprisingly, the TIM2 clock frequency is actually 2x APB1 = 84 MHz
-  TIM2->PSC = 42000000 * 2 / 1000000 - 1;  // comes out to 83
+  const uint32_t psc = 42000000 * 2 / 1000000 - 1;  // comes out to 83
+
+#elif defined(BOARD_mini)
+
+  RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN;
+  // APB1 speed is 168 MHz, TIM2 clock is also 168 MHz
+  const uint32_t psc = 168000000 / 1000000 - 1;  // equals 167
+
+#endif
+
+  TIM2->PSC = psc;
   TIM2->ARR = 0xffffffff; // count as long as possible
   TIM2->EGR = TIM_EGR_UG; // load the PSC register immediately
   TIM2->CR1 = TIM_CR1_CEN; // start counter
-#elif defined(BOARD_mini)
-  // TODO
-#endif
 }
