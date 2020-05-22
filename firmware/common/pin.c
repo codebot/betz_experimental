@@ -23,7 +23,20 @@ void pin_enable_gpio(GPIO_TypeDef *gpio)
   else if (gpio == GPIOI)
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN;
 #elif defined(BOARD_mini)
-  // TODO
+  if (gpio == GPIOA)
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN;
+  else if (gpio == GPIOB)
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
+  else if (gpio == GPIOC)
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOCEN;
+  else if (gpio == GPIOD)
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
+  else if (gpio == GPIOE)
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;
+  else if (gpio == GPIOF)
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOFEN;
+  else if (gpio == GPIOG)
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOGEN;
 #endif
 }
 

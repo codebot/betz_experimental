@@ -50,18 +50,33 @@ void reset_vector()
 
   SCB->CPACR |= ((3UL << (10*2)) | (3UL << (11*2))); // activate the FPU
 
-  while (1) { }
 
+#if defined(BOARD_blue)
   // we need to set 5 wait states on the flash controller to go 168 MHz
   FLASH->ACR = 0; // ensure the caches are turned off, so we can reset them
   FLASH->ACR = FLASH_ACR_DCRST | FLASH_ACR_ICRST; // flush the cache
   FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
                FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS; // re-enable the caches
+#elif defined(BOARD_mini)
+  // we need to set 8 wait states on the flash controller to go 168 MHz
+  //FLASH->ACR = 0; // ensure the caches are turned off, so we can reset them
+  FLASH->ACR;
+  FLASH->ACR |=
+      FLASH_ACR_DCEN   |
+      FLASH_ACR_ICEN   |
+      FLASH_ACR_PRFTEN |
+      FLASH_ACR_LATENCY_8WS ;
+  /*
+  FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
+               FLASH_ACR_DCEN | FLASH_ACR_LATENCY_8WS; // re-enable the caches
+*/
+#endif
 
   RCC->CR |= RCC_CR_HSION; // ensure the HSI (internal) oscillator is on
   RCC->CFGR = RCC_CFGR_SW_HSI; // ensure the HSI oscillator is the clock source
   // turn off main PLL and HSE oscillators
   RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_CSSON | RCC_CR_HSEBYP | RCC_CR_HSEON);
+
 
     // set up the clocking scheme
 #if defined(BOARD_blue)
@@ -70,6 +85,7 @@ void reset_vector()
 #elif defined(BOARD_mini)
   RCC->PLLCFGR = 0x00001000; // ensure PLLCFGR is at reset state
 #endif
+
 
   RCC->CR |= RCC_CR_HSEON; // enable HSE oscillator (off-chip crystal)
 
@@ -140,7 +156,6 @@ void reset_vector()
 
 #endif
 
-/*
   RCC->CR |= RCC_CR_PLLON; // start spinning up the PLL
   while (!(RCC->CR & RCC_CR_PLLRDY)) { } // wait until it's spun up
 
@@ -149,7 +164,6 @@ void reset_vector()
   RCC->CFGR |= RCC_CFGR_SW_PLL; // select PLL as clock source
   while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) { } // wait for it...
   // hooray we're done! PLL output is now 168 MHz
-*/
 
 #if defined(BOARD_mini)
   // on the STM32G4, must wait 1 usec, then set AHB divider to div1

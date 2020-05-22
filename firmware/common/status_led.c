@@ -29,7 +29,7 @@
 
 void status_led_init()
 {
-  pin_set_output(LED_GPIO, LED_PIN, 1);
+  pin_set_output(LED_GPIO, LED_PIN, 0);
 }
 
 void status_led_on()
