@@ -67,6 +67,9 @@ void adc_init()
   NVIC_SetPriority(ADC_IRQn, 1);  // must be higher priority than PWM
   NVIC_EnableIRQ(ADC_IRQn);
 #elif defined(BOARD_mini)
+
+  // TODO: select PLL_P input for 48 MHz clock
+
 #endif
 }
 

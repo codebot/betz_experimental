@@ -9,7 +9,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(blue_openocd_preamble openocd -f interface/ftdi/olimex-arm-usb-tiny-h.cfg -f interface/ftdi/olimex-arm-jtag-swd.cfg -f target/stm32f4x.cfg)
-set(mini_openocd_preamble openocd -f interface/ftdi/olimex-arm-usb-tiny-h.cfg -f interface/ftdi/olimex-arm-jtag-swd.cfg -f target/stm32g4x.cfg)
+
+set(mini_openocd_preamble openocd -f interface/ftdi/olimex-arm-usb-tiny-h.cfg -f interface/ftdi/olimex-arm-jtag-swd.cfg -f target/stm32g4x.cfg -c "reset_config srst_only srst_nogate connect_assert_srst")
+#set(mini_openocd_preamble openocd -f interface/ftdi/olimex-arm-usb-tiny-h.cfg -f interface/ftdi/olimex-arm-jtag-swd.cfg -f target/stm32g4x.cfg -c "reset_config srst_only srst_nogate connect_assert_srst")
 
 function(betzdrive_board_raw_executable board stem)
   message("betzdrive_board_raw_executable(${board}, ${stem})")
@@ -30,7 +32,9 @@ function(betzdrive_board_raw_executable board stem)
       COMMENT "disassembling ${stem}.${board}.elf")
   add_custom_target(${stem}.${board}.flash_swd
       DEPENDS ${stem}.${board}.elf
-      COMMAND ${${board}_openocd_preamble} -c "init; sleep 100; halt; sleep 100; flash write_image erase ${stem}.${board}.bin 0x08000000; verify_image ${stem}.${board}.bin 0x08000000; sleep 100; reset run; sleep 100; shutdown"
+      #COMMAND ${${board}_openocd_preamble} -d3 -c "init; reset halt; flash write_image erase ${stem}.${board}.bin 0x08000000; verify_image ${stem}.${board}.bin 0x08000000; sleep 100; reset run; sleep 100; shutdown"
+      #COMMAND ${${board}_openocd_preamble} -c "init; sleep 100; reset halt; sleep 100; flash write_image erase ${stem}.${board}.bin 0x08000000; verify_image ${stem}.${board}.bin 0x08000000; sleep 100; reset run; sleep 100; shutdown"
+      COMMAND ${${board}_openocd_preamble} -c "init; sleep 100; reset halt; sleep 100; flash write_image erase ${stem}.${board}.bin 0x08000000; verify_image ${stem}.${board}.bin 0x08000000; sleep 100; reset run; sleep 100; shutdown"
       VERBATIM)
   add_custom_target(${stem}.${board}.gdb
       DEPENDS ${stem}.${board}.elf
@@ -96,7 +100,7 @@ add_custom_target(reset_mcu.blue
 
 add_custom_target(gdb_server.mini
     DEPENDS test_blink.mini.elf
-    COMMAND ${mini_openocd_preamble} -c "init; halt"
+    COMMAND ${mini_openocd_preamble} -c "init; reset halt"
     VERBATIM)
 
 add_custom_target(gdb_server.blue

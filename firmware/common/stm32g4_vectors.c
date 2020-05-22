@@ -48,9 +48,9 @@ void usb_lp_vector(void) WEAK_VECTOR;
 void fdcan1_intr1_vector(void) WEAK_VECTOR;
 void fdcan1_intr0_vector(void) WEAK_VECTOR;
 void exti9_5_vector(void) WEAK_VECTOR;
-void tim1_brk_tim9_vector(void) WEAK_VECTOR;
-void tim1_up_tim10_vector(void) WEAK_VECTOR;
-void tim1_trg_com_tim11_vector(void) WEAK_VECTOR;
+void tim1_brk_tim15_vector(void) WEAK_VECTOR;
+void tim1_up_tim16_vector(void) WEAK_VECTOR;
+void tim1_trg_com_dir_idx_tim17_vector(void) WEAK_VECTOR;
 void tim1_cc_vector(void) WEAK_VECTOR;
 void tim2_vector(void) WEAK_VECTOR;
 void tim3_vector(void) WEAK_VECTOR;
@@ -71,13 +71,13 @@ void usart3_vector(void) WEAK_VECTOR;
 void exti15_10_vector(void) WEAK_VECTOR;
 void rtc_alarm_vector(void) WEAK_VECTOR;
 void otg_fs_wkup_vector(void) WEAK_VECTOR;
-void tim8_brk_tim12_vector(void) WEAK_VECTOR;
-void tim8_up_tim13_vector(void) WEAK_VECTOR;
-void tim8_trg_com_tim14_vector(void) WEAK_VECTOR;
+void tim8_brk_terr_ierr_vector(void) WEAK_VECTOR;
+void tim8_up_vector(void) WEAK_VECTOR;
+void tim8_trg_com_dir_idx_vector(void) WEAK_VECTOR;
 void tim8_cc_vector(void) WEAK_VECTOR;
-void dma1_stream7_vector(void) WEAK_VECTOR;
+void adc3_vector(void) WEAK_VECTOR;
 void fsmc_vector(void) WEAK_VECTOR;
-void sdio_vector(void) WEAK_VECTOR;
+void lptim1_vector(void) WEAK_VECTOR;
 
 // interrupt 50
 void tim5_vector(void) WEAK_VECTOR;
@@ -85,37 +85,65 @@ void spi3_vector(void) WEAK_VECTOR;
 void uart4_vector(void) WEAK_VECTOR;
 void uart5_vector(void) WEAK_VECTOR;
 void tim6_dac_vector(void) WEAK_VECTOR;
-void tim7_vector(void) WEAK_VECTOR;
-void dma2_stream0_vector(void) WEAK_VECTOR;
-void dma2_stream1_vector(void) WEAK_VECTOR;
-void dma2_stream2_vector(void) WEAK_VECTOR;
-void dma2_stream3_vector(void) WEAK_VECTOR;
+void tim7_dac_vector(void) WEAK_VECTOR;
+void dma2_ch1_vector(void) WEAK_VECTOR;
+void dma2_ch2_vector(void) WEAK_VECTOR;
+void dma2_ch3_vector(void) WEAK_VECTOR;
+void dma2_ch4_vector(void) WEAK_VECTOR;
 
 // interrupt 60
-void dma2_stream4_vector(void) WEAK_VECTOR;
-void eth_vector(void) WEAK_VECTOR;
-void eth_wkup_vector(void) WEAK_VECTOR;
-void can2_tx_vector(void) WEAK_VECTOR;
-void can2_rx0_vector(void) WEAK_VECTOR;
-void can2_rx1_vector(void) WEAK_VECTOR;
-void can2_sce_vector(void) WEAK_VECTOR;
-void otg_fs_vector(void) WEAK_VECTOR;
-void dma2_stream5_vector(void) WEAK_VECTOR;
-void dma2_stream6_vector(void) WEAK_VECTOR;
+void dma2_ch5_vector(void) WEAK_VECTOR;
+void adc4_vector(void) WEAK_VECTOR;
+void adc5_vector(void) WEAK_VECTOR;
+void ucpd1_vector(void) WEAK_VECTOR;
+void comp1_2_3_vector(void) WEAK_VECTOR;
+void comp4_5_6_vector(void) WEAK_VECTOR;
+void comp7_vector(void) WEAK_VECTOR;
+void hrtim_master_vector(void) WEAK_VECTOR;
+void hrtim_tima_vector(void) WEAK_VECTOR;
+void hrtim_timb_vector(void) WEAK_VECTOR;
 
 // interrupt 70
-void dma2_stream7_vector(void) WEAK_VECTOR;
-void usart6_vector(void) WEAK_VECTOR;
+void hrtim_timc_vector(void) WEAK_VECTOR;
+void hrtim_timd_vector(void) WEAK_VECTOR;
+void hrtim_time_vector(void) WEAK_VECTOR;
+void hrtim_tim_flt_vector(void) WEAK_VECTOR;
+void hrtim_timf_vector(void) WEAK_VECTOR;
+void crs_vector(void) WEAK_VECTOR;
+void sai_vector(void) WEAK_VECTOR;
+void tim20_brk_terr_ierr_vector(void) WEAK_VECTOR;
+void tim20_up_vector(void) WEAK_VECTOR;
+void tim20_trg_com_dir_idx_vector(void) WEAK_VECTOR;
+
+// interrupt 80
+void tim20_cc(void) WEAK_VECTOR;
+void fpu_vector(void) WEAK_VECTOR;
+void i2c4_ev_vector(void) WEAK_VECTOR;
+void i2c4_er_vector(void) WEAK_VECTOR;
+void spi4_vector(void) WEAK_VECTOR;
+void aes_vector(void) WEAK_VECTOR;
+void fdcan2_intr0_vector(void) WEAK_VECTOR;
+void fdcan2_intr1_vector(void) WEAK_VECTOR;
+void fdcan3_intr0_vector(void) WEAK_VECTOR;
+void fdcan3_intr1_vector(void) WEAK_VECTOR;
+
+// interrupt 90
+void rng_vector(void) WEAK_VECTOR;
+void lpuart_vector(void) WEAK_VECTOR;
 void i2c3_ev_vector(void) WEAK_VECTOR;
 void i2c3_er_vector(void) WEAK_VECTOR;
-void otg_hs_ep1_out_vector(void) WEAK_VECTOR;
-void otg_hs_ep1_in_vector(void) WEAK_VECTOR;
-void otg_hs_wkup_vector(void) WEAK_VECTOR;
-void otg_hs_vector(void) WEAK_VECTOR;
-void dcmi_vector(void) WEAK_VECTOR;
-void cryp_vector(void) WEAK_VECTOR;
-void hash_rng_vector(void) WEAK_VECTOR;
-void fpu_vector(void) WEAK_VECTOR;
+void dnamux_ovr_vector(void) WEAK_VECTOR;
+void quadspi_vector(void) WEAK_VECTOR;
+void dma1_ch8_vector(void) WEAK_VECTOR;
+void dma2_ch6_vector(void) WEAK_VECTOR;
+void dma2_ch7_vector(void) WEAK_VECTOR;
+void dma2_ch8_vector(void) WEAK_VECTOR;
+
+// interrupt 100
+void cordic_vector(void) WEAK_VECTOR;
+void fmac_vector(void) WEAK_VECTOR;
+
+////////////////////////////////////////////////////////////////////
 
 void dummy_reset_vector(void) { }
 
@@ -135,16 +163,18 @@ __attribute__((section(".vectors"))) vector_func_t g_vectors[] =
   0,
   pendsv_vector,
   systick_vector,
+
   wwdg_vector,       // 0
   pvd_vector,        
   rtc_tamp_css_lse_vector,
   rtc_wkup_vector,
   flash_vector,
-  rcc_vector,  // 5
+  rcc_vector,
   exti0_vector,
   exti1_vector,
   exti2_vector,
   exti3_vector,
+
   exti4_vector, // 10
   dma1_ch1_vector,
   dma1_ch2_vector,
@@ -160,9 +190,9 @@ __attribute__((section(".vectors"))) vector_func_t g_vectors[] =
   fdcan1_intr1_vector,
   fdcan1_intr0_vector,
   exti9_5_vector,
-  tim1_brk_tim9_vector,
-  tim1_up_tim10_vector,
-  tim1_trg_com_tim11_vector,
+  tim1_brk_tim15_vector,
+  tim1_up_tim16_vector,
+  tim1_trg_com_dir_idx_tim17_vector,
   tim1_cc_vector,
   tim2_vector,
   tim3_vector,
@@ -177,47 +207,74 @@ __attribute__((section(".vectors"))) vector_func_t g_vectors[] =
   usart1_vector,
   usart2_vector,
   usart3_vector,
+
   exti15_10_vector,  // 40
   rtc_alarm_vector,
   otg_fs_wkup_vector,
-  tim8_brk_tim12_vector,
-  tim8_up_tim13_vector,
-  tim8_trg_com_tim14_vector,
+  tim8_brk_terr_ierr_vector,
+  tim8_up_vector,
+  tim8_trg_com_dir_idx_vector,
   tim8_cc_vector,
-  dma1_stream7_vector,
+  adc3_vector,
   fsmc_vector,
-  sdio_vector,
+  lptim1_vector,
+
   tim5_vector,  // 50
   spi3_vector,
   uart4_vector,
   uart5_vector,
   tim6_dac_vector,
-  tim7_vector,
-  dma2_stream0_vector,
-  dma2_stream1_vector,
-  dma2_stream2_vector,
-  dma2_stream3_vector,
-  dma2_stream4_vector,  // 60
-  eth_vector,
-  eth_wkup_vector,
-  can2_tx_vector,
-  can2_rx0_vector,
-  can2_rx1_vector,
-  can2_sce_vector,
-  otg_fs_vector,
-  dma2_stream5_vector,
-  dma2_stream6_vector,
-  dma2_stream7_vector,  // 70
-  usart6_vector,
+  tim7_dac_vector,
+  dma2_ch1_vector,
+  dma2_ch2_vector,
+  dma2_ch3_vector,
+  dma2_ch4_vector,
+
+  dma2_ch5_vector,  // 60
+  adc4_vector,
+  adc5_vector,
+  ucpd1_vector,
+  comp1_2_3_vector,
+  comp4_5_6_vector,
+  comp7_vector,
+  hrtim_master_vector,
+  hrtim_tima_vector,
+  hrtim_timb_vector,
+
+  hrtim_timc_vector,  // 70
+  hrtim_timd_vector,
+  hrtim_time_vector,
+  hrtim_tim_flt_vector,
+  hrtim_timf_vector,
+  crs_vector,
+  sai_vector,
+  tim20_brk_terr_ierr_vector,
+  tim20_up_vector,
+  tim20_trg_com_dir_idx_vector,
+
+  tim20_cc,  // 80
+  fpu_vector,
+  i2c4_ev_vector,
+  i2c4_er_vector,
+  spi4_vector,
+  aes_vector,
+  fdcan2_intr0_vector,
+  fdcan2_intr1_vector,
+  fdcan3_intr0_vector,
+  fdcan3_intr1_vector,
+
+  rng_vector,  // 90
+  lpuart_vector,
   i2c3_ev_vector,
   i2c3_er_vector,
-  otg_hs_ep1_out_vector,
-  otg_hs_ep1_in_vector,
-  otg_hs_wkup_vector,
-  otg_hs_vector,
-  dcmi_vector,
-  cryp_vector,
-  hash_rng_vector,
-  fpu_vector
+  dnamux_ovr_vector,
+  quadspi_vector,
+  dma1_ch8_vector,
+  dma2_ch6_vector,
+  dma2_ch7_vector,
+  dma2_ch8_vector,
+
+  cordic_vector,  // 100
+  fmac_vector
 };
 

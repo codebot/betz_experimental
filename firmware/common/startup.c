@@ -24,6 +24,8 @@ extern int main();
 void startup_clock_init_fail() { while (1) { } }
 void __libc_init_array(void);
 
+volatile int ahhhh = 42;
+
 void reset_vector()
 {
   // need to put a reference to the stack array
@@ -45,27 +47,32 @@ void reset_vector()
     *pDest++ = 0;
 
   __libc_init_array() ;
+
   SCB->CPACR |= ((3UL << (10*2)) | (3UL << (11*2))); // activate the FPU
 
-#if defined(BOARD_blue)
+  while (1) { }
+
   // we need to set 5 wait states on the flash controller to go 168 MHz
   FLASH->ACR = 0; // ensure the caches are turned off, so we can reset them
   FLASH->ACR = FLASH_ACR_DCRST | FLASH_ACR_ICRST; // flush the cache
   FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
                FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS; // re-enable the caches
+
+  RCC->CR |= RCC_CR_HSION; // ensure the HSI (internal) oscillator is on
+  RCC->CFGR = RCC_CFGR_SW_HSI; // ensure the HSI oscillator is the clock source
+  // turn off main PLL and HSE oscillators
+  RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_CSSON | RCC_CR_HSEBYP | RCC_CR_HSEON);
+
+    // set up the clocking scheme
+#if defined(BOARD_blue)
+  RCC->PLLCFGR = 0x24003010; // ensure PLLCFGR is at reset state
+  RCC->CIR = 0x0; // disable all RCC interrupts
 #elif defined(BOARD_mini)
-  // TODO: set up stm32g4 flash wait states
+  RCC->PLLCFGR = 0x00001000; // ensure PLLCFGR is at reset state
 #endif
 
-#if defined(BOARD_blue)
-  // set up the clocking scheme
-  RCC->CR |= 0x1; // ensure the HSI (internal) oscillator is on
-  RCC->CFGR = 0; // ensure the HSI oscillator is the clock source
-  RCC->CR &= 0xfef6ffff; // turn off the main PLL and HSE oscillator
-  RCC->PLLCFGR = 0x24003010; // ensure PLLCFGR is at reset state
-  RCC->CR &= 0xfffbffff; // reset HSEBYP (i.e., HSE is *not* bypassed)
-  RCC->CIR = 0x0; // disable all RCC interrupts
   RCC->CR |= RCC_CR_HSEON; // enable HSE oscillator (off-chip crystal)
+
   for (volatile uint32_t i = 0; 
        i < 0x5000 && !(RCC->CR & RCC_CR_HSERDY); i++)
   {
@@ -74,40 +81,85 @@ void reset_vector()
   if (!(RCC->CR & RCC_CR_HSERDY))
     startup_clock_init_fail(); // go there and spin forever. BUH BYE
 
+
+  // both boards have an 8 MHz crystal
+  #define CRYSTAL_MHZ 8000000
+
+#if defined(BOARD_blue)
   RCC->APB1ENR |= RCC_APB1ENR_PWREN; // clock up the power controller
   PWR->CR |= PWR_CR_VOS; // ensure the voltage regulator is at max beef
-                         // this will let us run at 168 MHz without overdrive
-  RCC->CFGR |= RCC_CFGR_HPRE_DIV1; // set HCLK (AHB clock) to sysclock
-  RCC->CFGR |= RCC_CFGR_PPRE2_DIV2; // set APB high-speed clock to sysclock/2
-  RCC->CFGR |= RCC_CFGR_PPRE1_DIV4; // set APB  low-speed clock to sysclock/4
 
+  RCC->CFGR |=
+      RCC_CFGR_HPRE_DIV1  | // set HCLK (AHB clock) to sysclock
+      RCC_CFGR_PPRE2_DIV2 | // set APB high-speed clock to sysclock/2
+      RCC_CFGR_PPRE1_DIV4 ; // set APB  low-speed clock to sysclock/4
 
-  #define CRYSTAL_MHZ 8000000
+  // we want PLL input clock of 2 MHz
   #define PLL_M (CRYSTAL_MHZ/2000000)
   // with HSE_VALUE = 8 MHz, PLL_M will be 4
+
   #define PLL_N 168
   // PLL_VCO = crystal mhz / PLL_M * PLL_N = 336 MHz
   #define PLL_P   2
   // SYSCLK = PLL_VCO / PLL_P = 168 MHz
   #define PLL_Q   7
   // USB clock = PLL_VCO / PLL_Q = 48 MHz 
+
   RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1)-1) << 16) |
                  (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
-  RCC->CR |= RCC_CR_PLLON; // start spinning up the PLL
-  while (!(RCC->CR & RCC_CR_PLLRDY)) { } // wait until it's spun up
-
-  RCC->CFGR &= ~((uint32_t)RCC_CFGR_SW); // select internal oscillator
-  RCC->CFGR |= RCC_CFGR_SW_PLL; // select PLL as clock source
-  while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) { } // wait for it...
-  // hooray we're done! we're now running at 168 MHz.
 
 #elif defined(BOARD_mini)
+  RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN; // clock up the power controller
+  PWR->CR5 &= ~PWR_CR5_R1MODE;  // boost mode for extra beef
+  PWR->CR1 |= PWR_CR1_VOS_0; // ensure the voltage regulator is at Range 1
+  // on STM32G4 (very different from STM32F4 in this respect), we can take
+  // the peripheral buses all up to 170 MHz
 
-  // TODO: set up stm32g4 clocks
+  // we want PLL input clock of 8 MHz
+  #define PLL_M (CRYSTAL_MHZ/8000000)
+  // with an 8 MHz crystal, PLL_M will be 1, so we have fPLL_IN = 8 MHz
+
+  #define PLL_N 42
+  // PLL_VCO = crystal / PLL_M * PLL_N = 8 / 1 * 21 = 336 MHz
+
+  // PLL_P will be 7, to end up with ADC clock of 336/7 = 48 MHz
+  // PLL_Q will be 8, but we do not need it (no USB). Don't enable output
+  // PLL_R will be 2, to end up with main clock of 336/2 = 168 MHz
+
+  // we will temporarily set AHB to divide by 2 during spin-up
+  RCC->CFGR |= RCC_CFGR_HPRE_DIV2;  // set HCLK (AHB clock) to sysclock/2
+
+  RCC->PLLCFGR =
+      RCC_PLLCFGR_PLLSRC_HSE | // PLL input is crystal oscillator
+      0                      | // leave PLL_M as zero to use div1 for input
+      (PLL_N << RCC_PLLCFGR_PLLN_Pos) |
+      RCC_PLLCFGR_PLLPEN     | // enable PLL P output (for ADC) with div7
+      RCC_PLLCFGR_PLLQ_0     | // set PLL Q divider to 8 (unused)
+      RCC_PLLCFGR_PLLQ_1     | // set PLL Q divider to 8 (unused)
+      RCC_PLLCFGR_PLLREN     ; // enable main (R) output with div2
 
 #endif
 
+/*
+  RCC->CR |= RCC_CR_PLLON; // start spinning up the PLL
+  while (!(RCC->CR & RCC_CR_PLLRDY)) { } // wait until it's spun up
+
+  RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW) | RCC_CFGR_SW_PLL;
+  RCC->CFGR &= ~((uint32_t)RCC_CFGR_SW); // select internal oscillator
+  RCC->CFGR |= RCC_CFGR_SW_PLL; // select PLL as clock source
+  while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL) { } // wait for it...
+  // hooray we're done! PLL output is now 168 MHz
+*/
+
+#if defined(BOARD_mini)
+  // on the STM32G4, must wait 1 usec, then set AHB divider to div1
+  for (volatile int i = 0; i < 1000; i++) { }
+  RCC->CFGR &= ~RCC_CFGR_HPRE;  // now we're set for div1 on HCLK
+#endif
+
   status_led_init();
+  main();
+
   console_init();
   systime_init();
   state_init();
