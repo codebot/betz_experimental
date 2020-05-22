@@ -172,9 +172,11 @@ void reset_vector()
 #endif
 
   status_led_init();
+  console_init();
   main();
 
-  console_init();
+  // TODO: move stuff up as it's verified...
+
   systime_init();
   state_init();
   param_init();
