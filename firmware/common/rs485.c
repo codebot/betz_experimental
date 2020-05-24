@@ -117,7 +117,8 @@ void rs485_init()
   NVIC_SetPriority(USART1_IRQn, 0);  // highest priority (!)
   NVIC_EnableIRQ(USART1_IRQn);
 #elif defined(BOARD_mini)
-  // TODO
+  NVIC_SetPriority(USART2_IRQn, 0);  // highest priority (!)
+  NVIC_EnableIRQ(USART2_IRQn);
 #endif
 }
 
@@ -156,9 +157,16 @@ void rs485_tx(const uint8_t *data, const uint32_t len)
 // void usart1_vector() __attribute__((section(".ramfunc")));
 void usart1_vector()
 {
-  volatile uint8_t __attribute__((unused)) sr = USART1->SR;  // clear errors
-  volatile uint8_t b = USART1->DR;  // drain
-  g_rs485_rx_ring[g_rs485_rx_ring_wpos] = b;
+  volatile uint32_t __attribute__((unused)) sr = USART1->SR;  // clear errors
+  g_rs485_rx_ring[g_rs485_rx_ring_wpos] = USART1->DR;  // drain RX
+  if (++g_rs485_rx_ring_wpos >= RS485_RX_RING_LEN)
+    g_rs485_rx_ring_wpos = 0;
+}
+#elif defined(BOARD_mini)
+void usart2_vector()
+{
+  volatile uint32_t __attribute__((unused)) sr = USART1->ISR;  // clear errors
+  g_rs485_rx_ring[g_rs485_rx_ring_wpos] = USART2->RDR;  // drain RX
   if (++g_rs485_rx_ring_wpos >= RS485_RX_RING_LEN)
     g_rs485_rx_ring_wpos = 0;
 }

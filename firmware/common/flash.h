@@ -19,7 +19,10 @@ bool flash_write(
     const uint8_t *write_data);
 
 uint32_t flash_get_param_table_base_addr();
+uint32_t flash_get_param_table_size();
+
 bool flash_erase_page_by_addr(const uint32_t addr);
+bool flash_erase_range(const uint32_t addr, const uint32_t len);
 bool flash_program_word(const uint32_t addr, const uint32_t data);
 bool flash_program_byte(const uint32_t addr, const uint8_t byte);
 

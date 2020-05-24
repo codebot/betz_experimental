@@ -177,8 +177,10 @@ void param_save_to_flash()
   printf("param_save_to_flash()\r\n");
   // todo: be smart, pre-calculate the flash table size, and erase
   // enough pages to get that all done before writing starts.
-  // for now, stm32f405 has huge 128 KB pages so we only need a single erase
-  flash_erase_page_by_addr(flash_get_param_table_base_addr());
+  // for now, it's all hard-coded in the flash driver
+  flash_erase_range(
+      flash_get_param_table_base_addr(),
+      flash_get_param_table_size());
 
   uint32_t flash_write_addr = flash_get_param_table_base_addr();
 

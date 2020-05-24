@@ -15,8 +15,6 @@
 //   application: 768 KB spanning sectors 5..10
 //   parameters: 128 KB in sector 11
 
-#define NUM_SECTORS 12
-
 #elif defined(BOARD_mini)
 
 // stm32g474 has 128 pages of 4K bytes each (512K total)
@@ -28,11 +26,9 @@
 #endif
 
 // temporary
-#if defined(BOARD_blue)
 static void flash_unlock();
 static void flash_lock() __attribute__((unused));
 static bool flash_wait_for_idle();
-#endif
 
 static uint32_t g_flash_size = 0;
 static uint32_t g_flash_page_size = 0;
@@ -55,12 +51,10 @@ void flash_init()
   else
     printf("AAAAAAHHHH! unknown dev_id!\r\n");
 
-  /*
   printf("  flash size: %d\r\n", (int)g_flash_size);
   printf("  idcode: 0x%08x\r\n", (int)idcode);
   printf("  dev_id = 0x%03x\r\n", (int)dev_id);
   printf("  flash page size = %d\r\n", (int)g_flash_page_size);
-  */
 }
 
 void flash_unlock()
@@ -80,8 +74,6 @@ void flash_lock()
   FLASH->CR |= FLASH_CR_LOCK;
 }
 
-// temporary
-#if defined(BOARD_blue)
 bool flash_wait_for_idle()
 {
   // uint32_t t_start = SYSTIME;
@@ -103,45 +95,38 @@ bool flash_wait_for_idle()
   }
   return true;
 }
-#endif
 
 bool flash_program_word(const uint32_t addr, const uint32_t data)
 {
-#if defined(BOARD_blue)
   flash_unlock();
   if (!flash_wait_for_idle())
     return false;
   FLASH->CR |= FLASH_CR_PG; // set the programming bit
+#if defined(BOARD_blue)
   FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE to get ready to set it
   FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
+#endif
   *((volatile uint32_t *)addr) = data;
   const bool result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
   return result;
-#elif defined(BOARD_mini)
-  // TODO
-  return false;
-#endif
 }
 
 bool flash_program_byte(const uint32_t addr, const uint8_t byte)
 {
-#if defined(BOARD_blue)
   flash_unlock();
   if (!flash_wait_for_idle())
     return false;
+#if defined(BOARD_blue)
   FLASH->CR |= FLASH_CR_PG; // set the programming bit
   FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE=0 for byte writes
+#endif
   *((volatile uint8_t *)addr) = byte;
   const bool result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
   return result;
-#elif defined(BOARD_mini)
-  // TODO
-  return false;
-#endif
 }
 
 void flash_read(
@@ -193,53 +178,85 @@ bool flash_write(
 
 bool flash_erase_page_by_addr(const uint32_t addr)
 {
-#if defined(BOARD_blue)
   printf("erase page at 0x%08x\r\n", (unsigned)addr);
-  if (g_flash_page_size == 0x20000)
-  {
-    // stm32f405 and friends
-    if (addr <  0x08020000 ||
-        addr >  0x080fffff ||
-        (addr & 0x1ffff) != 0)
-      return false;  // bad address
-    const int offset = addr - 0x08020000;
-    const int sector = 5 + offset / g_flash_page_size;
+#if defined(BOARD_blue)
+  // stm32f405 and friends
+  if (addr <  0x08020000 ||
+      addr >  0x080fffff ||
+      (addr & 0x1ffff) != 0)
+    return false;  // bad address
+  const int offset = addr - 0x08020000;
+  const int sector = 5 + offset / g_flash_page_size;
 
-    flash_unlock();
-    flash_wait_for_idle();
-    FLASH->CR &= ~FLASH_CR_PSIZE;
-    FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
-    FLASH->CR &= ~0xf8; // wipe out the sector address bits
-    // todo: revisit this calculation for sectors beyond 12 (?)
-    FLASH->CR |= sector << 3;  // fill in the sector address bits
-    FLASH->CR |= FLASH_CR_SER; // sector erase operation
-    FLASH->CR |= FLASH_CR_STRT; // start the sector-erase operation
-    const bool result = flash_wait_for_idle();
-    FLASH->CR &= ~FLASH_CR_SER; // reset the sector-erase operation bit
-    FLASH->CR &= ~0xf8; // and wipe out the sector address bits
-    //flash_lock(); // lock the flash again
-    return result; // we're done
-  }
-  else if (g_flash_page_size == 0x1000)
-  {
-    // todo: stm32g474 and friends
-    return false;
-  }
-  else
-  {
-    printf(
-        "OH NO! unrecognized g_flash_page_size: 0x%08x\n",
-        (unsigned)g_flash_page_size);
-    return false;
-  }
+  flash_unlock();
+  flash_wait_for_idle();
+  FLASH->CR &= ~FLASH_CR_PSIZE;
+  FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
+  FLASH->CR &= ~0xf8; // wipe out the sector address bits
+  // todo: revisit this calculation for sectors beyond 12 (?)
+  FLASH->CR |= sector << 3;  // fill in the sector address bits
+  FLASH->CR |= FLASH_CR_SER; // sector erase operation
+  FLASH->CR |= FLASH_CR_STRT; // start the sector-erase operation
+  const bool result = flash_wait_for_idle();
+  FLASH->CR &= ~FLASH_CR_SER; // reset the sector-erase operation bit
+  FLASH->CR &= ~0xf8; // and wipe out the sector address bits
+  //flash_lock(); // lock the flash again
+  return result; // we're done
 #elif defined(BOARD_mini)
-  // TODO
+  // stm32g474 and friends
+  if (addr <  0x08020000 ||
+      addr >  0x0807ffff ||
+      (addr & 0xfff) != 0)
+    return false;  // bad address
+  const int offset = addr - 0x08020000;
+  const int page = 32 + offset / g_flash_page_size;
+
+  flash_unlock();
+  flash_wait_for_idle();
+  FLASH->CR &= ~0x7f8; // wipe out the page number bits
+  FLASH->CR |= page << 3;  // fill in the page number bits
+  FLASH->CR |= FLASH_CR_PER; // sector erase operation
+  FLASH->CR |= FLASH_CR_STRT; // start the sector-erase operation
+  const bool result = flash_wait_for_idle();
+  FLASH->CR &= ~FLASH_CR_PER; // reset the sector-erase operation bit
+  FLASH->CR &= ~0x7f8; // and wipe out the sector address bits
+  //flash_lock(); // lock the flash again
+  return result; // we're done
+#else
+  printf(
+      "OH NO! unrecognized g_flash_page_size: 0x%08x\n",
+      (unsigned)g_flash_page_size);
   return false;
 #endif
 }
 
 uint32_t flash_get_param_table_base_addr()
 {
+  // todo: smarter branching based on MCU type and flash size
+  if (g_flash_page_size == 0x1000)
+  {
+    // STM32G4, hard-code top 128 KB for now
+    return 0x08000000 + 3 * 128 * 1024;
+  }
+  else
+  {
+    // STM32F405, hard-code top 128 KB for now
+    return 0x080e0000;
+  }
+}
+
+uint32_t flash_get_param_table_size()
+{
   // todo: branch based on MCU type and flash size
-  return 0x080e0000;
+  return 128 * 1024;
+}
+
+bool flash_erase_range(const uint32_t start, const uint32_t len)
+{
+  for (uint32_t addr = start; addr < len; addr += g_flash_page_size)
+  {
+    if (!flash_erase_page_by_addr(addr))
+      return false;
+  }  
+  return true;
 }

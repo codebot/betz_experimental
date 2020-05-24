@@ -46,10 +46,9 @@ void reset_vector()
   for (pDest = &_sbss; pDest < &_ebss; )
     *pDest++ = 0;
 
-  __libc_init_array() ;
+  __libc_init_array();
 
   SCB->CPACR |= ((3UL << (10*2)) | (3UL << (11*2))); // activate the FPU
-
 
 #if defined(BOARD_blue)
   // we need to set 5 wait states on the flash controller to go 168 MHz
@@ -58,18 +57,12 @@ void reset_vector()
   FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
                FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS; // re-enable the caches
 #elif defined(BOARD_mini)
-  // we need to set 8 wait states on the flash controller to go 168 MHz
-  //FLASH->ACR = 0; // ensure the caches are turned off, so we can reset them
-  FLASH->ACR;
+  // we need to set 4 wait states on the flash controller to go 168 MHz
   FLASH->ACR |=
       FLASH_ACR_DCEN   |
       FLASH_ACR_ICEN   |
       FLASH_ACR_PRFTEN |
-      FLASH_ACR_LATENCY_8WS ;
-  /*
-  FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
-               FLASH_ACR_DCEN | FLASH_ACR_LATENCY_8WS; // re-enable the caches
-*/
+      FLASH_ACR_LATENCY_4WS ;
 #endif
 
   RCC->CR |= RCC_CR_HSION; // ensure the HSI (internal) oscillator is on
@@ -77,8 +70,7 @@ void reset_vector()
   // turn off main PLL and HSE oscillators
   RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_CSSON | RCC_CR_HSEBYP | RCC_CR_HSEON);
 
-
-    // set up the clocking scheme
+  // set up the clocking scheme
 #if defined(BOARD_blue)
   RCC->PLLCFGR = 0x24003010; // ensure PLLCFGR is at reset state
   RCC->CIR = 0x0; // disable all RCC interrupts
@@ -176,21 +168,22 @@ void reset_vector()
   systime_init();
   state_init();
   rs485_init();
+  param_init();
+  uuid_init();
+  flash_init();
+  rng_init();
+
+  comms_init(rs485_tx);
+
+  __enable_irq();
   main();
 
   // TODO: move stuff up as it's verified...
 
-  param_init();
-  uuid_init();
-  flash_init();
-  adc_init();
   pwm_init();
-  rng_init();
+  adc_init();
   enc_init();
   control_init();
-  comms_init(rs485_tx);
 
-  __enable_irq();
-  main(); // jump to application main()
   while (1) { } // hopefully we never get here...
 }

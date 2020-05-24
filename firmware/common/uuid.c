@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include "uuid.h"
-#include "stm32f405xx.h"
+#include "soc.h"
 
 uint8_t g_uuid[UUID_LEN];
 

@@ -16,7 +16,7 @@
 */
 
 #include "rng.h"
-#include "stm32f405xx.h"
+#include "soc.h"
 
 void rng_init()
 {
