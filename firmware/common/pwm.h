@@ -21,10 +21,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// TODO: revisit for stm32g4
+#if defined(BOARD_blue)
 
-// 84e6 / 4200 = 20 kHz
+// 84 MHz / 20 KHz = 4200
 #define PWM_MAX 4200  
+
+#elif defined(BOARD_mini)
+
+// 168 MHz / 20 KHz = 8400
+#define PWM_MAX 8400  
+
+#endif
 
 void pwm_init();
 void pwm_set(const uint32_t a, const uint32_t b, const uint32_t c);

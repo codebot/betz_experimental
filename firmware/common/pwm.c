@@ -37,13 +37,25 @@
 
 #elif defined(BOARD_mini)
 
+// PWM_SLEEP = PC6
+// PWM_FAULT = PA12
+
+// PWM_HSA = PA10, AF6 = TIM1_CH3
+// PWM_HSB = PA9, AF6 = TIM1_CH2
+// PWM_HSC = PA8, AF6 = TIM1_CH1
+
+// PWM_LSA = PB9, AF12 = TIM1_CH3N
+// PWM_LSB = PB0, AF6 = TIM1_CH2N
+// PWM_LSC = PA11, AF6 = TIM1_CH1N
+
 #endif
 
 void pwm_init()
 {
   printf("pwm_init()\r\n");
-#if defined(BOARD_blue)
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+
+#if defined(BOARD_blue)
 
   // drive NRESET pins low to disable the drivers
   pin_set_output(GPIOC, 7, 0);
@@ -53,6 +65,16 @@ void pwm_init()
   pin_set_alternate_function(GPIOA, 8, 1);
   pin_set_alternate_function(GPIOA, 9, 1);
   pin_set_alternate_function(GPIOA, 10, 1);
+
+#elif defined(BOARD_mini)
+  pin_set_output(GPIOC, 9, 0);  // assert SLEEP
+
+  pin_set_alternate_function(GPIOA, 8, 6);
+  pin_set_alternate_function(GPIOA, 9, 6);
+  pin_set_alternate_function(GPIOA, 10, 6);
+
+#endif
+
   TIM1->PSC = 0;  // timer frequency = sysclock/2 = 168 / 2 = 84 MHz
   TIM1->ARR = PWM_MAX;
   TIM1->CCR1 = PWM_MAX / 2;
@@ -89,20 +111,13 @@ void pwm_init()
 
   NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 2); // lower than comms and ADC
   NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
-#elif defined(BOARD_mini)
-  // TODO
-#endif
 }
 
 void pwm_set(const uint32_t a, const uint32_t b, const uint32_t c)
 {
-#if defined(BOARD_blue)
   TIM1->CCR1 = a;
   TIM1->CCR2 = b;
   TIM1->CCR3 = c;
-#elif defined(BOARD_mini)
-  // TODO
-#endif
 }
 
 uint32_t pwm_max()
@@ -129,6 +144,13 @@ void pwm_enable(const bool enable)
     pin_set_output(GPIOC, 9, 0);
   }
 #elif defined(BOARD_mini)
-  // TODO
+  if (enable)
+  {
+    pin_set_output(GPIOC, 9, 1);
+  }
+  else
+  {
+    pin_set_output(GPIOC, 9, 0);
+  }
 #endif
 }
