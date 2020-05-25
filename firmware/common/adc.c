@@ -22,16 +22,17 @@
 
 #include "soc.h"
 
-// PC0 = ISENSE_C = ADC123_IN10
-// PC1 = ISENSE_B = ADC123_IN11
-// PC2 = ISENSE_A = ADC123_IN12
-// PC3 = VSENSE_VIN = ADC123_IN13  (vbus through 49.9k / 2.21k divider)
-
 volatile bool g_adc_read_complete = false;
 
 void adc_init()
 {
 #if defined(BOARD_blue)
+
+  // PC0 = ISENSE_C = ADC123_IN10
+  // PC1 = ISENSE_B = ADC123_IN11
+  // PC2 = ISENSE_A = ADC123_IN12
+  // PC3 = VSENSE_VIN = ADC123_IN13  (vbus through 49.9k / 2.21k divider)
+
   // turn on ADC clock trees
   RCC->APB2ENR |=
       RCC_APB2ENR_ADC1EN |
@@ -68,7 +69,32 @@ void adc_init()
   NVIC_EnableIRQ(ADC_IRQn);
 #elif defined(BOARD_mini)
 
-  // TODO: select PLL_P input for 48 MHz clock
+  // PA0 = IC = ADC1_IN1
+  // PA6 = IB = ADC2_IN4
+  // PB1 = IA = ADC3_IN1
+
+  RCC->AHB2ENR |=
+      RCC_AHB2ENR_ADC12EN  |
+      RCC_AHB2ENR_ADC345EN ;
+
+  RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;  // powers up VREFBUF
+
+  VREFBUF->VREFBUF_CSR =
+      VREFBUF_VRS_1    |  // set voltage reference to 2.9 v
+      VREFBUF_CSR_ENVR ;  // enable the voltage reference
+
+  // TODO: clear ADC_CR DEEPPWD bit
+  // TODO: ADC_CR ADVREGEN=1 
+  // wait a bit (T_ADCVREG_STUP)
+  // start calibration sequence by setting ADCALDIF=0 and ADCAL=1
+  // set ADEN=1
+  // wait for ADCAL=0
+  // (cal factor is ADC_CALFACT)
+
+  // PLL input P is selected because we're leaving CLKSEL = b00
+  ADC->CCR =
+      ADC_CCR_DUAL_2 |  // set DUAL bits for "regular simultaneous mode"
+      ADC_CCR_DUAL_1 |
 
 #endif
 }
