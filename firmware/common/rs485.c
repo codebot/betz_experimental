@@ -172,8 +172,6 @@ void usart2_vector()
 }
 #endif
 
-// TODO: vector for mini board (usart2)
-
 void rs485_tick()
 {
   // called during the CPU's idle time

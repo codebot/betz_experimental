@@ -172,6 +172,9 @@ void reset_vector()
   uuid_init();
   flash_init();
   rng_init();
+  pwm_init();
+  control_init();
+  enc_init();
 
   comms_init(rs485_tx);
 
@@ -180,10 +183,7 @@ void reset_vector()
 
   // TODO: move stuff up as it's verified...
 
-  pwm_init();
   adc_init();
-  enc_init();
-  control_init();
 
   while (1) { } // hopefully we never get here...
 }

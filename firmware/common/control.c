@@ -32,6 +32,18 @@
 #include "soc.h"
 #endif
 
+#if defined(BOARD_blue)
+
+#define CONTROL_BUSY_GPIO GPIOA
+#define CONTROL_BUSY_PIN 3
+
+#elif defined(BOARD_mini)
+
+#define CONTROL_BUSY_GPIO GPIOB
+#define CONTROL_BUSY_PIN 3
+
+#endif
+
 static float g_control_position_target = 0;
 static float g_control_voltage_target = 0;
 static int g_control_pole_count = 21;
@@ -84,23 +96,22 @@ void control_init()
       1.0,
       PARAM_PERSISTENT);
 
-#if defined(BOARD_blue)
-  pin_set_output(GPIOA, 3, 0);
-#elif defined(BOARD_mini)
-  // TODO
-#endif
+  pin_set_output(CONTROL_BUSY_GPIO, CONTROL_BUSY_PIN, 0);
 }
 
 void control_tick()
 {
 }
 
-#if defined(BOARD_blue)
 // strangely, ramfunc seems to result in slightly higher jitter and no
 // real improvement in speed (?)
 // void tim1_up_tim10_vector() __attribute__((section(".ramfunc")));
 
+#if defined(BOARD_blue)
 void tim1_up_tim10_vector()
+#elif defined(BOARD_mini)
+void tim1_up_tim16_vector()
+#endif
 {
   TIM1->SR &= ~TIM_SR_UIF;  // clear the interrupt flag that got us here
   if (TIM1->CR1 & TIM_CR1_DIR)
@@ -108,14 +119,11 @@ void tim1_up_tim10_vector()
     // all shunts are ready to measure. trigger the ADC's.
     adc_start_nonblocking_read();
 
-    pin_set_output_high(GPIOA, 3);
+    pin_set_output_high(CONTROL_BUSY_GPIO, CONTROL_BUSY_PIN);
 
     g_state.t = systime_read();
 
-
-    // todo: other stuff...
-
-    // now spinlock until ADC is complete
+    // busy-wait until ADC is complete
     while (!g_adc_read_complete) { }
 
     g_state.raw_adc[0] = (uint16_t)ADC1->DR;
@@ -177,7 +185,7 @@ void tim1_up_tim10_vector()
           (int32_t)(v_c * PWM_MID / g_control_bus_voltage + PWM_MID);
 
       // clamp pwm to sane values
-      const int32_t PWM_TOO_LOW = 100;  // preserve "quiet time" at top/bottom
+      const int32_t PWM_TOO_LOW = 100;  // preserve "quiet time" at top/bot
       const int32_t PWM_TOO_HIGH = PWM_MAX - PWM_TOO_LOW;
 
       pwm_a = pwm_a < PWM_TOO_LOW ? PWM_TOO_LOW : pwm_a;
@@ -188,11 +196,10 @@ void tim1_up_tim10_vector()
       pwm_b = pwm_b >= PWM_TOO_HIGH ? PWM_TOO_HIGH : pwm_b;
       pwm_c = pwm_c >= PWM_TOO_HIGH ? PWM_TOO_HIGH : pwm_c;
 
-     
       pwm_set(pwm_a, pwm_b, pwm_c);
     }
 
-    pin_set_output_low(GPIOA, 3);
+    pin_set_output_low(CONTROL_BUSY_GPIO, CONTROL_BUSY_PIN);
   }
   else
   {
@@ -200,7 +207,3 @@ void tim1_up_tim10_vector()
     enc_start_nonblocking_read_to_state();
   }
 }
-
-#elif defined(BOARD_mini)
-// TODO
-#endif
