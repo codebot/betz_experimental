@@ -28,8 +28,8 @@
 
 #elif defined(BOARD_mini)
 
-// 168 MHz / 20 KHz = 8400
-#define PWM_MAX 8400  
+// 168 MHz / 20 KHz = 8400 for half cycle, need 4200 for full cycle
+#define PWM_MAX 4200  
 
 #endif
 

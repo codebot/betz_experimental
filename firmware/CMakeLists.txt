@@ -90,12 +90,12 @@ endfunction()
 
 add_custom_target(reset_mcu.mini
     DEPENDS test_blink.mini.elf
-    COMMAND ${mini_openocd_preamble} -c "debug_level 3; init; halt; reset run; shutdown"
+    COMMAND ${mini_openocd_preamble} -c "init; reset halt; reset run; shutdown"
     VERBATIM)
 
 add_custom_target(reset_mcu.blue
     DEPENDS test_blink.blue.elf
-    COMMAND ${blue_openocd_preamble} -c "debug_level 3; init; halt; reset run; shutdown"
+    COMMAND ${blue_openocd_preamble} -c "debug_level 3; init; reset run; shutdown"
     VERBATIM)
 
 add_custom_target(gdb_server.mini

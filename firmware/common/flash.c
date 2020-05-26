@@ -96,6 +96,8 @@ bool flash_wait_for_idle()
   return true;
 }
 
+// TODO: stm32g4 flash writes must always be double-word... no word/byte writes
+
 bool flash_program_word(const uint32_t addr, const uint32_t data)
 {
   flash_unlock();
@@ -253,7 +255,8 @@ uint32_t flash_get_param_table_size()
 
 bool flash_erase_range(const uint32_t start, const uint32_t len)
 {
-  for (uint32_t addr = start; addr < len; addr += g_flash_page_size)
+  printf("flash_erase_range(0x%08x, %d)\r\n", (unsigned)start, (int)len);
+  for (uint32_t addr = start; addr < start + len; addr += g_flash_page_size)
   {
     if (!flash_erase_page_by_addr(addr))
       return false;

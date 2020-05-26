@@ -155,11 +155,11 @@ void pwm_enable(const bool enable)
 #elif defined(BOARD_mini)
   if (enable)
   {
-    pin_set_output(GPIOC, 9, 1);
+    pin_set_output(GPIOC, 6, 1);
   }
   else
   {
-    pin_set_output(GPIOC, 9, 0);
+    pin_set_output(GPIOC, 6, 0);
   }
 #endif
 }

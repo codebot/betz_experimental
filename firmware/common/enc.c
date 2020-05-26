@@ -171,4 +171,6 @@ void ENC_VECTOR()
   pin_set_output_high(ENC_CS_GPIO, ENC_CS_PIN);
   uint16_t position = ENC_SPI->DR & 0x3fff;  // returns the _previous_ read
   g_state.enc = (position + g_encoder_offset) * (float)(2.0 * M_PI / 16384.0);
+  if (g_encoder_dir < 0)
+    g_state.enc = -g_state.enc;
 }

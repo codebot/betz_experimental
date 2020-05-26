@@ -79,9 +79,9 @@ void adc_init()
 
   RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;  // powers up VREFBUF
 
-  VREFBUF->VREFBUF_CSR =
-      VREFBUF_VRS_1    |  // set voltage reference to 2.9 v
-      VREFBUF_CSR_ENVR ;  // enable the voltage reference
+  VREFBUF->CSR =
+      VREFBUF_CSR_VRS_1 |  // set voltage reference to 2.9 v
+      VREFBUF_CSR_ENVR  ;  // enable the voltage reference
 
   // TODO: clear ADC_CR DEEPPWD bit
   // TODO: ADC_CR ADVREGEN=1 
@@ -92,9 +92,11 @@ void adc_init()
   // (cal factor is ADC_CALFACT)
 
   // PLL input P is selected because we're leaving CLKSEL = b00
-  ADC->CCR =
+  ADC12_COMMON->CCR =
       ADC_CCR_DUAL_2 |  // set DUAL bits for "regular simultaneous mode"
-      ADC_CCR_DUAL_1 |
+      ADC_CCR_DUAL_1 ;
+
+  ADC345_COMMON->CCR = 0;  // set DUAL bits to zero for independent mode
 
 #endif
 }
@@ -105,6 +107,7 @@ void adc_start_nonblocking_read()
   ADC1->CR2 |= ADC_CR2_SWSTART;
   g_adc_read_complete = false;
 #elif defined(BOARD_mini)
+  g_adc_read_complete = true;
 #endif
 }
 

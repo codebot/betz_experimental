@@ -126,6 +126,7 @@ void tim1_up_tim16_vector()
     // busy-wait until ADC is complete
     while (!g_adc_read_complete) { }
 
+#if 0
     g_state.raw_adc[0] = (uint16_t)ADC1->DR;
     g_state.raw_adc[1] = (uint16_t)ADC2->DR;
     g_state.raw_adc[2] = (uint16_t)ADC3->DR;
@@ -133,6 +134,7 @@ void tim1_up_tim16_vector()
     for (int i = 0; i < 3; i++)
       g_state.phase_currents[i] =
           ((float)(g_state.raw_adc[i]) - 2048.0f) / 2047.0f * 1.65f * 5.0f;
+#endif
 
     // do more control stuff
 
@@ -166,6 +168,10 @@ void tim1_up_tim16_vector()
       v_a = g_control_voltage_target * sinf(elec_angle);
       v_b = g_control_voltage_target * sinf(elec_angle + deg120);
       v_c = g_control_voltage_target * sinf(elec_angle + 2.0f * deg120);
+
+      g_state.phase_currents[0] = v_a;
+      g_state.phase_currents[1] = v_b;
+      g_state.phase_currents[2] = v_c;
     }
 
     const float PWM_MID = PWM_MAX / 2.0f;

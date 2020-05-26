@@ -173,17 +173,13 @@ void reset_vector()
   flash_init();
   rng_init();
   pwm_init();
+  adc_init();
   control_init();
   enc_init();
-
   comms_init(rs485_tx);
 
   __enable_irq();
   main();
-
-  // TODO: move stuff up as it's verified...
-
-  adc_init();
 
   while (1) { } // hopefully we never get here...
 }
