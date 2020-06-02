@@ -25,6 +25,11 @@
 
 #endif
 
+#define FLASH_WRITE_BLOCK_SIZE 8
+static uint8_t flash_write_buf[FLASH_WRITE_BLOCK_SIZE];
+static uint32_t flash_write_buf_idx;
+static uint32_t flash_write_addr;
+
 // temporary
 static void flash_unlock();
 static void flash_lock() __attribute__((unused));
@@ -125,7 +130,18 @@ bool flash_program_dword(
     return false;
   return true;
 #else
-  // TODO
+
+  flash_unlock();
+  if (!flash_wait_for_idle())
+    return false;
+  FLASH->CR |= FLASH_CR_PG; // set the programming bit
+  *((volatile uint32_t *)addr) = word_0;
+  *((volatile uint32_t *)addr+4) = word_1;
+  const bool result = flash_wait_for_idle();
+  FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
+  //flash_lock();
+  return result;
+
 #endif
 }
 
@@ -153,7 +169,7 @@ uint8_t flash_read_byte(const uint32_t addr)
   return byte;
 }
 
-bool flash_write(
+bool flash_write_block(
     const uint32_t write_addr,
     const uint32_t write_len,
     const uint8_t *write_data)
@@ -272,16 +288,50 @@ bool flash_erase_range(const uint32_t start, const uint32_t len)
 
 bool flash_write_begin(const uint32_t addr)
 {
+  flash_write_buf_idx = 0;
+  return true;
+}
+
+static bool flash_write_flush()
+{
+  const bool result = flash_write_block(
+      flash_write_addr,
+      FLASH_WRITE_BLOCK_SIZE,
+      flash_write_buf);
+
+  flash_write_buf_idx = 0;
+  flash_write_addr += FLASH_WRITE_BLOCK_SIZE;
+
+  return result;
 }
 
 bool flash_write_byte(const uint8_t byte)
 {
+  if (flash_write_buf_idx >= FLASH_WRITE_BLOCK_SIZE)
+  {
+    printf("ahhhhh flash write buf overrun attempted!\r\n");
+    return false;
+  }
+  flash_write_buf[flash_write_buf_idx++] = byte;
+  if (flash_write_buf_idx >= FLASH_WRITE_BLOCK_SIZE)
+    flash_write_flush();
+  return true;
 }
 
 bool flash_write_word(const uint32_t word)
 {
+  const uint8_t * const p_bytes = (const uint8_t * const)&word;
+  for (int byte_idx = 0; byte_idx < 4; byte_idx++)
+  {
+    if (!flash_write_byte(p_bytes[byte_idx]))
+      return false;
+  }
+  return true;
 }
 
 bool flash_write_end()
 {
+  for (; flash_write_buf_idx < FLASH_WRITE_BLOCK_SIZE; flash_write_buf_idx++)
+    flash_write_buf[flash_write_buf_idx] = 0x42;
+  return flash_write_flush();
 }

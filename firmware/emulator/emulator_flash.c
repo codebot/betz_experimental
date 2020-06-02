@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2020 Open Source Robotics Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+*/
+
 #include <stdio.h>
 #include <string.h>
 
@@ -9,6 +26,11 @@
 
 static uint8_t flash_image[FLASH_LEN] = {0};
 static bool flash_emulator_image_flush_to_disk();
+
+#define FLASH_WRITE_BLOCK_SIZE 8
+static uint8_t flash_write_buf[FLASH_WRITE_BLOCK_SIZE];
+static uint32_t flash_write_buf_idx;
+static uint32_t flash_write_addr;
 
 void flash_init()
 {
@@ -52,7 +74,7 @@ uint8_t flash_read_byte(const uint32_t addr)
   return byte;
 }
 
-bool flash_write(
+bool flash_write_block(
     const uint32_t write_addr,
     const uint32_t write_len,
     const uint8_t *write_data)
@@ -117,6 +139,7 @@ uint32_t flash_get_param_table_base_addr()
   return FLASH_START + 0x000e0000;
 }
 
+#if 0
 bool flash_program_word(const uint32_t addr, const uint32_t data)
 {
   const int offset = addr - FLASH_START;
@@ -139,4 +162,62 @@ bool flash_program_byte(const uint32_t addr, const uint8_t data)
   }
   flash_image[offset] = data;
   return flash_emulator_image_flush_to_disk();
+}
+#endif
+
+bool flash_program_dword(
+    const uint32_t addr,
+    const uint32_t word_0,
+    const uint32_t word_1)
+{
+}
+
+bool flash_write_begin(const uint32_t addr)
+{
+  flash_write_buf_idx = 0;
+  return true;
+}
+
+static bool flash_write_flush()
+{
+  const bool result = flash_write_block(
+      flash_write_addr,
+      FLASH_WRITE_BLOCK_SIZE,
+      flash_write_buf);
+
+  flash_write_buf_idx = 0;
+  flash_write_addr += FLASH_WRITE_BLOCK_SIZE;
+
+  return result;
+}
+
+bool flash_write_byte(const uint8_t byte)
+{
+  if (flash_write_buf_idx >= FLASH_WRITE_BLOCK_SIZE)
+  {
+    printf("ahhhhh flash write buf overrun attempted!\r\n");
+    return false;
+  }
+  flash_write_buf[flash_write_buf_idx++] = byte;
+  if (flash_write_buf_idx >= FLASH_WRITE_BLOCK_SIZE)
+    flash_write_flush();
+  return true;
+}
+
+bool flash_write_word(const uint32_t word)
+{
+  const uint8_t * const p_bytes = (const uint8_t * const)&word;
+  for (int byte_idx = 0; byte_idx < 4; byte_idx++)
+  {
+    if (!flash_write_byte(p_bytes[byte_idx]))
+      return false;
+  }
+  return true;
+}
+
+bool flash_write_end()
+{
+  for (; flash_write_buf_idx < FLASH_WRITE_BLOCK_SIZE; flash_write_buf_idx++)
+    flash_write_buf[flash_write_buf_idx] = 0x42;
+  return flash_write_flush();
 }

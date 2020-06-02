@@ -14,7 +14,9 @@ add_executable(comms_emulator
   ../common/control.c
   ../common/param.c
   ../common/state.c
+  emulator_adc.c
   emulator_flash.c
+  emulator_pwm.c
   emulator_rng.c
   emulator_sys.c
   emulator_systime.c
@@ -22,3 +24,4 @@ add_executable(comms_emulator
   multicast.c)
 
 target_compile_definitions(comms_emulator PUBLIC EMULATOR)
+target_link_libraries(comms_emulator m)

@@ -96,7 +96,9 @@ void control_init()
       1.0,
       PARAM_PERSISTENT);
 
+#ifndef EMULATOR
   pin_set_output(CONTROL_BUSY_GPIO, CONTROL_BUSY_PIN, 0);
+#endif
 }
 
 void control_tick()
@@ -111,15 +113,25 @@ void control_tick()
 void tim1_up_tim10_vector()
 #elif defined(BOARD_mini)
 void tim1_up_tim16_vector()
+#elif defined(EMULATOR)
+void control_timer()
 #endif
 {
+
+#ifndef EMULATOR
   TIM1->SR &= ~TIM_SR_UIF;  // clear the interrupt flag that got us here
   if (TIM1->CR1 & TIM_CR1_DIR)
+#else
+  static int emulator_toggle_idx = 0;
+  if (emulator_toggle_idx++ % 2 == 0)
+#endif
   {
     // all shunts are ready to measure. trigger the ADC's.
     adc_start_nonblocking_read();
 
+#ifndef EMULATOR
     pin_set_output_high(CONTROL_BUSY_GPIO, CONTROL_BUSY_PIN);
+#endif
 
     g_state.t = systime_read();
 
@@ -205,7 +217,9 @@ void tim1_up_tim16_vector()
       pwm_set(pwm_a, pwm_b, pwm_c);
     }
 
+#ifndef EMULATOR
     pin_set_output_low(CONTROL_BUSY_GPIO, CONTROL_BUSY_PIN);
+#endif
   }
   else
   {

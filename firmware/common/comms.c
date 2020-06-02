@@ -320,7 +320,7 @@ void comms_write_flash(const uint8_t *data, const uint32_t len)
     return;  // cannot. outside flash.
   }
 
-  if (flash_write(write_addr, write_len, write_data))
+  if (flash_write_block(write_addr, write_len, write_data))
   {
     uint8_t pkt[9] = {0};  // length of return request
     pkt[0] = 0xf2;

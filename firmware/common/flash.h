@@ -13,7 +13,7 @@ void flash_read(
     const uint32_t len,
     void *dest_addr);
 
-bool flash_write(
+bool flash_write_block(
     const uint32_t write_addr,
     const uint32_t write_len,
     const uint8_t *write_data);
@@ -33,6 +33,8 @@ bool flash_program_dword(
 uint32_t flash_read_word(const uint32_t addr);
 uint8_t flash_read_byte(const uint32_t addr);
 
+// some flash devices only perform block writes (e.g. 8 bytes)
+// these functions queue up blocks and flush them as needed
 bool flash_write_begin(const uint32_t addr);
 bool flash_write_byte(const uint8_t byte);
 bool flash_write_word(const uint32_t word);

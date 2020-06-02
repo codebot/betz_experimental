@@ -15,31 +15,19 @@
  *
 */
 
-#ifndef PWM_H
-#define PWM_H
+#include "adc.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+volatile bool g_adc_read_complete = false;
 
-#if defined(BOARD_blue)
+void adc_init()
+{
+}
 
-// 84 MHz / 20 KHz = 4200
-#define PWM_MAX 4200  
+void adc_start_nonblocking_read()
+{
+  g_adc_read_complete = true;
+}
 
-#elif defined(BOARD_mini)
-
-// 168 MHz / 20 KHz = 8400 for half cycle, need 4200 for full cycle
-#define PWM_MAX 4200  
-
-#elif defined(EMULATOR)
-
-#define PWM_MAX 4200
-
-#endif
-
-void pwm_init();
-void pwm_set(const uint32_t a, const uint32_t b, const uint32_t c);
-uint32_t pwm_max();
-void pwm_enable(const bool enable);
-
-#endif
+void adc_blocking_read()
+{
+}

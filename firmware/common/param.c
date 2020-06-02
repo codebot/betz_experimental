@@ -176,8 +176,6 @@ void param_save_to_flash()
       flash_get_param_table_base_addr(),
       flash_get_param_table_size());
 
-  uint32_t flash_write_addr = flash_get_param_table_base_addr();
-
   // first, write the number of params that the reader (in the future)
   // can expect to find
   uint32_t num_persistent_params = 0;
@@ -185,56 +183,52 @@ void param_save_to_flash()
     if (g_param_params[i].storage == PARAM_PERSISTENT)
       num_persistent_params++;
 
-  if (!flash_program_dword(flash_write_addr, num_persistent_params, 0x42))
+  flash_write_begin(flash_get_param_table_base_addr());
+
+  if (!flash_write_word(num_persistent_params))
   {
     printf("woah! error programming table length\n");
     return;
   }
-  flash_write_addr += 8;
 
   // now walk through the table, writing the persistent entries
   for (uint32_t i = 0; i < g_param_num_params; i++)
   {
     if (g_param_params[i].storage != PARAM_PERSISTENT)
       continue;
-    printf(
-        "writing param %d at 0x%08x\r\n",
-        (int)i,
-        (unsigned)flash_write_addr);
+    printf("writing param %d\r\n", (int)i);
+
     const uint8_t type_byte = (uint8_t)g_param_params[i].t;
-    if (!flash_program_byte(flash_write_addr, type_byte))
+    if (!flash_write_byte(type_byte))
     {
       printf("woah! error programming param %d type byte\n", (int)i);
       return;
     }
-    flash_write_addr++;
+
     // now write the null-terminated name string
     for (const char *name_rptr = g_param_params[i].n;
         *name_rptr; name_rptr++)
     {
-      if (!flash_program_byte(flash_write_addr, *name_rptr))
+      if (!flash_write_byte(*name_rptr))
       {
         printf("woah! error programming param %d name\n", (int)i);
         return;
       }
-      flash_write_addr++;
     }
     // null-terminate the name string
-    if (!flash_program_byte(flash_write_addr, 0))
+    if (!flash_write_byte(0))
     {
       printf("woah! error null-terminating param %d name\n", (int)i);
       return;
     }
-    flash_write_addr++;
-    // write the 4 byte value
-    volatile uint8_t *pval = g_param_params[i].p;
-    for (int b_idx = 0; b_idx < 4; b_idx++)
-    {
-      flash_program_byte(flash_write_addr, pval[b_idx]);
-      flash_write_addr++;
-    }
+
+    // write the current param value
+    volatile uint32_t *pval = g_param_params[i].p;
+    flash_write_word(*pval);
   }
 
+  // flush the remainder of the buffer
+  flash_write_end();
   printf("done\r\n");
 }
 
