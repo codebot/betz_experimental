@@ -33,4 +33,9 @@ bool flash_program_dword(
 uint32_t flash_read_word(const uint32_t addr);
 uint8_t flash_read_byte(const uint32_t addr);
 
+bool flash_write_begin(const uint32_t addr);
+bool flash_write_byte(const uint8_t byte);
+bool flash_write_word(const uint32_t word);
+bool flash_write_end();
+
 #endif

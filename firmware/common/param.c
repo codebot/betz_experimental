@@ -166,12 +166,6 @@ void param_set_float(const char *param_name, const float value)
   }
 }
 
-void param_load_from_flash()
-{
-  printf("param_load_from_flash()\r\n");
-  printf("done\r\n");
-}
-
 void param_save_to_flash()
 {
   printf("param_save_to_flash()\r\n");

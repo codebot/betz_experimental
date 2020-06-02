@@ -269,3 +269,19 @@ bool flash_erase_range(const uint32_t start, const uint32_t len)
   }  
   return true;
 }
+
+bool flash_write_begin(const uint32_t addr)
+{
+}
+
+bool flash_write_byte(const uint8_t byte)
+{
+}
+
+bool flash_write_word(const uint32_t word)
+{
+}
+
+bool flash_write_end()
+{
+}
