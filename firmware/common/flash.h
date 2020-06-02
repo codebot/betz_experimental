@@ -23,8 +23,12 @@ uint32_t flash_get_param_table_size();
 
 bool flash_erase_page_by_addr(const uint32_t addr);
 bool flash_erase_range(const uint32_t addr, const uint32_t len);
-bool flash_program_word(const uint32_t addr, const uint32_t data);
-bool flash_program_byte(const uint32_t addr, const uint8_t byte);
+//bool flash_program_word(const uint32_t addr, const uint32_t data);
+//bool flash_program_byte(const uint32_t addr, const uint8_t byte);
+bool flash_program_dword(
+    const uint32_t addr,
+    const uint32_t word_0,
+    const uint32_t word_1);
 
 uint32_t flash_read_word(const uint32_t addr);
 uint8_t flash_read_byte(const uint32_t addr);

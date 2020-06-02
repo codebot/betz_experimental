@@ -191,12 +191,12 @@ void param_save_to_flash()
     if (g_param_params[i].storage == PARAM_PERSISTENT)
       num_persistent_params++;
 
-  if (!flash_program_word(flash_write_addr, num_persistent_params))
+  if (!flash_program_dword(flash_write_addr, num_persistent_params, 0x42))
   {
     printf("woah! error programming table length\n");
     return;
   }
-  flash_write_addr += sizeof(num_persistent_params);
+  flash_write_addr += 8;
 
   // now walk through the table, writing the persistent entries
   for (uint32_t i = 0; i < g_param_num_params; i++)

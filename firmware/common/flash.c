@@ -96,39 +96,37 @@ bool flash_wait_for_idle()
   return true;
 }
 
-// TODO: stm32g4 flash writes must always be double-word... no word/byte writes
-
-bool flash_program_word(const uint32_t addr, const uint32_t data)
+#if defined(BOARD_blue)
+bool flash_stm32f4_program_word(const uint32_t addr, const uint32_t data)
 {
   flash_unlock();
   if (!flash_wait_for_idle())
     return false;
   FLASH->CR |= FLASH_CR_PG; // set the programming bit
-#if defined(BOARD_blue)
   FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE to get ready to set it
   FLASH->CR |=  FLASH_CR_PSIZE_1; // we'll do 32-bit erases at a time
-#endif
   *((volatile uint32_t *)addr) = data;
   const bool result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
   return result;
 }
-
-bool flash_program_byte(const uint32_t addr, const uint8_t byte)
-{
-  flash_unlock();
-  if (!flash_wait_for_idle())
-    return false;
-#if defined(BOARD_blue)
-  FLASH->CR |= FLASH_CR_PG; // set the programming bit
-  FLASH->CR &= ~FLASH_CR_PSIZE; // wipe out PSIZE=0 for byte writes
 #endif
-  *((volatile uint8_t *)addr) = byte;
-  const bool result = flash_wait_for_idle();
-  FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
-  //flash_lock();
-  return result;
+
+bool flash_program_dword(
+    const uint32_t addr,
+    const uint32_t word_0,
+    const uint32_t word_1)
+{
+#if defined(BOARD_blue)
+  if (!flash_stm32f4_program_word(addr, word_0))
+    return false;
+  if (!flash_stm32f4_program_word(addr+4, word_1))
+    return false;
+  return true;
+#else
+  // TODO
+#endif
 }
 
 void flash_read(
@@ -160,6 +158,14 @@ bool flash_write(
     const uint32_t write_len,
     const uint8_t *write_data)
 {
+  if (write_len % 8 != 0)
+  {
+    printf(
+        "flash_write len must be a multiple of 8. saw %d\r\n",
+        (int)write_len);
+    return false;
+  }
+
   if (write_addr % g_flash_page_size == 0)
   {
     if (!flash_erase_page_by_addr(write_addr))
@@ -167,11 +173,11 @@ bool flash_write(
   }
 
   // now we can program the payload
-  for (int i = 0; i < write_len; i += 4)
+  for (int i = 0; i < write_len; i += 8)
   {
-    uint32_t word = 0;
-    memcpy(&word, &write_data[i], sizeof(word));
-    if (!flash_program_word(write_addr + i, word))
+    uint32_t words[2] = {0};
+    memcpy(&words, &write_data[i], 8);
+    if (!flash_program_dword(write_addr + i, words[0], words[1]))
       return false;
   }
 
