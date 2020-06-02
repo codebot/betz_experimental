@@ -15,6 +15,7 @@ add_executable(comms_emulator
   ../common/param.c
   ../common/state.c
   emulator_adc.c
+  emulator_enc.c
   emulator_flash.c
   emulator_pwm.c
   emulator_rng.c

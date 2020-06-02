@@ -116,8 +116,8 @@ bool flash_erase_page_by_addr(const uint32_t addr)
 {
   printf("flash_erase_page_by_addr(0x%08x)\n", (unsigned)addr);
 
-  // todo: test out various page sizes...
-  const int page_size = 0x20000;  // 128 KB flash page (stm32f4xx)
+  // const int page_size = 0x20000;  // 128 KB flash page (stm32f4xx)
+  const int page_size = 0x1000;  // 4 KB flash page (stm32g4)
 
   printf("erase page at 0x%08x\r\n", (unsigned)addr);
   const int offset = addr - FLASH_START;
@@ -136,7 +136,12 @@ bool flash_erase_page_by_addr(const uint32_t addr)
 
 uint32_t flash_get_param_table_base_addr()
 {
-  return FLASH_START + 0x000e0000;
+  return FLASH_START + 3 * 128 * 1024;
+}
+
+uint32_t flash_get_param_table_size()
+{
+  return 128 * 1024;
 }
 
 #if 0
@@ -220,4 +225,8 @@ bool flash_write_end()
   for (; flash_write_buf_idx < FLASH_WRITE_BLOCK_SIZE; flash_write_buf_idx++)
     flash_write_buf[flash_write_buf_idx] = 0x42;
   return flash_write_flush();
+}
+
+bool flash_erase_range(const uint32_t addr, const uint32_t len)
+{
 }
