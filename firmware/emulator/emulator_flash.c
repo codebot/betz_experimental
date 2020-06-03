@@ -21,7 +21,8 @@
 #include "flash.h"
 
 
-#define FLASH_LEN (1024 * 1024)
+#define FLASH_LEN (512 * 1024)
+#define FLASH_PAGE_SIZE 4096
 #define FLASH_IMAGE_FILENAME "emulator_flash.bin"
 
 static uint8_t flash_image[FLASH_LEN] = {0};
@@ -50,7 +51,7 @@ void flash_read(
     const uint32_t len,
     void *dest_addr)
 {
-  printf("flash_read(0x%08x, %d)\n", read_addr, len);
+  // printf("flash_read(0x%08x, %d)\n", read_addr, len);
   const int offset = read_addr - FLASH_START;
   if (offset > FLASH_LEN)
   {
@@ -180,6 +181,7 @@ bool flash_program_dword(
 bool flash_write_begin(const uint32_t addr)
 {
   flash_write_buf_idx = 0;
+  flash_write_addr = addr;
   return true;
 }
 
@@ -227,6 +229,13 @@ bool flash_write_end()
   return flash_write_flush();
 }
 
-bool flash_erase_range(const uint32_t addr, const uint32_t len)
+bool flash_erase_range(const uint32_t start, const uint32_t len)
 {
+  printf("flash_erase_range(0x%08x, %d)\r\n", (unsigned)start, (int)len);
+  for (uint32_t addr = start; addr < start + len; addr += FLASH_PAGE_SIZE)
+  {
+    if (!flash_erase_page_by_addr(addr))
+      return false;
+  }
+  return true;
 }
