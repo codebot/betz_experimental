@@ -51,6 +51,7 @@ static int g_control_mode = 0;
 static float g_control_bus_voltage = 24.0;
 static float g_control_position_kp = 0;
 static float g_control_max_voltage = 0;
+static float g_control_joint_offset = 0;
 
 void control_init()
 {
@@ -94,6 +95,12 @@ void control_init()
       "max_voltage",
       &g_control_max_voltage,
       1.0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "joint_offset",
+      &g_control_joint_offset,
+      0.0,
       PARAM_PERSISTENT);
 
 #ifndef EMULATOR
@@ -156,7 +163,8 @@ void control_timer()
 
     if (g_control_mode == CONTROL_MODE_POSITION)
     {
-      float pos_error = g_control_position_target - g_state.enc;
+      float joint_pos = g_state.enc + g_control_joint_offset;
+      float pos_error = g_control_position_target - joint_pos;
       if (pos_error > (float)(M_PI))
         pos_error -= (float)(2.0f * M_PI);
       else if (pos_error < (float)(-M_PI))

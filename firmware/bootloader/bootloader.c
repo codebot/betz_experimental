@@ -6,6 +6,7 @@
 
 int main(int argc, char **argv)
 {
+  printf("===\r\nbootloader\r\n===\r\n\r\n");
   comms_set_bootloader_mode(true);
   status_led_off();
   uint32_t t_blink = systime_read();

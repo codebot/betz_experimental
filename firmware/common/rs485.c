@@ -84,8 +84,14 @@ void rs485_init()
 #elif defined(BOARD_mini)
 
   RCC->APB1ENR1 |= RCC_APB1ENR1_USART2EN;
-  pin_set_alternate_function(RS485_USART_GPIO, RS485_DIR_PIN, 7);  // AF7 = DE
-  
+  pin_set_output(RS485_DIR_GPIO, RS485_DIR_PIN, 0);
+
+  // even though it would be fancy to use the RS485 DE pin hardware,
+  // sadly since we get interrupted by the control timer, the 1-word FIFO
+  // drains and then DE gets de-asserted. In order to use the DE pin, we'll
+  // need (someday) to switch to DMA-based comms TX
+  //pin_set_alternate_function(RS485_USART_GPIO, RS485_DIR_PIN, 7);  // AF7 = DE
+
   // peripheral clock = 168 MHz
   // 3 mbit: 168 MHz / (16 * 3 mbit) = 3.5 = mantissa 3, fraction = 8/16
   const uint32_t brr = (3 << 4) | 8;
@@ -101,11 +107,19 @@ void rs485_init()
   RS485_USART->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE;
 
 #if defined(BOARD_mini)
-  // set the driver-enable assert and de-assert ime as 1/2 bit = 8 time units
+  // set the driver-enable assert and de-assert time as 1/2 bit = 8 time units
+  // JUST KIDDING we can't use this until switching to DMA comms due to FIFO
+  // fully draining during control cycles...
+  /*
   RS485_USART->CR1 |=
       (8 << USART_CR1_DEAT_Pos) |
       (8 << USART_CR1_DEDT_Pos) ;
   RS485_USART->CR3 |= USART_CR3_DEM;  // turn on the driver-enable pin function
+  */
+
+  // disable overrun detection so we don't get stuck when we're too slow
+  // to drain the inbound RX buffer during flash writes and stuff
+  RS485_USART->CR3 |= USART_CR3_OVRDIS;
 #endif
 
   RS485_USART->CR1 |= USART_CR1_UE;
@@ -144,12 +158,14 @@ void rs485_tx(const uint8_t *data, const uint32_t len)
   while (!(RS485_USART->SR & USART_SR_TC)) { } // wait for TX to finish
   pin_set_output_low(RS485_DIR_GPIO, RS485_DIR_PIN);  // disable transmitter
 #elif defined(BOARD_mini)
+  pin_set_output_high(RS485_DIR_GPIO, RS485_DIR_PIN);  // enable transmitter
   for (uint32_t i = 0; i < len; i++)
   {
     while (!(RS485_USART->ISR & USART_ISR_TXE)) { } // wait for tx to clear
     RS485_USART->TDR = data[i];
   }
   while (!(RS485_USART->ISR & USART_ISR_TC)) { } // wait for TX to finish
+  pin_set_output_low(RS485_DIR_GPIO, RS485_DIR_PIN);  // disable transmitter
 #endif
 }
 
@@ -165,7 +181,7 @@ void usart1_vector()
 #elif defined(BOARD_mini)
 void usart2_vector()
 {
-  volatile uint32_t __attribute__((unused)) sr = USART1->ISR;  // clear errors
+  volatile uint32_t __attribute__((unused)) sr = USART2->ISR;  // clear errors
   g_rs485_rx_ring[g_rs485_rx_ring_wpos] = USART2->RDR;  // drain RX
   if (++g_rs485_rx_ring_wpos >= RS485_RX_RING_LEN)
     g_rs485_rx_ring_wpos = 0;

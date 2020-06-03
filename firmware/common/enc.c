@@ -67,12 +67,12 @@
 #include "pin.h"
 #include "state.h"
 
-volatile int g_encoder_offset = 0;
+volatile float g_encoder_offset = 0;
 volatile int g_encoder_dir = 0;
 
 void enc_init()
 {
-  param_int(
+  param_float(
       "encoder_offset",
       &g_encoder_offset,
       100,
@@ -169,8 +169,18 @@ void enc_start_nonblocking_read_to_state()
 void ENC_VECTOR()
 {
   pin_set_output_high(ENC_CS_GPIO, ENC_CS_PIN);
-  uint16_t position = ENC_SPI->DR & 0x3fff;  // returns the _previous_ read
-  g_state.enc = (position + g_encoder_offset) * (float)(2.0 * M_PI / 16384.0);
+  const uint16_t pos_raw = ENC_SPI->DR & 0x3fff;  // returns the previous read
+  float pos = pos_raw * (float)(2.0 * M_PI / 16384.0);
+
   if (g_encoder_dir < 0)
-    g_state.enc = -g_state.enc;
+    pos *= -1.0f;
+
+  pos += g_encoder_offset;
+
+  if (pos < 0)
+    pos += (float)(2 * M_PI);
+  else if (pos > (float)(2 * M_PI))
+    pos -= (float)(2 * M_PI);
+
+  g_state.enc = pos;
 }

@@ -82,11 +82,11 @@ bool Bus::wait_for_packet(const double max_seconds, const uint8_t packet_id)
 
 bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
 {
-#if 0
+  /*
   printf("    rx: 0x%02x  parser_state = %d\n",
       static_cast<unsigned>(b),
       static_cast<int>(parser_state));
-#endif
+  */
 
   switch (parser_state)
   {
@@ -163,7 +163,7 @@ bool Bus::rx_byte(const uint8_t b, Packet& rx_pkt)
       }
       else
       {
-        printf("csum fail. 0x%0x != 0x%0x\n",
+        printf("csum fail. expected 0x%0x, received 0x%0x\n",
             parser_crc.get_crc(),
             parser_packet.rx_csum);
       }
@@ -351,7 +351,7 @@ void Bus::discovery_tick()
           discovery_state = DiscoveryState::DONE;
           break;
         }
-        
+
         const Drive& drive = *drives[discovery_drive_idx];
         if (drive.params[discovery_param_idx].is_valid())
         {

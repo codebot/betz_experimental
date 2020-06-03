@@ -169,12 +169,14 @@ void param_set_float(const char *param_name, const float value)
 void param_save_to_flash()
 {
   printf("param_save_to_flash()\r\n");
+  /*
   // todo: be smart, pre-calculate the flash table size, and erase
   // enough pages to get that all done before writing starts.
   // for now, it's all hard-coded in the flash driver
   flash_erase_range(
       flash_get_param_table_base_addr(),
       flash_get_param_table_size());
+  */
 
   // first, write the number of params that the reader (in the future)
   // can expect to find

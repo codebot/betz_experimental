@@ -74,7 +74,7 @@ void flash_unlock()
     printf("couldn't unlock flash\r\n");
 }
 
-void flash_lock() 
+void flash_lock()
 {
   FLASH->CR |= FLASH_CR_LOCK;
 }
@@ -91,6 +91,7 @@ bool flash_wait_for_idle()
     //   watchdog_reset_counter();
   }
   // todo: check all the error bits, etc.
+#if defined(BOARD_blue)
   if (FLASH->SR & 0x1f3)
   {
     printf("unexpected FLASH_SR error bit: FLASH_SR = 0x%08lx\r\n",
@@ -98,6 +99,15 @@ bool flash_wait_for_idle()
     FLASH->SR |= (FLASH->SR & 0x1f3); // clear the error bit(s)
     return false;
   }
+#elif defined(BOARD_mini)
+  if (FLASH->SR & 0xc3fb)
+  {
+    printf("unexpected FLASH_SR error bit: FLASH_SR = 0x%08lx\r\n",
+           FLASH->SR);
+    FLASH->SR |= (FLASH->SR & 0xc3fb); // clear the error bit(s)
+    return false;
+  }
+#endif
   return true;
 }
 
@@ -131,15 +141,20 @@ bool flash_program_dword(
   return true;
 #else
 
+  //__disable_irq();
   flash_unlock();
   if (!flash_wait_for_idle())
+  {
+    //__enable_irq();
     return false;
+  }
   FLASH->CR |= FLASH_CR_PG; // set the programming bit
   *((volatile uint32_t *)addr) = word_0;
-  *((volatile uint32_t *)addr+4) = word_1;
+  *((volatile uint32_t *)(addr+4)) = word_1;
   const bool result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PG; // disable the programming bit
   //flash_lock();
+  //__enable_irq();
   return result;
 
 #endif
@@ -202,8 +217,8 @@ bool flash_write_block(
 
 bool flash_erase_page_by_addr(const uint32_t addr)
 {
-  printf("erase page at 0x%08x\r\n", (unsigned)addr);
 #if defined(BOARD_blue)
+  printf("erase page at 0x%08x\r\n", (unsigned)addr);
   // stm32f405 and friends
   if (addr <  0x08020000 ||
       addr >  0x080fffff ||
@@ -234,7 +249,9 @@ bool flash_erase_page_by_addr(const uint32_t addr)
     return false;  // bad address
   const int offset = addr - 0x08020000;
   const int page = 32 + offset / g_flash_page_size;
+  printf("erase page %d at 0x%08x\r\n", page, (unsigned)addr);
 
+  //__disable_irq();
   flash_unlock();
   flash_wait_for_idle();
   FLASH->CR &= ~0x7f8; // wipe out the page number bits
@@ -243,8 +260,11 @@ bool flash_erase_page_by_addr(const uint32_t addr)
   FLASH->CR |= FLASH_CR_STRT; // start the sector-erase operation
   const bool result = flash_wait_for_idle();
   FLASH->CR &= ~FLASH_CR_PER; // reset the sector-erase operation bit
-  FLASH->CR &= ~0x7f8; // and wipe out the sector address bits
+  FLASH->CR &= ~0x7f8; // and wipe out the page address bits
   //flash_lock(); // lock the flash again
+  //printf("eirq\r\n");
+  //__enable_irq();
+
   return result; // we're done
 #else
   printf(
@@ -282,13 +302,14 @@ bool flash_erase_range(const uint32_t start, const uint32_t len)
   {
     if (!flash_erase_page_by_addr(addr))
       return false;
-  }  
+  }
   return true;
 }
 
 bool flash_write_begin(const uint32_t addr)
 {
   flash_write_buf_idx = 0;
+  flash_write_addr = addr;
   return true;
 }
 

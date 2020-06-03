@@ -268,7 +268,10 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
   uint32_t read_addr = 0, read_len = 0;
   memcpy(&read_addr, &data[1], sizeof(read_addr));
   memcpy(&read_len, &data[5], sizeof(read_len));
-  // printf("comms_read_flash()\r\n");
+  // printf(
+  //     "comms_read_flash(0x%08x, %d)\r\n",
+  //     (unsigned)read_addr,
+  //     (int)read_len);
   if (read_len > 128)
   {
     printf("invalid flash read: len = %d\r\n", (int)read_len);
@@ -404,7 +407,7 @@ void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
   memcpy(&param_idx, &rx_pkt[1], sizeof(param_idx));
   if (param_idx >= param_count())
     return;  // invalid
-  
+
   volatile void *ptr = param_get_ptr(param_idx);
   if (!ptr)
     return;  // shouldn't be possible, but... let's always check anyway
@@ -422,7 +425,7 @@ void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
     memcpy(&f, &rx_pkt[5], 4);
     *(float *)ptr = f;
   }
-  
+
   // todo: someday send confirmation back, if requested?
 }
 
@@ -452,7 +455,7 @@ void comms_state_poll(
     tx_pkt[1] = 0x00;  // padding, for future use by flags and stuff
     tx_pkt[2] = 0x00;  // padding, for future use by flags and stuff
     tx_pkt[3] = 0x00;  // padding, for future use by flags and stuff
-  
+
     // Now that we're sure to be 32-bit aligned, we can just copy stuff in.
     // To avoid some compiler warnings about breaking aliasing rules, we'll
     // do it in 2 steps. We know this is safe, and this is a performance
@@ -505,7 +508,7 @@ void comms_rx_pkt(
     case 0xf2: comms_write_flash(p, len); break;
     case 0xf3: comms_boot(); break;
     case 0xf4: comms_reset(); break;
-    default: 
+    default:
       printf("unhandled packet id: 0x%02x\n", pkt_id);
       break;
   }
@@ -566,6 +569,8 @@ static void comms_tx_long_addr(const uint8_t *data, const uint32_t len)
   const uint16_t crc = comms_crc(framed_pkt, framed_pkt_len - 2);
   framed_pkt[len+15] = (uint8_t)(crc & 0xff);
   framed_pkt[len+16] = (uint8_t)(crc >> 8);
+
+  // printf("comms_tx_long_addr(%d) crc = 0x%04x\r\n", (int)len, (unsigned)crc);
 
   if (g_comms_raw_tx_fptr)
     g_comms_raw_tx_fptr(framed_pkt, len + 17);
