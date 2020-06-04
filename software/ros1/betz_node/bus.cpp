@@ -282,7 +282,7 @@ void Bus::discovery_begin(const bool _enumerate_params)
   enumerate_params = _enumerate_params;
 
   // default args create a random response time between 0 and 100 milliseconds
-  send_packet(std::make_unique<Discovery>());
+  send_packet(std::make_unique<Discovery>(500));
 }
 
 void Bus::discovery_tick()
@@ -292,13 +292,13 @@ void Bus::discovery_tick()
   {
     case DiscoveryState::PROBING:
       // send out broadcast discovery requests to retrieve drive UUID's
-      if (elapsed > 0.1)
+      if (elapsed > 0.5)
       {
         discovery_attempt++;
         if (discovery_attempt < 3)
         {
           discovery_time = ros::Time::now();
-          send_packet(std::make_unique<Discovery>());
+          send_packet(std::make_unique<Discovery>(500));
         }
         else
         {

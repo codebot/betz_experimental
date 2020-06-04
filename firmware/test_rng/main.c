@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "delay.h"
 #include "rng.h"
-#include "stm32f405xx.h"
+#include "soc.h"
 
 int main(int argc, char **argv)
 {

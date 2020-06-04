@@ -339,8 +339,8 @@ void comms_discovery(const uint8_t *p, const uint32_t len)
   {
     const uint16_t req_max_delay = (uint16_t)(p[1]) | (p[2] << 8);
     uint32_t sampled_delay = rng_read() % (uint32_t)req_max_delay;
-    g_comms_discovery_send_time = systime_read() + sampled_delay;
-    // printf("discovery response in %u usec\n", (unsigned)sampled_delay);
+    g_comms_discovery_send_time = systime_read() + sampled_delay * 1000;
+    // printf("t_disc: %u\r\n", (unsigned)sampled_delay);
     // for now, ignore the corner cases where this equals zero or wraparound
     // we'll query multiple times on the host to enumerate anyway.
   }

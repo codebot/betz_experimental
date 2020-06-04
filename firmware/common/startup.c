@@ -111,7 +111,7 @@ void reset_vector()
   #define PLL_P   2
   // SYSCLK = PLL_VCO / PLL_P = 168 MHz
   #define PLL_Q   7
-  // USB clock = PLL_VCO / PLL_Q = 48 MHz 
+  // USB clock = PLL_VCO / PLL_Q = 48 MHz
 
   RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1)-1) << 16) |
                  (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
@@ -131,19 +131,22 @@ void reset_vector()
   // PLL_VCO = crystal / PLL_M * PLL_N = 8 / 1 * 21 = 336 MHz
 
   // PLL_P will be 7, to end up with ADC clock of 336/7 = 48 MHz
-  // PLL_Q will be 8, but we do not need it (no USB). Don't enable output
+  // PLL_Q will be 8, 336/8 => 42 MHz. Unused anyway.
   // PLL_R will be 2, to end up with main clock of 336/2 = 168 MHz
 
   // we will temporarily set AHB to divide by 2 during spin-up
   RCC->CFGR |= RCC_CFGR_HPRE_DIV2;  // set HCLK (AHB clock) to sysclock/2
+
+  // enable the 48 MHz oscillator for RNG
+  RCC->CRRCR |= RCC_CRRCR_HSI48ON;
 
   RCC->PLLCFGR =
       RCC_PLLCFGR_PLLSRC_HSE | // PLL input is crystal oscillator
       0                      | // leave PLL_M as zero to use div1 for input
       (PLL_N << RCC_PLLCFGR_PLLN_Pos) |
       RCC_PLLCFGR_PLLPEN     | // enable PLL P output (for ADC) with div7
-      RCC_PLLCFGR_PLLQ_0     | // set PLL Q divider to 8 (unused)
-      RCC_PLLCFGR_PLLQ_1     | // set PLL Q divider to 8 (unused)
+      RCC_PLLCFGR_PLLQ_0     | // set PLL Q divider to 8
+      RCC_PLLCFGR_PLLQ_1     | // set PLL Q divider to 8
       RCC_PLLCFGR_PLLREN     ; // enable main (R) output with div2
 
 #endif

@@ -138,6 +138,8 @@ int BetzNode::init(int argc, char **argv)
   const string verb(argv[1]);
   if (verb == "run")
     return run();
+  else if (verb == "discover")
+    return discover();
   else if (verb == "burn_firmware")
   {
     if (argc <= 2)
@@ -149,6 +151,11 @@ int BetzNode::init(int argc, char **argv)
   }
   else
     return usage();
+}
+
+int BetzNode::discover()
+{
+  return 0;  // nothing else to do
 }
 
 int BetzNode::run()

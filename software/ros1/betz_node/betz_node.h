@@ -42,6 +42,7 @@ public:
 
   int run();
   int burn_firmware(const std::string& filename);
+  int discover();
 };
 
 }  // namespace betz
