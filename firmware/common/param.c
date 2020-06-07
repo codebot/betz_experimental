@@ -239,11 +239,11 @@ bool param_find_flash_value(
     const int type,
     param_value_t *value)
 {
-  if (!value || !name)  // come on, man
+  if (!value || !name)  // uhh
     return false;
 
   const size_t name_len = strlen(name);
-  if (name_len == 0)  // come on, man
+  if (name_len == 0)  // uhh
     return false;
 
   // walk through the param table and see if we can find this param
@@ -259,7 +259,7 @@ bool param_find_flash_value(
   {
     const uint8_t type_byte = flash_read_byte(flash_read_addr);
     flash_read_addr++;
-    
+
     bool found = true;
     for (int name_char_idx = 0; name_char_idx < name_len; name_char_idx++)
     {
@@ -303,4 +303,15 @@ bool param_find_flash_value(
     return true;
   }
   return false;
+}
+
+int param_get_idx(const char *param_name)
+{
+  for (uint32_t i = 0; i < g_param_num_params; i++)
+  {
+    struct param *p = &g_param_params[i];
+    if (!strcmp(p->n, param_name))
+      return i;
+  }
+  return -1;
 }

@@ -361,6 +361,9 @@ void comms_reset()
 
 void comms_num_params()
 {
+  if (g_comms_is_bootloader)
+    return;  // don't deal with params in bootloader mode
+
   // printf("comms_num_params()\r\n");
   uint8_t pkt[5] = {0};
   pkt[0] = 0x01;
@@ -371,15 +374,20 @@ void comms_num_params()
 
 void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
 {
+  if (g_comms_is_bootloader)
+    return;  // don't deal with params in bootloader mode
+
   if (rx_len < 5)
     return; // too short
 
   uint8_t tx_pkt[100] = {0};
   tx_pkt[0] = 0x02;
+
   uint32_t param_idx = 0;
   memcpy(&param_idx, &rx_pkt[1], sizeof(param_idx));
+
   if (param_idx >= param_count())
-    return;  // invalid
+    return;  // invalid request
 
   memcpy(&tx_pkt[1], &param_idx, sizeof(param_idx));
 
@@ -400,6 +408,9 @@ void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
 
 void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
 {
+  if (g_comms_is_bootloader)
+    return;  // don't deal with params in bootloader mode
+
   if (len < 9)
     return; // too short, something must be wrong
 
@@ -431,6 +442,9 @@ void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
 
 void comms_param_write_flash(const uint8_t *rx_pkt, const uint32_t len)
 {
+  if (g_comms_is_bootloader)
+    return;  // don't deal with params in bootloader mode
+
   param_save_to_flash();
   // todo: someday send confirmation back?
 }
@@ -440,6 +454,9 @@ void comms_state_poll(
     const uint32_t len,
     const bool long_address)
 {
+  if (g_comms_is_bootloader)
+    return;  // don't deal with state polling in bootloader mode
+
   if (len < 2)
     return;  // too short
 
