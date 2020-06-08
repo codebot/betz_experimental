@@ -225,6 +225,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionDiscover"/>
+   <addaction name="actionBoot"/>
    <addaction name="actionStream"/>
    <addaction name="actionWriteParameters"/>
   </widget>
@@ -267,6 +268,17 @@
   <action name="actionWriteParameters">
    <property name="text">
     <string>Write Parameters</string>
+   </property>
+  </action>
+  <action name="actionBoot">
+   <property name="text">
+    <string>Boot</string>
+   </property>
+   <property name="toolTip">
+    <string>Boot all drives</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
    </property>
   </action>
  </widget>

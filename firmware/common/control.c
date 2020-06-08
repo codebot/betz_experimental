@@ -58,7 +58,7 @@ void control_init()
   param_int(
       "control_mode",
       &g_control_mode,
-      CONTROL_MODE_VOLTAGE,
+      CONTROL_MODE_IDLE,
       PARAM_TRANSIENT);
 
   param_float(
