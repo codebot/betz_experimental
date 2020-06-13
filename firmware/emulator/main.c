@@ -34,7 +34,10 @@ int main(int argc, char **argv)
   flash_init();
   systime_init();
   rng_init();
-  multicast_init();
+
+  if (!multicast_init())
+    return 1;
+
   uuid_init();
   state_init();
   param_init();

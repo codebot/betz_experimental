@@ -50,6 +50,12 @@ bool multicast_init()
       continue; // boring
     tx_addr_str = host; // save this one for now
   }
+  if (!tx_addr_str)
+  {
+    printf("woah! no IP address found. cannot proceed :(\n");
+    return false;
+  }
+
   printf("using interface: %s\n", tx_addr_str);
   memset(&g_tx_addr, 0, sizeof(g_tx_addr));
   g_tx_addr.sin_addr.s_addr = inet_addr(tx_addr_str);
