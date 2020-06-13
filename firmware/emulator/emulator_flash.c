@@ -19,11 +19,12 @@
 #include <string.h>
 
 #include "flash.h"
-
+#include "uuid.h"
 
 #define FLASH_LEN (512 * 1024)
 #define FLASH_PAGE_SIZE 4096
-#define FLASH_IMAGE_FILENAME "emulator_flash.bin"
+
+static char flash_image_filename[1024];
 
 static uint8_t flash_image[FLASH_LEN] = {0};
 static bool flash_emulator_image_flush_to_disk();
@@ -36,14 +37,34 @@ static uint32_t flash_write_addr;
 void flash_init()
 {
   printf("flash_init()\n");
-  FILE *f = fopen(FLASH_IMAGE_FILENAME, "r");
+  uint32_t uuid_words[3] = {0};
+
+  for (int i = 0; i < 3; i++)
+  {
+    uuid_words[i] =
+        (g_uuid[4*i + 3] << 24) |
+        (g_uuid[4*i + 2] << 16) |
+        (g_uuid[4*i + 1] <<  8) |
+        (g_uuid[4*i + 0] <<  0) ;
+    printf("uuid_words[%d] = 0x%08x\n", i, uuid_words[i]);
+  }
+
+  snprintf(
+      flash_image_filename,
+      sizeof(flash_image_filename),
+      "emulator_flash_%08x_%08x_%08x.bin",
+      uuid_words[0],
+      uuid_words[1],
+      uuid_words[2]);
+  printf("flash image filename: [%s]\n", flash_image_filename);
+  FILE *f = fopen(flash_image_filename, "r");
   if (f)
   {
     if (FLASH_LEN != fread(flash_image, 1, FLASH_LEN, f))
       printf("AHHH couldn't read emulator flash image\n");
   }
   else
-    printf("unable to open [%s]\n", FLASH_IMAGE_FILENAME);
+    printf("unable to open [%s]\n", flash_image_filename);
 }
 
 void flash_read(
@@ -98,7 +119,7 @@ bool flash_write_block(
 bool flash_emulator_image_flush_to_disk()
 {
   // flush to disk
-  FILE *f = fopen(FLASH_IMAGE_FILENAME, "w");
+  FILE *f = fopen(flash_image_filename, "w");
   if (!f)
   {
     printf("AHHHH couldn't open emulator flash image\n");
