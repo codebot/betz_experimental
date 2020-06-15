@@ -84,7 +84,10 @@ bool multicast_init()
       &loopback,
       sizeof(loopback));
   if (result < 0)
+  {
     printf("ERROR: couldn't set tx socket for tx multicast loopback\n");
+    return false;
+  }
 
   g_rx_sock = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -96,7 +99,10 @@ bool multicast_init()
       &one,
       sizeof(one));
   if (result < 0)
+  {
     printf("ERROR: couldn't set SO_REUSEPORT on rx sock\n");
+    return false;
+  }
   
   result = setsockopt(
       g_rx_sock,
@@ -105,7 +111,10 @@ bool multicast_init()
       &one,
       sizeof(one));
   if (result < 0)
+  {
     printf("ERROR: couldn't set SO_REUSEADDR on rx sock\n");
+    return false;
+  }
 
   struct sockaddr_in bind_addr;
   memset(&bind_addr, 0, sizeof(bind_addr));
@@ -117,7 +126,10 @@ bool multicast_init()
       (struct sockaddr *)&bind_addr,
       sizeof(bind_addr));
   if (result < 0)
+  {
     printf("ERROR: couldn't bind to multicast group\n");
+    return false;
+  }
 
   struct ip_mreq mreq;
   mreq.imr_multiaddr.s_addr = g_multicast_group;
@@ -129,7 +141,12 @@ bool multicast_init()
       &mreq,
       sizeof(mreq));
   if (result < 0)
+  {
     printf("ERROR: couldn't add rx sock to multicast group\n");
+    return false;
+  }
+
+  return true;
 }
 
 void multicast_tx(const uint8_t *data, const uint32_t len)
