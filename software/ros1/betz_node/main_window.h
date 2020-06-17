@@ -58,9 +58,10 @@ private:
   void param_changed(const int param_idx);
 
   void write_parameters();
+  void boot();
 
-  void set_data_table_item(const int row, const int32_t value); 
-  void set_data_table_item(const int row, const float value); 
+  void set_data_table_item(const int row, const int32_t value);
+  void set_data_table_item(const int row, const float value);
 
   std::string selected_uuid;
 

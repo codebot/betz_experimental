@@ -274,7 +274,7 @@ bool Bus::spin_once(const uint8_t watch_packet_id)
 
 void Bus::discovery_begin(const bool _enumerate_params)
 {
-  printf("Bus::discovery_begin()\n");
+  printf("Bus::discovery_begin(%s)\n", _enumerate_params ? "true" : "false");
 
   discovery_time = ros::Time::now();
   discovery_state = DiscoveryState::PROBING;
@@ -305,6 +305,7 @@ void Bus::discovery_tick()
           if (enumerate_params)
           {
             discovery_state = DiscoveryState::NUM_PARAMS;
+            discovery_drive_idx = 0;
             discovery_attempt = 0;
           }
           else
@@ -319,24 +320,47 @@ void Bus::discovery_tick()
     case DiscoveryState::NUM_PARAMS:
       if (elapsed > 0.1)
       {
-        bool all_done = true;
-        for (auto& drive : drives)
+        printf("param enumeration\n");
+        if (discovery_drive_idx >= drives.size())
         {
-          if (drive->num_params == 0)
-          {
-            all_done = false;
-            send_packet(std::make_unique<NumParams>(*drive));
-            discovery_time = ros::Time::now();
-            break;  // only send a single request packet each time
-          }
-        }
-        if (all_done)
-        {
-          discovery_state = DiscoveryState::PARAMS;
+          if (discovery_drive_idx > 0)
+            discovery_state = DiscoveryState::PARAMS;
+          else
+            discovery_state = DiscoveryState::DONE;
+
           discovery_attempt = 0;
           discovery_drive_idx = 0;
           discovery_param_idx = 0;
+          break;
         }
+
+        auto& drive = drives[discovery_drive_idx];
+        if (drive->is_bootloader)
+        {
+          discovery_drive_idx++;
+          discovery_attempt = 0;
+          break;
+        }
+
+        if (drive->num_params != 0)
+        {
+          discovery_drive_idx++;
+          discovery_attempt = 0;
+          break;
+        }
+
+        if (discovery_attempt > 3)
+        {
+          ROS_ERROR(
+              "no response to num_params of drive %d",
+              static_cast<int>(discovery_drive_idx));
+          discovery_drive_idx++;
+          break;
+        }
+
+        send_packet(std::make_unique<NumParams>(*drive));
+        discovery_time = ros::Time::now();
+        discovery_attempt++;
       }
       break;
 
@@ -346,8 +370,10 @@ void Bus::discovery_tick()
         if (discovery_drive_idx >= drives.size() ||
             discovery_param_idx >= drives[discovery_drive_idx]->params.size())
         {
-          // something messed up. let's bail before crashing.
-          ROS_ERROR("WOAH invalid drive or param idx in discovery");
+          if (drives[discovery_drive_idx]->is_bootloader)
+            ROS_WARN("found drive in bootloader mode. Please click 'Boot'");
+          else
+            ROS_ERROR("WOAH invalid drive or param idx in discovery");
           discovery_state = DiscoveryState::DONE;
           break;
         }
@@ -359,6 +385,7 @@ void Bus::discovery_tick()
           if (discovery_param_idx >= drive.params.size())
           {
             discovery_drive_idx++;
+            discovery_param_idx = 0;
             if (discovery_drive_idx >= drives.size())
             {
               discovery_state = DiscoveryState::DONE;
@@ -511,12 +538,16 @@ bool Bus::boot_all_drives()
 {
   for (auto drive : drives)
   {
+    printf("booting drive: %s\n", drive->uuid.to_string().c_str());
     send_packet(std::make_unique<Boot>(*drive));
+    /*
+    // todo: receive ACK from boot request, not sure... ?
     if (!wait_for_packet(1.0, Packet::ID_BOOT))
     {
       ROS_ERROR("couldn't boot drive %s", drive->uuid.to_string().c_str());
       return false;
     }
+    */
   }
   return true;
 }

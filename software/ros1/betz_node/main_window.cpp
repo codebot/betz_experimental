@@ -70,6 +70,20 @@ MainWindow::MainWindow(QWidget *parent)
       &QAction::toggled,
       [this](bool checked) { this->stream = checked; } );
 
+  connect(
+      ui->actionBoot,
+      &QAction::triggered,
+      [this]() { boot(); } );
+
+  connect(
+      ui->drive_table,
+      &QTableWidget::cellClicked,
+      [this](int row, int /*col*/)
+      {
+        set_selected_drive(
+            ui->drive_table->item(row, 1)->text().toStdString());
+      });
+
   stream_elapsed_timer.start();
 
   QTimer *timer = new QTimer(this);
@@ -87,7 +101,7 @@ MainWindow::~MainWindow()
 void MainWindow::discover()
 {
   printf("discover()\n");
-  bus.discovery_begin();
+  bus.discovery_begin(true);
 }
 
 void MainWindow::tick()
@@ -127,7 +141,7 @@ void MainWindow::rx_num_params(const betz::Packet& packet)
   if (selected_uuid != packet.uuid.to_string())
     return;
 
-  const size_t num_params = 
+  const size_t num_params =
       bus.drive_by_uuid_str(selected_uuid)->params.size();
 
   ui->param_table->blockSignals(true);
@@ -307,6 +321,52 @@ void MainWindow::set_selected_drive(const std::string& uuid_str)
     if (uuid_item)
       uuid_item->setBackground(selected_uuid == row_uuid ? selected : white);
   }
+
+  const auto drive = bus.drive_by_uuid_str(selected_uuid);
+  if (!drive)
+  {
+    ROS_ERROR("woah! couldn't find drive");
+    return;
+  }
+
+  if (drive->is_bootloader)
+  {
+    // todo: colors or other obvious UI text?
+    ui->data_table->setEnabled(false);
+    ui->param_table->setEnabled(false);
+    ui->data_plot->setEnabled(false);
+  }
+  else
+  {
+    // todo: colors or other obvious UI text?
+    ui->data_table->setEnabled(true);
+    ui->param_table->setEnabled(true);
+    ui->data_plot->setEnabled(true);
+  }
+
+  // stuff the param table with this drive's params
+  ui->param_table->blockSignals(true);
+  ui->param_table->setRowCount(drive->params.size());
+  for (int i = 0; i < static_cast<int>(drive->params.size()); i++)
+  {
+    const Param& param = drive->params[i];
+
+    auto name_item = new QTableWidgetItem(QString::fromStdString(param.name));
+    name_item->setFlags(name_item->flags() & ~Qt::ItemIsEditable);
+    ui->param_table->setItem(i, 0, name_item);
+
+    auto value_item = new QTableWidgetItem();
+    //QString::fromStdString(param.value_to_string()));
+    if (param.type == Param::Type::INT)
+      value_item->setText(QString::number(param.i_value));
+    else if (param.type == Param::Type::FLOAT)
+      value_item->setText(QString::number(param.f_value));
+    else
+      ROS_ERROR("WOAH unknown type of param idx %d", (int)i);
+
+    ui->param_table->setItem(i, 1, value_item);
+  }
+  ui->param_table->blockSignals(false);
 }
 
 void MainWindow::param_changed(const int param_idx)
@@ -354,4 +414,12 @@ void MainWindow::write_parameters()
     return;
   }
   bus.send_packet(make_unique<betz::ParamWriteFlash>(*drive));
+}
+
+void MainWindow::boot()
+{
+  if (!bus.boot_all_drives())
+    ROS_FATAL("unable to boot all drives");
+  else
+    ROS_INFO("booted all drives");
 }
