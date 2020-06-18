@@ -52,6 +52,7 @@ static float g_control_bus_voltage = 24.0;
 static float g_control_position_kp = 0;
 static float g_control_max_voltage = 0;
 static float g_control_joint_offset = 0;
+static int g_control_joint_dir = 1;
 
 void control_init()
 {
@@ -101,6 +102,12 @@ void control_init()
       "joint_offset",
       &g_control_joint_offset,
       0.0,
+      PARAM_PERSISTENT);
+
+  param_int(
+      "joint_dir",
+      &g_control_joint_dir,
+      1,
       PARAM_PERSISTENT);
 
 #ifndef EMULATOR
@@ -161,10 +168,18 @@ void control_timer()
     float v_b = 0;
     float v_c = 0;
 
+    g_state.joint_pos = g_state.enc + g_control_joint_offset;
+    if (g_control_joint_dir < 0)
+      g_state.joint_pos *= -1.0f;
+
+    if (g_state.joint_pos > (float)(M_PI))
+      g_state.joint_pos -= (float)(2.0f * M_PI);
+    else if (g_state.joint_pos < (float)(-M_PI))
+      g_state.joint_pos += (float)(2.0f * M_PI);
+
     if (g_control_mode == CONTROL_MODE_POSITION)
     {
-      float joint_pos = g_state.enc + g_control_joint_offset;
-      float pos_error = g_control_position_target - joint_pos;
+      float pos_error = g_control_position_target - g_state.joint_pos;
       if (pos_error > (float)(M_PI))
         pos_error -= (float)(2.0f * M_PI);
       else if (pos_error < (float)(-M_PI))

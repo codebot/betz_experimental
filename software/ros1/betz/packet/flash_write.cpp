@@ -15,22 +15,22 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#include "betz/flash_write.h"
+using betz::FlashWrite;
+using betz::Packet;
 
-#include <stdint.h>
-
-struct state_t
+FlashWrite::FlashWrite(
+    const Drive& drive,
+    const uint32_t addr,
+    const std::vector<uint8_t>& data)
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
-};
+  flags = FLAG_SENTINEL | FLAG_ADDR_UUID;
+  uuid = drive.uuid;
 
-extern struct state_t g_state;
+  payload.push_back(ID_FLASH_WRITE);
+  append(addr);
 
-void state_init();
-
-#endif
+  // someday could get all fancy here with STL and stuff
+  for (size_t i = 0; i < data.size(); i++)
+    payload.push_back(data[i]);
+}

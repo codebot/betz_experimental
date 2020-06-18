@@ -15,22 +15,41 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef PARAM_H
+#define PARAM_H
 
-#include <stdint.h>
+#include <string>
+#include "betz/packet.h"
 
-struct state_t
+namespace betz {
+
+class Param
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
+public:
+  enum class Type
+  {
+    INVALID = 0,
+    INT = 1,
+    FLOAT = 2
+  };
+  Type type = Type::INVALID;
+
+  enum class Storage
+  {
+    PERSISTENT = 0,
+    TRANSIENT = 1
+  };
+  Storage storage = Storage::TRANSIENT;
+
+  std::string name;
+  int32_t i_value = 0;
+  float f_value = 0.0;
+  int idx = 0;  // index in the MCU's param table
+
+  std::string value_to_string() const;
+  bool is_valid() const;
 };
 
-extern struct state_t g_state;
-
-void state_init();
+}  // namespace betz
 
 #endif

@@ -15,22 +15,17 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#include "betz/param_write_flash.h"
 
-#include <stdint.h>
+using betz::Packet;
+using betz::Param;
+using betz::ParamWriteFlash;
 
-struct state_t
+
+ParamWriteFlash::ParamWriteFlash(const Drive& drive)
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
-};
+  flags = FLAG_SENTINEL | FLAG_ADDR_UUID;
+  uuid = drive.uuid;
 
-extern struct state_t g_state;
-
-void state_init();
-
-#endif
+  payload.push_back(ID_PARAM_WRITE_FLASH);
+}

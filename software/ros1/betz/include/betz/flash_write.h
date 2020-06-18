@@ -15,22 +15,26 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef FLASH_WRITE_H
+#define FLASH_WRITE_H
 
 #include <stdint.h>
+#include <vector>
 
-struct state_t
+#include "betz/drive.h"
+#include "betz/packet.h"
+
+namespace betz {
+
+class FlashWrite : public Packet
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
+public:
+  FlashWrite(
+      const Drive& drive,
+      const uint32_t addr,
+      const std::vector<uint8_t>& data);
 };
 
-extern struct state_t g_state;
-
-void state_init();
+}  // namespace betz
 
 #endif

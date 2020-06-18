@@ -15,22 +15,21 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef NUM_PARAMS_H
+#define NUM_PARAMS_H
 
 #include <stdint.h>
+#include "betz/drive.h"
+#include "betz/packet.h"
 
-struct state_t
+namespace betz {
+
+class NumParams : public Packet
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
+public:
+  NumParams(const Drive& drive);
 };
 
-extern struct state_t g_state;
-
-void state_init();
+}  // namespace betz
 
 #endif

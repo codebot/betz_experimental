@@ -15,22 +15,34 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef BETZ_NODE_H
+#define BETZ_NODE_H
 
-#include <stdint.h>
+#include "ros/ros.h"
+#include "betz/bus.h"
 
-struct state_t
+namespace betz {
+
+// to avoid confusion and/or namespace collisions with ros::Node, this class
+// is called BetzNode (for now)
+
+class BetzNode
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
+public:
+  ros::NodeHandle nh, nh_private;
+  betz::Bus bus;
+
+  BetzNode();
+  ~BetzNode();
+
+  int init(int argc, char **argv);
+  int usage();
+
+  int run();
+  int burn_firmware(const std::string& filename);
+  int discover();
 };
 
-extern struct state_t g_state;
-
-void state_init();
+}  // namespace betz
 
 #endif

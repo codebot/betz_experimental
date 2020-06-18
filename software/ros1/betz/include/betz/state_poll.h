@@ -15,22 +15,24 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef STATE_POLL_H
+#define STATE_POLL_H
 
 #include <stdint.h>
+#include "betz/drive.h"
+#include "betz/packet.h"
 
-struct state_t
+namespace betz {
+
+class StatePoll : public Packet
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
+public:
+  StatePoll(
+      const Drive& drive,
+      const uint8_t verbosity = 0,
+      const bool force_long_addr = false);
 };
 
-extern struct state_t g_state;
-
-void state_init();
+}  // namespace betz
 
 #endif

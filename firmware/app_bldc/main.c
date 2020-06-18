@@ -23,8 +23,9 @@ int main(int argc, char **argv)
 
     if (systime_read() > t_next)
     {
-      t_next += print_us;
       status_led_toggle();
+      if (systime_read() - t_next < print_us)
+        t_next += print_us;
     }
   }
   return 0;

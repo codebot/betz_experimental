@@ -15,22 +15,13 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#include "betz/discovery.h"
+using betz::Discovery;
+using betz::Packet;
 
-#include <stdint.h>
-
-struct state_t
+Discovery::Discovery(const uint16_t max_ms)
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
-};
-
-extern struct state_t g_state;
-
-void state_init();
-
-#endif
+  flags = FLAG_SENTINEL | FLAG_BCAST;
+  append(static_cast<uint8_t>(ID_DISCOVERY));
+  append(max_ms);
+}

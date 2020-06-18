@@ -15,22 +15,23 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#include "betz/param.h"
+using betz::Param;
+using std::string;
 
-#include <stdint.h>
-
-struct state_t
+string Param::value_to_string() const
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
-};
+  if (type == Type::INVALID)
+    return string();
+  else if (type == Type::INT)
+    return std::to_string(i_value);
+  else if (type == Type::FLOAT)
+    return std::to_string(f_value);
+  else
+    return string("AHHHHHH");
+}
 
-extern struct state_t g_state;
-
-void state_init();
-
-#endif
+bool Param::is_valid() const
+{
+  return type != Type::INVALID;
+}

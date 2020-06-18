@@ -15,22 +15,13 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#include "betz/reset.h"
+using betz::Reset;
+using betz::Packet;
 
-#include <stdint.h>
-
-struct state_t
+Reset::Reset(const Drive& drive)
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
-};
-
-extern struct state_t g_state;
-
-void state_init();
-
-#endif
+  flags = FLAG_SENTINEL | FLAG_ADDR_UUID;
+  uuid = drive.uuid;
+  payload.push_back(ID_RESET);
+}

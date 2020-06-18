@@ -293,9 +293,6 @@ void comms_read_flash(const uint8_t *data, const uint32_t len)
 
 void comms_write_flash(const uint8_t *data, const uint32_t len)
 {
-  if (!g_comms_is_bootloader)
-    return;
-
   if (len < 9)
     return;  // must have >= 9 bytes in request message
   const uint32_t write_len = len - 5;
@@ -348,9 +345,6 @@ void comms_discovery(const uint8_t *p, const uint32_t len)
 
 void comms_boot()
 {
-  if (!g_comms_is_bootloader)
-    return;
-
   sys_run_application();  // this isn't really a function, more a JUMP
 }
 
@@ -361,9 +355,6 @@ void comms_reset()
 
 void comms_num_params()
 {
-  if (g_comms_is_bootloader)
-    return;  // don't deal with params in bootloader mode
-
   // printf("comms_num_params()\r\n");
   uint8_t pkt[5] = {0};
   pkt[0] = 0x01;
@@ -374,9 +365,6 @@ void comms_num_params()
 
 void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
 {
-  if (g_comms_is_bootloader)
-    return;  // don't deal with params in bootloader mode
-
   if (rx_len < 5)
     return; // too short
 
@@ -408,9 +396,6 @@ void comms_param_name_value(const uint8_t *rx_pkt, const uint32_t rx_len)
 
 void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
 {
-  if (g_comms_is_bootloader)
-    return;  // don't deal with params in bootloader mode
-
   if (len < 9)
     return; // too short, something must be wrong
 
@@ -442,9 +427,6 @@ void comms_param_set_value(const uint8_t *rx_pkt, const uint32_t len)
 
 void comms_param_write_flash(const uint8_t *rx_pkt, const uint32_t len)
 {
-  if (g_comms_is_bootloader)
-    return;  // don't deal with params in bootloader mode
-
   param_save_to_flash();
   // todo: someday send confirmation back?
 }
@@ -454,9 +436,6 @@ void comms_state_poll(
     const uint32_t len,
     const bool long_address)
 {
-  if (g_comms_is_bootloader)
-    return;  // don't deal with state polling in bootloader mode
-
   if (len < 2)
     return;  // too short
 
@@ -484,7 +463,10 @@ void comms_state_poll(
     float *enc_dest = (float *)&tx_pkt[8];
     *enc_dest = g_state.enc;
 
-    float *currents_dest = (float *)&tx_pkt[12];
+    float *joint_dest = (float *)&tx_pkt[12];
+    *joint_dest = g_state.joint_pos;
+
+    float *currents_dest = (float *)&tx_pkt[16];
     *currents_dest = g_state.phase_currents[0];
     currents_dest++;
     *currents_dest = g_state.phase_currents[1];
@@ -492,7 +474,26 @@ void comms_state_poll(
     *currents_dest = g_state.phase_currents[2];
 
     // todo: match the poll for short/long address
-    comms_tx_long_addr(tx_pkt, 24);
+    comms_tx_long_addr(tx_pkt, 28);
+  }
+  else if (verbosity == 2)
+  {
+    uint8_t tx_pkt[8] __attribute__((aligned(4))) = {0};
+    // ultra terse, intended for highest-speed polling of a leader arm
+    tx_pkt[0] = 0x12;
+
+    // suspend interrupts while we copy out the state
+    __disable_irq();
+    volatile float joint_pos = g_state.joint_pos;
+    __enable_irq();
+    uint8_t *enc_bytes = (uint8_t *)&joint_pos;
+    tx_pkt[1] = enc_bytes[0];
+    tx_pkt[2] = enc_bytes[1];
+    tx_pkt[3] = enc_bytes[2];
+    tx_pkt[4] = enc_bytes[3];
+
+    // todo: short addr packets with single-byte ID
+    comms_tx_long_addr(tx_pkt, 5);
   }
   else
   {
@@ -511,23 +512,39 @@ void comms_rx_pkt(
   //for (uint32_t i = 0; i < len; i++)
   //  printf("%02d: %02x\r\n", (int)i, (unsigned)data[i]);
   const uint8_t pkt_id = p[0];
-  switch (pkt_id)
+
+  if (g_comms_is_bootloader)
   {
-    case 0x01: comms_num_params(); break;
-    case 0x02: comms_param_name_value(p, len); break;
-    case 0x03: comms_param_set_value(p, len); break;
-    case 0x04: comms_param_write_flash(p, len); break;
+    switch (pkt_id)
+    {
+      case 0xf0: comms_discovery(p, len); break;
+      case 0xf1: comms_read_flash(p, len); break;
+      case 0xf2: comms_write_flash(p, len); break;
+      case 0xf3: comms_boot(); break;
+      case 0xf4: comms_reset(); break;
+      default:
+        printf("bootloader unhandled packet id: 0x%02x\n", pkt_id);
+        break;
+    }
+  }
+  else  // we're not in bootloader mode
+  {
+    switch (pkt_id)
+    {
+      case 0x01: comms_num_params(); break;
+      case 0x02: comms_param_name_value(p, len); break;
+      case 0x03: comms_param_set_value(p, len); break;
+      case 0x04: comms_param_write_flash(p, len); break;
 
-    case 0x10: comms_state_poll(p, len, long_address); break;
+      case 0x10: comms_state_poll(p, len, long_address); break;
 
-    case 0xf0: comms_discovery(p, len); break;
-    case 0xf1: comms_read_flash(p, len); break;
-    case 0xf2: comms_write_flash(p, len); break;
-    case 0xf3: comms_boot(); break;
-    case 0xf4: comms_reset(); break;
-    default:
-      printf("unhandled packet id: 0x%02x\n", pkt_id);
-      break;
+      case 0xf0: comms_discovery(p, len); break;
+      case 0xf1: comms_read_flash(p, len); break;
+      case 0xf4: comms_reset(); break;
+      default:
+        printf("app unhandled packet id: 0x%02x\r\n", pkt_id);
+        break;
+    }
   }
 }
 

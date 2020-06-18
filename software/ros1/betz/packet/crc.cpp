@@ -15,22 +15,27 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#include <cstdio>
+#include "betz/crc.h"
 
-#include <stdint.h>
-
-struct state_t
+CRC::CRC()
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
-};
+}
 
-extern struct state_t g_state;
+CRC::~CRC()
+{
+}
 
-void state_init();
+void CRC::add_byte(const uint8_t b)
+{
+  // todo: replace with a real CRC-16 someday. this is a placeholder to
+  // get unstuck while standing up other stuff
+  crc = ((crc & 0x8000) >> 15) | (crc << 1);
+  crc ^= b;
+  //printf("crc = %02x\n", static_cast<unsigned>(crc));
+}
 
-#endif
+void CRC::reset()
+{
+  crc = 0;
+}

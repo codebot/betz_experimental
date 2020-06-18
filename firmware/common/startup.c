@@ -54,7 +54,7 @@ void reset_vector()
   // we need to set 5 wait states on the flash controller to go 168 MHz
   FLASH->ACR = 0; // ensure the caches are turned off, so we can reset them
   FLASH->ACR = FLASH_ACR_DCRST | FLASH_ACR_ICRST; // flush the cache
-  FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | 
+  FLASH->ACR = FLASH_ACR_PRFTEN | FLASH_ACR_ICEN |
                FLASH_ACR_DCEN | FLASH_ACR_LATENCY_5WS; // re-enable the caches
 #elif defined(BOARD_mini)
   // we need to set 4 wait states on the flash controller to go 168 MHz
@@ -81,7 +81,7 @@ void reset_vector()
 
   RCC->CR |= RCC_CR_HSEON; // enable HSE oscillator (off-chip crystal)
 
-  for (volatile uint32_t i = 0; 
+  for (volatile uint32_t i = 0;
        i < 0x5000 && !(RCC->CR & RCC_CR_HSERDY); i++)
   {
     // no op... wait for either timeout or HSE to spin up

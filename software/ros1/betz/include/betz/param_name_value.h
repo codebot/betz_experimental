@@ -15,22 +15,24 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef PARAM_NAME_VALUE_H
+#define PARAM_NAME_VALUE_H
 
 #include <stdint.h>
+#include "betz/drive.h"
+#include "packet.h"
 
-struct state_t
+namespace betz {
+
+class ParamNameValue : public Packet
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
+public:
+  ParamNameValue(
+      const Drive& drive,
+      const uint32_t param_idx,
+      const bool force_long_addr = true);
 };
 
-extern struct state_t g_state;
-
-void state_init();
+}  // namespace betz
 
 #endif

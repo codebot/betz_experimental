@@ -15,22 +15,24 @@
  *
 */
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef FLASH_READ_H
+#define FLASH_READ_H
 
 #include <stdint.h>
+#include "betz/drive.h"
+#include "packet.h"
 
-struct state_t
+namespace betz {
+
+class FlashRead : public Packet
 {
-  uint32_t t;  // systime at instant of PWM cycle start
-  float enc;  // encoder (radians)
-  float joint_pos;  // joint position (radians), typically offset from encoder
-  uint16_t raw_adc[3];
-  float phase_currents[3];
+public:
+  FlashRead(
+      const Drive& drive,
+      const uint32_t addr,
+      const uint32_t len);
 };
 
-extern struct state_t g_state;
-
-void state_init();
+}  // namespace betz
 
 #endif
