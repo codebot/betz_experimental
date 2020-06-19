@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "comms.h"
+#include "control.h"
 #include "flash.h"
 #include "param.h"
 #include "rng.h"
@@ -501,6 +502,19 @@ void comms_state_poll(
   }
 }
 
+void comms_set_position_target(
+    const uint8_t *p,
+    const uint32_t len)
+{
+  // this is intended to be send at high rate, not needing ACKs
+  if (len < 5)
+    return;  // too short
+
+  float target = 0;
+  memcpy(&target, &p[1], 4);
+  control_set_position_target(target);
+}
+
 void comms_rx_pkt(
     const uint8_t *p,
     const uint32_t len,
@@ -537,6 +551,8 @@ void comms_rx_pkt(
       case 0x04: comms_param_write_flash(p, len); break;
 
       case 0x10: comms_state_poll(p, len, long_address); break;
+
+      case 0x20: comms_set_position_target(p, len); break;
 
       case 0xf0: comms_discovery(p, len); break;
       case 0xf1: comms_read_flash(p, len); break;

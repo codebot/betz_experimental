@@ -28,6 +28,8 @@
 
 namespace betz {
 
+class Bus;
+
 class Drive
 {
 public:
@@ -60,6 +62,11 @@ public:
   bool uuid_equals(const std::vector<uint8_t>& _uuid) const;
   void set_uuid(const UUID& _uuid);
   void print() const;
+
+  // convenience function to set the local copy of the param as well
+  // as blast out a packet to set it on the MCU
+  void set_param(Bus& bus, const std::string& name, const float value);
+  void set_param(Bus& bus, const std::string& name, const int value);
 };
 
 }  // namespace betz

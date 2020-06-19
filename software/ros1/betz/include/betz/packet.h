@@ -63,6 +63,8 @@ public:
     ID_STATE_POLL = 0x10,
     ID_TERSE_STATE_POLL = 0x12,
 
+    ID_SET_POSITION_TARGET = 0x20,
+
     ID_DISCOVERY  = 0xf0,
     ID_FLASH_READ = 0xf1,
     ID_FLASH_WRITE = 0xf2,

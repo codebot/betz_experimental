@@ -15,17 +15,24 @@
  *
 */
 
-#ifndef CONTROL_H
-#define CONTROL_H
+#ifndef SET_POSITION_TARGET_H
+#define SET_POSITION_TARGET_H
 
-#include <stdbool.h>
+#include <stdint.h>
+#include "betz/drive.h"
+#include "betz/packet.h"
 
-void control_init();
-void control_tick();
-void control_set_position_target(const float target);
+namespace betz {
 
-#define CONTROL_MODE_IDLE     0
-#define CONTROL_MODE_VOLTAGE  1
-#define CONTROL_MODE_POSITION 2
+class SetPositionTarget : public Packet
+{
+public:
+  SetPositionTarget(
+      const Drive& drive,
+      const float position_target,
+      const bool force_long_addr = false);
+};
+
+}  // namespace betz
 
 #endif

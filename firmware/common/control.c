@@ -53,6 +53,8 @@ static float g_control_position_kp = 0;
 static float g_control_max_voltage = 0;
 static float g_control_joint_offset = 0;
 static int g_control_joint_dir = 1;
+static float g_control_joint_pos_min = -0.2;
+static float g_control_joint_pos_max = 0.2;
 
 void control_init()
 {
@@ -108,6 +110,18 @@ void control_init()
       "joint_dir",
       &g_control_joint_dir,
       1,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "joint_pos_min",
+      &g_control_joint_pos_min,
+      -0.2,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "joint_pos_max",
+      &g_control_joint_pos_max,
+      0.2,
       PARAM_PERSISTENT);
 
 #ifndef EMULATOR
@@ -179,7 +193,14 @@ void control_timer()
 
     if (g_control_mode == CONTROL_MODE_POSITION)
     {
-      float pos_error = g_control_position_target - g_state.joint_pos;
+      // clamp the position target
+      float clamped_pos_target = g_control_position_target;
+      if (clamped_pos_target < g_control_joint_pos_min)
+        clamped_pos_target = g_control_joint_pos_min;
+      else if (clamped_pos_target > g_control_joint_pos_max)
+        clamped_pos_target = g_control_joint_pos_max;
+
+      float pos_error = clamped_pos_target - g_state.joint_pos;
       if (pos_error > (float)(M_PI))
         pos_error -= (float)(2.0f * M_PI);
       else if (pos_error < (float)(-M_PI))
@@ -249,4 +270,9 @@ void control_timer()
     // We're at the top of the PWM cycle. Time to talk to the encoder.
     enc_start_nonblocking_read_to_state();
   }
+}
+
+void control_set_position_target(const float target)
+{
+  g_control_position_target = target;
 }

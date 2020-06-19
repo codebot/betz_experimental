@@ -43,6 +43,7 @@ add_library(betz
   packet/param_write_flash.cpp
   packet/reset.cpp
   packet/packet.cpp
+  packet/set_position_target.cpp
   packet/state_poll.cpp)
 
 add_executable(betz_node

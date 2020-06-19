@@ -15,17 +15,27 @@
  *
 */
 
-#ifndef CONTROL_H
-#define CONTROL_H
+#include "betz/set_position_target.h"
 
-#include <stdbool.h>
+using betz::Packet;
+using betz::SetPositionTarget;
+using betz::Param;
 
-void control_init();
-void control_tick();
-void control_set_position_target(const float target);
 
-#define CONTROL_MODE_IDLE     0
-#define CONTROL_MODE_VOLTAGE  1
-#define CONTROL_MODE_POSITION 2
+SetPositionTarget::SetPositionTarget(
+    const Drive& drive,
+    const float position_target,
+    const bool force_long_addr)
+{
+  flags = FLAG_SENTINEL;
+  if (drive.id == 0 || force_long_addr)
+  {
+    flags |= FLAG_ADDR_UUID;
+    uuid = drive.uuid;
+  }
+  else
+    drive_id = drive.id;
 
-#endif
+  payload.push_back(ID_SET_POSITION_TARGET);
+  append(position_target);
+}

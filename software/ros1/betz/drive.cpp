@@ -15,7 +15,9 @@
  *
 */
 
+#include "betz/bus.h"
 #include "betz/drive.h"
+#include "betz/param_set_value.h"
 #include "ros/ros.h"
 #include <string.h>  // for memcpy
 using betz::Drive;
@@ -168,4 +170,46 @@ void Drive::rx_discovery(const Packet& packet)
       "discovered %s (%s)",
       uuid.to_string().c_str(),
       is_bootloader ? "BL" : "APP");
+}
+
+void Drive::set_param(Bus& bus, const std::string& name, const float value)
+{
+  for (int i = 0; i < static_cast<int>(params.size()); i++)
+  {
+    if (params[i].name != name)
+      continue;
+
+    if (params[i].type != Param::Type::FLOAT)
+    {
+      ROS_ERROR("woah! tried to set a non-float param as float!");
+      return;
+    }
+
+    params[i].f_value = value;
+
+    bus.send_packet(std::make_unique<betz::ParamSetValue>(*this, params[i]));
+
+    break;
+  }
+}
+
+void Drive::set_param(Bus& bus, const std::string& name, const int value)
+{
+  for (int i = 0; i < static_cast<int>(params.size()); i++)
+  {
+    if (params[i].name != name)
+      continue;
+
+    if (params[i].type != Param::Type::INT)
+    {
+      ROS_ERROR("woah! tried to set a non-int param as int!");
+      return;
+    }
+
+    params[i].i_value = value;
+
+    bus.send_packet(std::make_unique<betz::ParamSetValue>(*this, params[i]));
+
+    break;
+  }
 }
