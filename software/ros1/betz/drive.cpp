@@ -119,6 +119,14 @@ void Drive::rx_param_name_value(const Packet& packet)
     return;
   }
   params[param.idx] = param;
+
+  // because the "id" parameter is used so frequently, we'll special-case
+  // it here and save it for later.
+  if (param.name == "id")
+  {
+    id = param.i_value;
+    ROS_INFO("  found id: %d\n", (int)id);
+  }
 }
 
 void Drive::rx_state_poll(const Packet& packet)
