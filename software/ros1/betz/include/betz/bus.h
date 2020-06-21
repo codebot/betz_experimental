@@ -86,6 +86,7 @@ public:
   // void add_drive_id(const uint8_t drive_id);
   //Drive *find_drive_by_id(const uint8_t drive_id);
 
+  std::shared_ptr<Drive> drive_by_id(const uint8_t id);
   std::shared_ptr<Drive> drive_by_uuid(const UUID& uuid);
   std::shared_ptr<Drive> drive_by_uuid_str(const std::string& uuid_str);
 

@@ -189,6 +189,14 @@ bool Bus::set_led(const uint8_t drive_id, const bool on)
 }
 #endif
 
+shared_ptr<Drive> Bus::drive_by_id(const uint8_t id)
+{
+  for (auto drive : drives)
+    if (drive->id == id)
+      return drive;
+  return shared_ptr<Drive>();  // oh noes
+}
+
 shared_ptr<Drive> Bus::drive_by_uuid(const UUID& uuid)
 {
   for (auto drive : drives)
