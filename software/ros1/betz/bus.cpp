@@ -416,11 +416,30 @@ void Bus::discovery_tick()
   }
 }
 
-bool Bus::burn_firmware(const std::string& firmware_filename)
+bool Bus::burn_firmware(const std::string& firmware_filename, const int id)
 {
-  for (auto drive : drives)
-    if (!burn_firmware(*drive, firmware_filename))
+  if (id == -1)
+  {
+    ROS_INFO("burning firmware to all drives on the bus");
+    for (auto drive : drives)
+      if (!burn_firmware(*drive, firmware_filename))
+        return false;
+  }
+  else
+  {
+    auto drive = drive_by_id(id);
+    if (drive)
+    {
+      ROS_INFO("burning firmware to drive id %d", id);
+      return burn_firmware(*drive, firmware_filename);
+    }
+    else
+    {
+      ROS_ERROR("couldn't find drive id %d", id);
       return false;
+    }
+  }
+
   return true;
 }
 

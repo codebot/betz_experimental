@@ -25,6 +25,7 @@ struct state_t
   uint32_t t;  // systime at instant of PWM cycle start
   float enc;  // encoder (radians)
   float joint_pos;  // joint position (radians), typically offset from encoder
+  float joint_vel;  // joint velocity (radians/second)
   uint16_t raw_adc[3];
   float phase_currents[3];
 };

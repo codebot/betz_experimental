@@ -39,7 +39,7 @@ public:
   int usage();
 
   int run();
-  int burn_firmware(const std::string& filename);
+  int burn_firmware(const std::string& filename, const int id);
   int discover();
 };
 

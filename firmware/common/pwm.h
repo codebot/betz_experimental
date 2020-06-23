@@ -24,12 +24,12 @@
 #if defined(BOARD_blue)
 
 // 84 MHz / 20 KHz = 4200
-#define PWM_MAX 4200  
+#define PWM_MAX 4200
 
 #elif defined(BOARD_mini)
 
 // 168 MHz / 20 KHz = 8400 for half cycle, need 4200 for full cycle
-#define PWM_MAX 4200  
+#define PWM_MAX 4200
 
 #elif defined(EMULATOR)
 

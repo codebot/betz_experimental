@@ -474,8 +474,11 @@ void comms_state_poll(
     currents_dest++;
     *currents_dest = g_state.phase_currents[2];
 
+    float *joint_vel_dest = (float *)&tx_pkt[28];
+    *joint_vel_dest = g_state.joint_vel;
+
     // todo: match the poll for short/long address
-    comms_tx_long_addr(tx_pkt, 28);
+    comms_tx_long_addr(tx_pkt, 32);
   }
   else if (verbosity == 2)
   {

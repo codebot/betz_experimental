@@ -86,10 +86,13 @@ int BetzNode::init(int argc, char **argv)
   {
     if (argc <= 2)
     {
-      ROS_FATAL("syntax: betz_node burn_firmware FILENAME");
+      ROS_FATAL("syntax: betz_node burn_firmware FILENAME ID");
       return 1;
     }
-    return burn_firmware(string(argv[2]));
+    int id = -1;
+    if (argc > 3)
+      id = atoi(argv[3]);
+    return burn_firmware(string(argv[2]), id);
   }
   else
     return usage();
@@ -113,10 +116,10 @@ int BetzNode::run()
   return 0;
 }
 
-int BetzNode::burn_firmware(const string& filename)
+int BetzNode::burn_firmware(const string& filename, const int id)
 {
   ROS_INFO("burning firmware...");
-  if (!bus.burn_firmware(filename))
+  if (!bus.burn_firmware(filename, id))
   {
     ROS_FATAL("error burning firmware");
     return 1;

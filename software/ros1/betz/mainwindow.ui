@@ -107,7 +107,7 @@
         <item>
          <widget class="QTableWidget" name="data_table">
           <property name="rowCount">
-           <number>6</number>
+           <number>7</number>
           </property>
           <property name="columnCount">
            <number>3</number>
@@ -127,6 +127,7 @@
           <attribute name="verticalHeaderVisible">
            <bool>false</bool>
           </attribute>
+          <row/>
           <row/>
           <row/>
           <row/>
@@ -176,6 +177,11 @@
           <item row="5" column="1">
            <property name="text">
             <string>current C</string>
+           </property>
+          </item>
+          <item row="6" column="1">
+           <property name="text">
+            <string>velocity</string>
            </property>
           </item>
          </widget>

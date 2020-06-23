@@ -50,11 +50,18 @@ static int g_control_pole_count = 21;
 static int g_control_mode = 0;
 static float g_control_bus_voltage = 24.0;
 static float g_control_position_kp = 0;
+static float g_control_position_kd = 0;
 static float g_control_max_voltage = 0;
 static float g_control_joint_offset = 0;
 static int g_control_joint_dir = 1;
 static float g_control_joint_pos_min = -0.2;
 static float g_control_joint_pos_max = 0.2;
+static float g_control_prev_unfilt_pos = 0.0;
+static float g_control_joint_pos_lpf_alpha = 0.5;
+static float g_control_joint_vel_lpf_alpha = 0.1;
+static bool g_control_init_complete = false;
+static float g_control_prev_pos_error = 0;
+static float g_control_vel_damp = 0;
 
 void control_init()
 {
@@ -95,6 +102,18 @@ void control_init()
       PARAM_PERSISTENT);
 
   param_float(
+      "position_kd",
+      &g_control_position_kd,
+      0.0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "vel_damp",
+      &g_control_vel_damp,
+      0.0,
+      PARAM_PERSISTENT);
+
+  param_float(
       "max_voltage",
       &g_control_max_voltage,
       1.0,
@@ -122,6 +141,18 @@ void control_init()
       "joint_pos_max",
       &g_control_joint_pos_max,
       0.2,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "joint_pos_lpf_alpha",
+      &g_control_joint_pos_lpf_alpha,
+      0.5,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "joint_vel_lpf_alpha",
+      &g_control_joint_vel_lpf_alpha,
+      0.1,
       PARAM_PERSISTENT);
 
 #ifndef EMULATOR
@@ -182,14 +213,43 @@ void control_timer()
     float v_b = 0;
     float v_c = 0;
 
-    g_state.joint_pos = g_state.enc + g_control_joint_offset;
+    float unfilt_pos = g_state.enc + g_control_joint_offset;
     if (g_control_joint_dir < 0)
-      g_state.joint_pos *= -1.0f;
+      unfilt_pos *= -1.0f;
 
-    if (g_state.joint_pos > (float)(M_PI))
-      g_state.joint_pos -= (float)(2.0f * M_PI);
-    else if (g_state.joint_pos < (float)(-M_PI))
-      g_state.joint_pos += (float)(2.0f * M_PI);
+    if (unfilt_pos > (float)(M_PI))
+      unfilt_pos -= (float)(2.0f * M_PI);
+    else if (unfilt_pos < (float)(-M_PI))
+      unfilt_pos += (float)(2.0f * M_PI);
+
+    if (!g_control_init_complete)
+    {
+      // wait initialize the filters
+      g_control_init_complete = true;
+      g_state.joint_pos = unfilt_pos;
+      g_state.joint_vel = 0;
+    }
+    else
+    {
+      float raw_diff = unfilt_pos - g_control_prev_unfilt_pos;
+      if (raw_diff > (float)M_PI)
+        raw_diff -= (float)(2.0 * M_PI);
+      else if (raw_diff < (float)-M_PI)
+        raw_diff += (float)(2.0 * M_PI);
+
+      const float raw_vel = raw_diff * 20000.0f;  // we're running at 20 kHz
+      const float a_vel = g_control_joint_vel_lpf_alpha;  // save typing
+      g_state.joint_vel =
+          g_state.joint_vel * (1.0f - a_vel) + raw_vel * a_vel;
+
+      const float a_pos = g_control_joint_pos_lpf_alpha;  // save typing
+      g_state.joint_pos =
+          g_state.joint_pos * (1.0f - a_pos) + unfilt_pos * a_pos;
+    }
+
+    g_control_prev_unfilt_pos = unfilt_pos;
+
+    /////////////////////////////////////////////
 
     if (g_control_mode == CONTROL_MODE_POSITION)
     {
@@ -206,7 +266,13 @@ void control_timer()
       else if (pos_error < (float)(-M_PI))
         pos_error += (float)(2.0f * M_PI);
 
-      g_control_voltage_target = g_control_position_kp * pos_error;
+      float deriv_error = (pos_error - g_control_prev_pos_error) * 20000.0f;
+      g_control_voltage_target =
+          g_control_position_kp * pos_error +
+          g_control_position_kd * deriv_error +
+          g_control_vel_damp * g_state.joint_vel;
+
+      g_control_prev_pos_error = pos_error;
     }
 
     // clamp voltage target to the parameterized range
