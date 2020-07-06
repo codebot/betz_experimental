@@ -477,8 +477,11 @@ void comms_state_poll(
     float *joint_vel_dest = (float *)&tx_pkt[28];
     *joint_vel_dest = g_state.joint_vel;
 
+    float *effort_dest = (float *)&tx_pkt[32];
+    *effort_dest = g_state.effort;
+
     // todo: match the poll for short/long address
-    comms_tx_long_addr(tx_pkt, 32);
+    comms_tx_long_addr(tx_pkt, 36);
   }
   else if (verbosity == 2)
   {

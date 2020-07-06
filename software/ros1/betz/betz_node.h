@@ -20,8 +20,11 @@
 
 #include "ros/ros.h"
 #include "betz/bus.h"
+#include <cstdio>
 
 namespace betz {
+
+class Packet;
 
 // to avoid confusion and/or namespace collisions with ros::Node, this class
 // is called BetzNode (for now)
@@ -41,6 +44,14 @@ public:
   int run();
   int burn_firmware(const std::string& filename, const int id);
   int discover();
+  int calibrate();
+
+private:
+  double calibration_joint_target = 0;
+  FILE* calibration_log = nullptr;
+
+  void rx_packet(const Packet& packet);
+  void rx_state_poll(const Packet& packet);
 };
 
 }  // namespace betz

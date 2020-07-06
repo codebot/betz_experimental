@@ -28,6 +28,7 @@ struct state_t
   float joint_vel;  // joint velocity (radians/second)
   uint16_t raw_adc[3];
   float phase_currents[3];
+  float effort;
 };
 
 extern struct state_t g_state;

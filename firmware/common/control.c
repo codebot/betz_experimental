@@ -291,9 +291,15 @@ void control_timer()
       v_b = g_control_voltage_target * sinf(elec_angle + deg120);
       v_c = g_control_voltage_target * sinf(elec_angle + 2.0f * deg120);
 
+      g_state.effort = g_control_voltage_target;
+
       g_state.phase_currents[0] = v_a;
       g_state.phase_currents[1] = v_b;
       g_state.phase_currents[2] = v_c;
+    }
+    else
+    {
+      g_state.effort = 0.0f;
     }
 
     const float PWM_MID = PWM_MAX / 2.0f;
