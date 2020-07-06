@@ -50,6 +50,7 @@ static int g_control_pole_count = 21;
 static int g_control_mode = 0;
 static float g_control_bus_voltage = 24.0;
 static float g_control_position_kp = 0;
+static float g_control_position_ki = 0;
 static float g_control_position_kd = 0;
 static float g_control_max_voltage = 0;
 static float g_control_joint_offset = 0;
@@ -62,6 +63,11 @@ static float g_control_joint_vel_lpf_alpha = 0.1;
 static bool g_control_init_complete = false;
 static float g_control_prev_pos_error = 0;
 static float g_control_vel_damp = 0;
+static int g_control_joint_wraps = 0;
+static float g_control_prev_unwrapped_pos = 0;
+static float g_control_integrator = 0;
+static float g_control_integrator_max_windup = 0;
+static float g_control_integrator_bleed = 1.0f;
 
 void control_init()
 {
@@ -84,9 +90,27 @@ void control_init()
       PARAM_TRANSIENT);
 
   param_int(
+      "wraps",
+      &g_control_joint_wraps,
+      0,
+      PARAM_TRANSIENT);
+
+  param_int(
       "pole_count",
       &g_control_pole_count,
       12,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "max_windup",
+      &g_control_integrator_max_windup,
+      0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "integrator_bleed",
+      &g_control_integrator_bleed,
+      1.0,
       PARAM_PERSISTENT);
 
   param_float(
@@ -98,6 +122,12 @@ void control_init()
   param_float(
       "position_kp",
       &g_control_position_kp,
+      0.0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "position_ki",
+      &g_control_position_ki,
       0.0,
       PARAM_PERSISTENT);
 
@@ -217,34 +247,49 @@ void control_timer()
     if (g_control_joint_dir < 0)
       unfilt_pos *= -1.0f;
 
+    /*
     if (unfilt_pos > (float)(M_PI))
       unfilt_pos -= (float)(2.0f * M_PI);
     else if (unfilt_pos < (float)(-M_PI))
       unfilt_pos += (float)(2.0f * M_PI);
+    */
 
     if (!g_control_init_complete)
     {
       // wait initialize the filters
       g_control_init_complete = true;
       g_state.joint_pos = unfilt_pos;
+      g_control_prev_unfilt_pos = unfilt_pos;
       g_state.joint_vel = 0;
     }
     else
     {
       float raw_diff = unfilt_pos - g_control_prev_unfilt_pos;
       if (raw_diff > (float)M_PI)
-        raw_diff -= (float)(2.0 * M_PI);
+      {
+        //raw_diff -= (float)(2.0 * M_PI);
+        g_control_joint_wraps--;
+      }
       else if (raw_diff < (float)-M_PI)
-        raw_diff += (float)(2.0 * M_PI);
+      {
+        //raw_diff += (float)(2.0 * M_PI);
+        g_control_joint_wraps++;
+      }
 
-      const float raw_vel = raw_diff * 20000.0f;  // we're running at 20 kHz
+      const float unwrapped_pos =
+        unfilt_pos + g_control_joint_wraps * (float)(2 * M_PI);
+
+      const float raw_vel =
+        (unwrapped_pos - g_control_prev_unwrapped_pos) * 20000.0f;  // 20 kHz
+      g_control_prev_unwrapped_pos = unwrapped_pos;
+
       const float a_vel = g_control_joint_vel_lpf_alpha;  // save typing
       g_state.joint_vel =
           g_state.joint_vel * (1.0f - a_vel) + raw_vel * a_vel;
 
       const float a_pos = g_control_joint_pos_lpf_alpha;  // save typing
       g_state.joint_pos =
-          g_state.joint_pos * (1.0f - a_pos) + unfilt_pos * a_pos;
+          g_state.joint_pos * (1.0f - a_pos) + unwrapped_pos * a_pos;
     }
 
     g_control_prev_unfilt_pos = unfilt_pos;
@@ -260,17 +305,24 @@ void control_timer()
       else if (clamped_pos_target > g_control_joint_pos_max)
         clamped_pos_target = g_control_joint_pos_max;
 
-      float pos_error = clamped_pos_target - g_state.joint_pos;
-      if (pos_error > (float)(M_PI))
-        pos_error -= (float)(2.0f * M_PI);
-      else if (pos_error < (float)(-M_PI))
-        pos_error += (float)(2.0f * M_PI);
+      const float pos_error = clamped_pos_target - g_state.joint_pos;
 
-      float deriv_error = (pos_error - g_control_prev_pos_error) * 20000.0f;
+      g_control_integrator += pos_error;
+      g_control_integrator *= g_control_integrator_bleed;
+
+      if (g_control_integrator > g_control_integrator_max_windup)
+        g_control_integrator = g_control_integrator_max_windup;
+      else if (g_control_integrator < -g_control_integrator_max_windup)
+        g_control_integrator = -g_control_integrator_max_windup;
+
+      const float deriv_error =
+        (pos_error - g_control_prev_pos_error) * 20000.0f;
+
       g_control_voltage_target =
-          g_control_position_kp * pos_error +
-          g_control_position_kd * deriv_error +
-          g_control_vel_damp * g_state.joint_vel;
+        g_control_position_kp * pos_error +
+        g_control_position_ki * g_control_integrator +
+        g_control_position_kd * deriv_error +
+        g_control_vel_damp * g_state.joint_vel;
 
       g_control_prev_pos_error = pos_error;
     }

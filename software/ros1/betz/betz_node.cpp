@@ -26,11 +26,13 @@
 #include "betz/bus.h"
 #include "betz/drive.h"
 #include "betz/set_position_target.h"
+#include "betz/state_poll.h"
 
 using betz::BetzNode;
 using std::string;
 using std::make_unique;
 using std::shared_ptr;
+using std::vector;
 
 
 BetzNode::BetzNode()
@@ -185,9 +187,10 @@ void BetzNode::rx_state_poll(const Packet& packet)
   {
     fprintf(
         calibration_log,
-        "%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.8f,%.6f\n",
+        "%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.8f,%.6f\n",
         t,
         enc,
+        calibration_joint_target,
         joint_pos,
         phase_currents[0],
         phase_currents[1],
@@ -199,6 +202,17 @@ void BetzNode::rx_state_poll(const Packet& packet)
 
 int BetzNode::calibrate()
 {
+  // enumerate, this time polling for all parameters
+  bus.discovery_begin(true);
+
+  ros::Rate discovery_poll_rate(100);
+  while (ros::ok() && (bus.discovery_state < Bus::DiscoveryState::DONE))
+  {
+    bus.spin_once();
+    ros::spinOnce();
+    discovery_poll_rate.sleep();
+  }
+
   const int joint_id = 1;
   // make sure the joint enumerated
   shared_ptr<Drive> drive = bus.drive_by_id(static_cast<uint8_t>(joint_id));
@@ -224,15 +238,38 @@ int BetzNode::calibrate()
       [this](const Packet& p) { this->rx_packet(p); };
 
   // first ramp up the position gain smoothly to avoid a freak-out
-  const float gain_target = -10.0f;
-  ros::Duration gain_ramp_time(2.0);
-  ros::Rate serial_poll_rate(100);
+  const float gain_target = 2.0f;
+  ros::Duration gain_ramp_time(1.0);
+  ros::Rate serial_poll_rate(1000);
   ros::Time last_poll_time(ros::Time::now());
   ros::Time t_start(ros::Time::now());
 
+  ROS_INFO("calculating target positions");
+  vector<float> joint_targets;
+  const float start_pos = -M_PI - 0.05;
+  const float end_pos = -M_PI + 0.05;  //M_PI + 0.5;
+  const int num_targets = 1000;
+  joint_targets.reserve(2 * num_targets);  // going up and coming down
+  for (int i = 0; i < num_targets; i++)
+  {
+    joint_targets.push_back(
+      start_pos + i * (end_pos - start_pos) / num_targets);
+  }
+  for (int i = 0; i < num_targets; i++)
+  {
+    joint_targets.push_back(
+      end_pos - i * (end_pos - start_pos) / num_targets);
+  }
+
   ROS_INFO("engaging position controller");
+
   drive->set_param(bus, "position_kp", 0.0f);  // we'll ramp it gracefully
+  drive->set_param(bus, "position_ki", 0.0f);  // we'll ramp it gracefully
   drive->set_param(bus, "control_mode", 2);  // position control
+
+  bus.send_packet(
+    make_unique<betz::SetPositionTarget>(
+      *drive, start_pos));
 
   while (ros::ok())
   {
@@ -254,33 +291,53 @@ int BetzNode::calibrate()
     ros::spinOnce();
     serial_poll_rate.sleep();
   }
-
   drive->set_param(bus, "position_kp", gain_target);
+
+  bus.send_packet(
+    make_unique<betz::SetPositionTarget>(*drive, joint_targets[0]));
+  bus.spin_once();
+  drive->set_param(bus, "position_ki", 2.0f);
+  ros::Duration(1.0).sleep();
 
   // now we'll cycle to each joint position and measure the holding torque
   // required to reach it
-  for (double joint_pos = 0; joint_pos < 2.0 * M_PI; joint_pos += 0.01)
+  for (size_t i = 0; i < joint_targets.size(); i++)
   {
+    calibration_joint_target = joint_targets[i];
+    ROS_INFO("going to position %.3f", calibration_joint_target);
+
     t_start = ros::Time::now();
-    const ros::Time t(t_start);
-    
+
     // send twice to make really sure it gets there
     bus.send_packet(
-        make_unique<betz::SetPositionTarget>(*drive, joint_pos));
-    usleep(10000);
-    bus.send_packet(
-        make_unique<betz::SetPositionTarget>(*drive, joint_pos));
+      make_unique<betz::SetPositionTarget>(
+        *drive, calibration_joint_target));
+    bus.spin_once();
 
-    while (ros::ok() && (t - t_start).toSec() < 1.0)
+    ros::Time t(t_start);
+    while (ros::ok() && (t - t_start).toSec() < 0.1)  // 05)
     {
+      if ((t - last_poll_time) > ros::Duration(0.004))
+      {
+        last_poll_time = t;
+        bus.send_packet(make_unique<betz::StatePoll>(*drive, 1, true));
+      }
+
       bus.spin_once();
       ros::spinOnce();
       serial_poll_rate.sleep();
+      t = ros::Time::now();
     }
   }
 
+  // drive->set_param(bus, "position_kp", 2.0f);
+  bus.send_packet(make_unique<betz::SetPositionTarget>(*drive, 0.0f));
+  bus.spin_once();
+  ros::Duration(2.0).sleep();
+
   ROS_INFO("return drive to idle mode");
   drive->set_param(bus, "position_kp", 0.0f);
+  drive->set_param(bus, "position_ki", 0.0f);
   drive->set_param(bus, "control_mode", 0);
   return 0;
 }
@@ -288,6 +345,9 @@ int BetzNode::calibrate()
 int BetzNode::usage()
 {
   ROS_FATAL("no verb supplied!\n\nvalid verbs:\n"
-      "  run\nreset\nburn_firmware\ncalibrate");
+      "  run\n"
+      "  reset\n"
+      "  burn_firmware\n"
+      "  calibrate");
   return 1;
 }
