@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 
+# sudo apt install python3-sklearn
+
 import csv
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import linalg
+from sklearn.neighbors import NearestNeighbors
 import statistics
 import sys
+
 
 if __name__=='__main__':
     if len(sys.argv) != 2:
@@ -15,18 +20,29 @@ if __name__=='__main__':
     log_filename = sys.argv[1]
     print(f'loading {log_filename}')
     num_rows = 0
-    all_t = []
-    all_target = []
-    all_vel = []
-    all_effort = []
-    all_change_idx = []
-    prev_target = 0
+    #all_t = []
+    #all_target = []
+    #all_vel = []
+    #all_effort = []
+    #all_change_idx = []
+    #prev_target = 0
 
     with open(log_filename) as csv_file:
         csv_reader = csv.reader(csv_file)
-        for row in csv_reader:
-            num_rows += 1
 
+        # First, let's figure out how big of a numpy array to allocate
+        num_rows = sum(1 for row in csv_reader)  # fastest way to do it (?)
+        csv_file.seek(0)
+
+        data = np.zeros((num_rows, 9))
+
+        row_idx = 0
+        for row in csv_reader:
+            for col_idx in range(0, 9):
+                data[row_idx, col_idx] = float(row[col_idx])
+            row_idx += 1
+
+            """
             all_t.append(float(row[0]))
             all_target.append(float(row[2]))
             all_vel.append(float(row[7]))
@@ -36,9 +52,10 @@ if __name__=='__main__':
                 if all_target[-1] != prev_target:
                     all_change_idx.append(num_rows)
             prev_target = all_target[-1]
+            """
 
-    t_start = all_t[0]
-    t_end = all_t[-1]
+    t_start = data[0, 0]
+    t_end = data[-1, 0]
     elapsed_secs = t_end - t_start
     if elapsed_secs < 0:
         elapsed_secs += 4294967296.0
@@ -46,50 +63,49 @@ if __name__=='__main__':
     elapsed_mins = elapsed_secs / 60.0
     print(f'found {num_rows} rows')
     print(f'elapsed time: {elapsed_secs}s = {elapsed_mins:.3f} minutes')
-    print(f'{len(all_change_idx)} target changes')
 
-    change_t = []
-    change_effort = []
-    change_target = []
-    for change_idx in all_change_idx:
-        idx = change_idx - 2
-        change_t.append(all_t[idx])
-        change_effort.append(statistics.mean(all_effort[idx-5:idx]))
-        change_target.append(all_target[idx])
+    # compute a function approximation
+    approx_pos = np.linspace(-math.pi, math.pi, 16384)
+    approx_effort = np.zeros(len(approx_pos))
 
-    num_buckets = 16384
-    bucket_width = 2 * math.pi / num_buckets
-    bucket_centers = []
-    bucket_efforts = []
-    for i in range(0, num_buckets):
-        bucket_centers.append(-math.pi + bucket_width/2 + i * bucket_width)
-        bucket_efforts.append([])
-    # print(bucket_centers)
+    sigma = 0.001  # gaussian weights
 
-    for idx in range(0, len(all_effort), 10):
-        target = all_target[idx]
-        if target < -math.pi or target > math.pi:
-            continue
+    p = data[:, 2][::1]  # positions
+    e = data[:, 8][::1]  # efforts
 
-        min_dist = 1.0e9
-        min_bucket_idx = -1
-        for bucket_idx in range(0, num_buckets):
-            bucket_dist = abs(target - bucket_centers[bucket_idx])
-            # print(f'  bucket {bucket_idx} center {bucket_centers[bucket_idx]} dist {bucket_dist}')
-            if bucket_dist < min_dist:
-                min_dist = bucket_dist
-                min_bucket_idx = bucket_idx
+    # Currently using the approach given here:
+    # https://xavierbourretsicotte.github.io/loess.html
+    # Haven't spent any time working on speeding it up beyond using
+    # NearestNeighbors to help avoid computing tons of useless weights
 
-        # print(f'using bucket {min_bucket_idx} for target {target}')
-        bucket_efforts[min_bucket_idx].append(all_effort[idx])
+    print('computing nearest neighbor tree...')
+    nn_tree = NearestNeighbors(1000, 0.2, leaf_size=100).fit(p.reshape(-1, 1))
 
-    # for bucket_effort in bucket_efforts:
-    #     print(len(bucket_effort))
+    for idx, pos in enumerate(approx_pos):
+        print(f'{idx}/{len(approx_pos)}')
+        nn_dist, nn_idx = nn_tree.kneighbors(pos)
+        # print('nn_dist', nn_dist)
+        # print('nn_idx', nn_idx)
 
-    bucket_means = []
-    for bucket_effort in bucket_efforts:
-        bucket_means.append(statistics.mean(bucket_effort))
+        nn_p = p[nn_idx]
+        nn_e = e[nn_idx]
 
-    plt.plot(change_target, change_effort, linewidth=1.0)
-    plt.plot(bucket_centers, bucket_means, linewidth=5.0, color='red', markersize=10)
+        w = np.exp(-(nn_p - pos)**2 / (2 * sigma**2))
+        b = np.array([np.sum(w * nn_e), np.sum(w * nn_e * nn_p)])
+        A = np.array(
+            [
+                [np.sum(w), np.sum(w * nn_p)],
+                [np.sum(w * nn_p), np.sum(w * nn_p * nn_p)]
+            ])
+        x = linalg.solve(A, b)
+        approx_effort[idx] = x[0] + x[1] * approx_pos[idx]
+
+    plt.plot(p[::1], e[::1], linewidth=0, marker='o', markersize=0.5)
+    plt.plot(approx_pos, approx_effort, color='red', marker='o', markersize=5)
     plt.show()
+
+    # I'm sure there is a much more elegant way to do this
+    with open('approximation.csv', 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        for idx, pos in enumerate(approx_pos):
+            writer.writerow([pos, approx_effort[idx]])
