@@ -33,6 +33,7 @@ add_library(betz
   transport_multicast.cpp
   uuid.cpp
   packet/boot.cpp
+  packet/cog_write.cpp
   packet/crc.cpp
   packet/discovery.cpp
   packet/flash_read.cpp

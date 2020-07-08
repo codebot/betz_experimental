@@ -65,7 +65,10 @@ if __name__=='__main__':
     print(f'elapsed time: {elapsed_secs}s = {elapsed_mins:.3f} minutes')
 
     # compute a function approximation
-    approx_pos = np.linspace(-math.pi, math.pi, 16384)
+    start_pos = -math.pi
+    end_pos = math.pi
+    num_pos = 16384
+    approx_pos = np.linspace(start_pos, end_pos, num_pos)
     approx_effort = np.zeros(len(approx_pos))
 
     sigma = 0.001  # gaussian weights
@@ -100,12 +103,11 @@ if __name__=='__main__':
         x = linalg.solve(A, b)
         approx_effort[idx] = x[0] + x[1] * approx_pos[idx]
 
+    with open('approximation.txt', 'w') as output_file:
+        output_file.write(f'{start_pos:.9f} {end_pos:.9f} {num_pos}\n')
+        for effort in approx_effort:
+            output_file.write(f'{effort:.9f}\n')
+
     plt.plot(p[::1], e[::1], linewidth=0, marker='o', markersize=0.5)
     plt.plot(approx_pos, approx_effort, color='red', marker='o', markersize=5)
     plt.show()
-
-    # I'm sure there is a much more elegant way to do this
-    with open('approximation.csv', 'w', newline='') as csv_file:
-        writer = csv.writer(csv_file)
-        for idx, pos in enumerate(approx_pos):
-            writer.writerow([pos, approx_effort[idx]])

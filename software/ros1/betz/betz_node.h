@@ -43,6 +43,7 @@ public:
 
   int run();
   int burn_firmware(const std::string& filename, const int id);
+  int burn_cog_table(const std::string& filename, const int id);
   int discover();
   int calibrate();
 

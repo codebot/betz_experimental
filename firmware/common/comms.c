@@ -331,6 +331,48 @@ void comms_write_flash(const uint8_t *data, const uint32_t len)
   }
 }
 
+void comms_cog_write_flash(const uint8_t *data, const uint32_t len)
+{
+  if (len < 9)
+    return;  // must have >= 9 bytes in request message
+  const uint32_t write_len = len - 5;
+  uint32_t write_addr = 0;
+  memcpy(&write_addr, &data[1], sizeof(write_addr));
+  const uint8_t *write_data = &data[5];
+
+  /*
+  printf(
+      "comms_write_flash(0x%08x, %u)\r\n",
+      (unsigned)write_addr,
+      (unsigned)write_len);
+  */
+
+  if (write_len > 128)
+  {
+    printf("invalid flash write: len = %d\r\n", (int)write_len);
+    return;  // cannot. too long.
+  }
+
+  // sanity check to make sure the address range lies in flash
+  if (write_addr < flash_cog_table_base_addr() ||
+    write_addr >= flash_cog_table_base_addr() + flash_cog_table_size())
+  {
+    printf(
+      "invalid cog flash write: addr = 0x%08x\r\n",
+      (unsigned)write_addr);
+    return;  // cannot. outside flash.
+  }
+
+  if (flash_write_block(write_addr, write_len, write_data))
+  {
+    uint8_t pkt[9] = {0};  // length of return request
+    pkt[0] = 0x05;
+    memcpy(&pkt[1], &write_addr, sizeof(write_addr));
+    memcpy(&pkt[5], &write_len, sizeof(write_len));
+    comms_tx_long_addr(pkt, 9);
+  }
+}
+
 void comms_discovery(const uint8_t *p, const uint32_t len)
 {
   if (len >= 3)
@@ -555,6 +597,7 @@ void comms_rx_pkt(
       case 0x02: comms_param_name_value(p, len); break;
       case 0x03: comms_param_set_value(p, len); break;
       case 0x04: comms_param_write_flash(p, len); break;
+      case 0x05: comms_cog_write_flash(p, len); break;
 
       case 0x10: comms_state_poll(p, len, long_address); break;
 

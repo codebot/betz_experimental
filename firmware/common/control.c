@@ -19,6 +19,7 @@
 #include <math.h>
 
 #include "adc.h"
+#include "cog.h"
 #include "control.h"
 #include "enc.h"
 #include "param.h"
@@ -68,6 +69,7 @@ static float g_control_prev_unwrapped_pos = 0;
 static float g_control_integrator = 0;
 static float g_control_integrator_max_windup = 0;
 static float g_control_integrator_bleed = 1.0f;
+static float g_control_cog_scale = 0;
 
 void control_init()
 {
@@ -88,6 +90,12 @@ void control_init()
       &g_control_voltage_target,
       0,
       PARAM_TRANSIENT);
+
+  param_float(
+      "cog_scale",
+      &g_control_cog_scale,
+      0,
+      PARAM_PERSISTENT);
 
   param_int(
       "wraps",
@@ -336,12 +344,19 @@ void control_timer()
     if (g_control_mode == CONTROL_MODE_VOLTAGE ||
         g_control_mode == CONTROL_MODE_POSITION)
     {
+      float decogged_voltage_target = g_control_voltage_target;
+      if (g_control_cog_scale != 0)
+      {
+        decogged_voltage_target +=
+          g_control_cog_scale * cog_effort(g_state.joint_pos);
+      }
+
       const float deg120 = (float)(M_PI * 2.0f / 3.0f);
       const float elec_angle =
           fmodf(g_state.enc * (float)g_control_pole_count, 2.0f * M_PI);
-      v_a = g_control_voltage_target * sinf(elec_angle);
-      v_b = g_control_voltage_target * sinf(elec_angle + deg120);
-      v_c = g_control_voltage_target * sinf(elec_angle + 2.0f * deg120);
+      v_a = decogged_voltage_target * sinf(elec_angle);
+      v_b = decogged_voltage_target * sinf(elec_angle + deg120);
+      v_c = decogged_voltage_target * sinf(elec_angle + 2.0f * deg120);
 
       g_state.effort = g_control_voltage_target;
 

@@ -23,6 +23,7 @@
 #include "betz/transport_serial.h"
 
 #include "betz/boot.h"
+#include "betz/cog_write.h"
 #include "betz/discovery.h"
 #include "betz/flash_read.h"
 #include "betz/flash_write.h"
@@ -34,6 +35,7 @@ using std::make_shared;
 using std::make_unique;
 using std::shared_ptr;
 using std::string;
+using std::vector;
 
 using betz::Bus;
 using betz::Drive;
@@ -443,6 +445,146 @@ bool Bus::burn_firmware(const std::string& firmware_filename, const int id)
   return true;
 }
 
+bool Bus::burn_cog_table(const std::string& filename, const int id)
+{
+  auto drive = drive_by_id(id);
+  if (!drive)
+  {
+    ROS_ERROR("couldn't find drive id %d", id);
+    return false;
+  }
+
+  ROS_INFO(
+    "burning cog table [%s] to drive %d = %s",
+    filename.c_str(),
+    id,
+    drive->uuid.to_string().c_str());
+
+  FILE *f = fopen(filename.c_str(), "r");
+  if (!f)
+  {
+    ROS_FATAL("couldn't open cog file: [%s]", filename.c_str());
+    return false;
+  }
+
+  float min_pos = 0;
+  float max_pos = 0;
+  int num_pos = 0;
+
+  if (3 != fscanf(f, "%f %f %d\n", &min_pos, &max_pos, &num_pos))
+  {
+    ROS_FATAL("couldn't read header line of cog table");
+    return false;
+  }
+
+  ROS_INFO(
+    "cog table span: (%.4f, %.4f) with %d elements",
+    min_pos,
+    max_pos,
+    num_pos);
+
+  vector<float> cog_table;
+  cog_table.reserve(num_pos);
+  while (!feof(f))
+  {
+    float effort = 0;
+    if (1 != fscanf(f, "%f\n", &effort))
+    {
+      ROS_FATAL("couldn't read element in cog table");
+      return false;
+    }
+    cog_table.push_back(effort);
+  }
+  ROS_INFO("read %d elements from cog table file", (int)cog_table.size());
+
+  if (static_cast<int>(cog_table.size()) != num_pos)
+  {
+    ROS_FATAL("cog table file number of elements does not agree with header");
+    return false;
+  }
+
+  const size_t CHUNK_LEN = 16;  // this will be *4 = 64-byte chunks
+
+  // implement something fancy later if this ever matters
+  if (cog_table.size() % CHUNK_LEN != 0)
+  {
+    ROS_FATAL(
+      "the cog table must be a multiple of chunk size (%d)",
+      static_cast<int>(CHUNK_LEN));
+    return false;
+  }
+
+  for (size_t idx = 0; idx < cog_table.size(); idx += CHUNK_LEN)
+  {
+    const unsigned addr = 0x08070000 + idx * 4;
+    if (addr >= 0x08080000)
+    {
+      ROS_FATAL("attempted to write beyond cog table capacity");
+      return false;
+    }
+
+    ROS_INFO("burning chunk at addr 0x%08x", addr);
+    vector<uint8_t> chunk_bytes;
+    for (int b = 0; b < CHUNK_LEN*4; b++)
+      chunk_bytes.push_back(0);
+    memcpy(&chunk_bytes[0], &cog_table[idx], CHUNK_LEN*4);
+    send_packet(make_unique<CogWrite>(*drive, addr, chunk_bytes));
+
+    if (!wait_for_packet(3.0, Packet::ID_COG_WRITE_FLASH))
+    {
+      ROS_ERROR(
+        "couldn't write drive %s addr 0x%08x",
+        drive->uuid.to_string().c_str(),
+        static_cast<unsigned>(addr));
+      return false;
+    }
+  }
+
+  // now verify the table, reading back cog values one-at-a-time
+  for (size_t idx = 0; idx < cog_table.size(); idx++)
+  {
+    const unsigned addr = 0x08070000 + idx * 4;
+    send_packet(std::make_unique<FlashRead>(*drive, addr, 4));
+    if (!wait_for_packet(1.0, Packet::ID_FLASH_READ))
+    {
+      ROS_ERROR(
+        "couldn't read drive %s addr 0x%08x",
+        drive->uuid.to_string().c_str(),
+        addr);
+      return false;
+    }
+
+    // check that we received the expected chunk
+    if (drive->flash_last_addr != addr)
+    {
+      ROS_ERROR("woah! didn't seem to read the requested address!");
+      return false;
+    }
+
+    if (drive->flash_last_read.size() != 4)
+    {
+      ROS_ERROR("woah! unexpected read size");
+      return false;
+    }
+
+    float flash_cog_value = 0;
+    memcpy(&flash_cog_value, &drive->flash_last_read[0], 4);
+    if (flash_cog_value != cog_table[idx])
+    {
+      ROS_FATAL(
+        "cog table readback failed at idx %d: %.6f != %.6f",
+        static_cast<int>(idx),
+        flash_cog_value,
+        cog_table[idx]);
+      return false;
+    }
+  }
+
+  ROS_INFO("cog table verification succeeded");
+
+  return true;
+}
+
 bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
 {
   ROS_INFO(
@@ -539,7 +681,7 @@ bool Bus::burn_firmware(Drive& drive, const std::string& firmware_filename)
     // erasing page is triggered in MCU bootloader when writing the first
     // chunk of a page
 
-    std::vector<uint8_t> chunk_vec;
+    vector<uint8_t> chunk_vec;
     for (int i = 0; i < CHUNK_LEN; i++)
       chunk_vec.push_back(chunk[i]);
     send_packet(std::make_unique<FlashWrite>(drive, addr, chunk_vec));

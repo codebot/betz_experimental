@@ -159,6 +159,7 @@ void Drive::rx_packet(const Packet& packet)
     case Packet::ID_BOOT:             rx_boot(packet); break;
     case Packet::ID_STATE_POLL:       rx_state_poll(packet); break;
     case Packet::ID_TERSE_STATE_POLL: rx_terse_state_poll(packet); break;
+    case Packet::ID_COG_WRITE_FLASH:  break;
     default:
       ROS_INFO(
           "unrecognized packet ID: 0x%02x",

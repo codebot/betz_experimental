@@ -107,7 +107,10 @@ public:
   ros::Time discovery_time;
   bool enumerate_params = true;
 
-  bool burn_firmware(const std::string& firmware_filename, const int id = -1);
+  bool burn_firmware(const std::string& _filename, const int id = -1);
+
+  bool burn_cog_table(const std::string& filename, const int id = -1);
+
   bool boot_all_drives();
 
 private:

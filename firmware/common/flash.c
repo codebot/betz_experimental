@@ -13,7 +13,8 @@
 // flash organization:
 //   bootloader: 128 KB spanning sectors 0, 1, 2, 3, 4
 //   application: 768 KB spanning sectors 5..10
-//   parameters: 128 KB in sector 11
+//   parameters: 64 KB in sector 11
+//   cog table: next 64 KB
 
 #elif defined(BOARD_mini)
 
@@ -21,7 +22,8 @@
 // flash organization:
 //   bootloader: first 128 KB
 //   application: next 256 KB
-//   parameters: last 128 KB
+//   parameters: next 64 KB
+//   cogging table: next 64 KB
 
 #endif
 
@@ -278,21 +280,29 @@ uint32_t flash_get_param_table_base_addr()
 {
   // todo: smarter branching based on MCU type and flash size
   if (g_flash_page_size == 0x1000)
-  {
-    // STM32G4, hard-code top 128 KB for now
-    return 0x08000000 + 3 * 128 * 1024;
-  }
+    return 0x08060000;  // STM32G4
   else
-  {
-    // STM32F405, hard-code top 128 KB for now
-    return 0x080e0000;
-  }
+    return 0x080e0000;  // STM32F405
 }
 
 uint32_t flash_get_param_table_size()
 {
   // todo: branch based on MCU type and flash size
-  return 128 * 1024;
+  return 64 * 1024;
+}
+
+uint32_t flash_cog_table_base_addr()
+{
+  // todo: smarter branching based on MCU type and flash size
+  if (g_flash_page_size == 0x1000)
+    return 0x08070000;  // STM32G4
+  else
+    return 0x080f0000;  // STM32F405
+}
+
+uint32_t flash_cog_table_size()
+{
+  return 64 * 1024;
 }
 
 bool flash_erase_range(const uint32_t start, const uint32_t len)

@@ -100,6 +100,16 @@ int BetzNode::init(int argc, char **argv)
       id = atoi(argv[3]);
     return burn_firmware(string(argv[2]), id);
   }
+  else if (verb == "burn_cog_table")
+  {
+    if (argc <= 3)
+    {
+      ROS_FATAL("syntax: betz_node burn_cog_table FILENAME ID");
+      return 1;
+    }
+    const int id = atoi(argv[3]);
+    return burn_cog_table(string(argv[2]), id);
+  }
   else
     return usage();
 }
@@ -119,6 +129,30 @@ int BetzNode::run()
     return 1;
   }
 
+  return 0;
+}
+
+int BetzNode::burn_cog_table(const std::string& filename, const int id)
+{
+  ROS_INFO("enumerating all parameters...");
+  // enumerate, this time polling for all parameters
+  bus.discovery_begin(true);
+
+  ros::Rate discovery_poll_rate(100);
+  while (ros::ok() && (bus.discovery_state < Bus::DiscoveryState::DONE))
+  {
+    bus.spin_once();
+    ros::spinOnce();
+    discovery_poll_rate.sleep();
+  }
+
+  ROS_INFO("burning cog table...");
+  if (!bus.burn_cog_table(filename, id))
+  {
+    ROS_FATAL("error burning cog table");
+    return 1;
+  }
+  ROS_INFO("cog table burn completed");
   return 0;
 }
 
@@ -356,6 +390,7 @@ int BetzNode::usage()
       "  run\n"
       "  reset\n"
       "  burn_firmware\n"
-      "  calibrate");
+      "  calibrate\n"
+      "  burn_cog_table\n");
   return 1;
 }

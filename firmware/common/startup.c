@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "adc.h"
+#include "cog.h"
 #include "console.h"
 #include "control.h"
 #include "comms.h"
@@ -179,6 +180,7 @@ void reset_vector()
   adc_init();
   control_init();
   enc_init();
+  cog_init();
   comms_init(rs485_tx);
 
   __enable_irq();
