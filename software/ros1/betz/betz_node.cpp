@@ -86,8 +86,8 @@ int BetzNode::init(int argc, char **argv)
     return run();
   else if (verb == "discover")
     return discover();
-  else if (verb == "calibrate")
-    return calibrate();
+  else if (verb == "calibrate_cog")
+    return calibrate_cog();
   else if (verb == "burn_firmware")
   {
     if (argc <= 2)
@@ -234,7 +234,7 @@ void BetzNode::rx_state_poll(const Packet& packet)
   }
 }
 
-int BetzNode::calibrate()
+int BetzNode::calibrate_cog()
 {
   // enumerate, this time polling for all parameters
   bus.discovery_begin(true);
@@ -390,7 +390,8 @@ int BetzNode::usage()
       "  run\n"
       "  reset\n"
       "  burn_firmware\n"
-      "  calibrate\n"
-      "  burn_cog_table\n");
+      "  calibrate_cog\n"
+      "  burn_cog_table\n"
+      "  calibrate_enc_offset\n");
   return 1;
 }
