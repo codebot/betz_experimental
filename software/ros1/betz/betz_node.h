@@ -45,11 +45,13 @@ public:
   int burn_firmware(const std::string& filename, const int id);
   int burn_cog_table(const std::string& filename, const int id);
   int discover();
-  int calibrate();
+  int calibrate_enc();
+  int calibrate_cog();
 
 private:
-  double calibration_joint_target = 0;
+  double calibration_target = 0;
   FILE* calibration_log = nullptr;
+  bool log_sample = false;
 
   void rx_packet(const Packet& packet);
   void rx_state_poll(const Packet& packet);

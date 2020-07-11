@@ -540,7 +540,8 @@ bool Bus::burn_cog_table(const std::string& filename, const int id)
     }
   }
 
-  // now verify the table, reading back cog values one-at-a-time
+  ROS_INFO("verifying cog table...");
+
   for (size_t idx = 0; idx < cog_table.size(); idx++)
   {
     const unsigned addr = 0x08070000 + idx * 4;

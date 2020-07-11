@@ -88,6 +88,8 @@ int BetzNode::init(int argc, char **argv)
     return discover();
   else if (verb == "calibrate_cog")
     return calibrate_cog();
+  else if (verb == "calibrate_enc")
+    return calibrate_enc();
   else if (verb == "burn_firmware")
   {
     if (argc <= 2)
@@ -224,7 +226,7 @@ void BetzNode::rx_state_poll(const Packet& packet)
         "%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.8f,%.6f\n",
         t,
         enc,
-        calibration_joint_target,
+        calibration_target,
         joint_pos,
         phase_currents[0],
         phase_currents[1],
@@ -232,6 +234,113 @@ void BetzNode::rx_state_poll(const Packet& packet)
         joint_vel,
         joint_effort);
   }
+}
+
+int BetzNode::calibrate_enc()
+{
+  // enumerate, this time polling for all parameters
+  bus.discovery_begin(true);
+
+  ros::Rate discovery_poll_rate(100);
+  while (ros::ok() && (bus.discovery_state < Bus::DiscoveryState::DONE))
+  {
+    bus.spin_once();
+    ros::spinOnce();
+    discovery_poll_rate.sleep();
+  }
+
+  const int joint_id = 1;
+  // make sure the joint enumerated
+  shared_ptr<Drive> drive = bus.drive_by_id(static_cast<uint8_t>(joint_id));
+  if (!drive)
+  {
+    ROS_FATAL("couldn't find joint %d", joint_id);
+    return 1;
+  }
+  ROS_INFO("found drive %d", joint_id);
+
+  const std::string calibration_filename("enc_calibration.csv");
+  calibration_log = fopen(calibration_filename.c_str(), "w");
+  if (!calibration_log)
+  {
+    ROS_FATAL(
+        "couldn't open enc calibration log: [%s]",
+        calibration_filename.c_str());
+    return 1;
+  }
+  ROS_INFO("opened %s", calibration_filename.c_str());
+
+  bus.packet_listener =
+      [this](const Packet& p) { this->rx_packet(p); };
+
+  ros::Rate serial_poll_rate(1000);
+  ros::Time last_poll_time(ros::Time::now());
+  ros::Time t_start(ros::Time::now());
+
+  vector<float> offset_targets;
+  const float start_offset = 0.0f;
+  const float end_offset = 0.4f;
+  const float step_pos = 0.001;  // enc resolution
+  const int num_targets = (end_offset - start_offset) / step_pos;
+  offset_targets.reserve(num_targets);
+
+  for (int i = 0; i < num_targets; i++)
+  {
+    offset_targets.push_back(start_offset + i * step_pos);
+  }
+
+  ROS_INFO("engaging velocity controller");
+
+  drive->set_param(bus, "encoder_offset", offset_targets[0]);
+  drive->set_param(bus, "vel_damp", 0.0f);
+  drive->set_param(bus, "voltage_target", 4.0f);
+  drive->set_param(bus, "control_mode", 1);  // voltage mode
+
+  bus.spin_once();
+
+  // now we'll cycle through each encoder offset and measure the velocity
+  // we achieve (eventually) from it
+  for (size_t i = 0; i < offset_targets.size(); i++)
+  {
+    calibration_target = offset_targets[i];
+    ROS_INFO(
+      "%d/%d (%.3f%%) seeking %.4f",
+      (int)i,
+      (int)offset_targets.size(),
+      (double)i / (double)offset_targets.size() * 100.0,
+      calibration_target);
+
+    t_start = ros::Time::now();
+
+    drive->set_param(bus, "encoder_offset", (float)calibration_target);
+    bus.spin_once();
+
+    ros::Time t(t_start);
+    const double dwell_time = 1.0;
+    const double settle_time = dwell_time - 0.2;
+
+    while (ros::ok() && (t - t_start).toSec() < dwell_time)
+    {
+      if ((t - last_poll_time) > ros::Duration(0.05) &&
+          (t - t_start).toSec() > (dwell_time - settle_time))
+      {
+        last_poll_time = t;
+        bus.send_packet(make_unique<betz::StatePoll>(*drive, 1, true));
+      }
+
+      bus.spin_once();
+      ros::spinOnce();
+      serial_poll_rate.sleep();
+      t = ros::Time::now();
+    }
+
+    if (!ros::ok())
+      break;
+  }
+
+  ROS_INFO("return drive to idle mode");
+  drive->set_param(bus, "voltage_target", 0.0f);
+  drive->set_param(bus, "control_mode", 0);
 }
 
 int BetzNode::calibrate_cog()
@@ -337,20 +446,20 @@ int BetzNode::calibrate_cog()
   // required to reach it
   for (size_t i = 0; i < joint_targets.size(); i++)
   {
-    calibration_joint_target = joint_targets[i];
+    calibration_target = joint_targets[i];
     ROS_INFO(
       "%d/%d (%.3f%%) seeking %.4f",
       (int)i,
       (int)joint_targets.size(),
       (double)i / (double)joint_targets.size() * 100.0,
-      calibration_joint_target);
+      calibration_target);
 
     t_start = ros::Time::now();
 
     // send twice to make really sure it gets there
     bus.send_packet(
       make_unique<betz::SetPositionTarget>(
-        *drive, calibration_joint_target));
+        *drive, calibration_target));
     bus.spin_once();
 
     ros::Time t(t_start);
@@ -390,8 +499,8 @@ int BetzNode::usage()
       "  run\n"
       "  reset\n"
       "  burn_firmware\n"
+      "  calibrate_enc\n"
       "  calibrate_cog\n"
-      "  burn_cog_table\n"
-      "  calibrate_enc_offset\n");
+      "  burn_cog_table\n");
   return 1;
 }

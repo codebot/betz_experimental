@@ -86,7 +86,12 @@ if __name__=='__main__':
 
     for idx, pos in enumerate(approx_pos):
         print(f'{idx}/{len(approx_pos)}')
+
         nn_dist, nn_idx = nn_tree.kneighbors(pos)
+
+        #if len(nn_idx) < 2:
+        #    continue
+
         # print('nn_dist', nn_dist)
         # print('nn_idx', nn_idx)
 
