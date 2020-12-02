@@ -47,12 +47,17 @@
 
 static float g_control_position_target = 0;
 static float g_control_voltage_target = 0;
+static float g_control_velocity_target = 0;
 static int g_control_pole_count = 21;
 static int g_control_mode = 0;
 static float g_control_bus_voltage = 24.0;
 static float g_control_position_kp = 0;
 static float g_control_position_ki = 0;
 static float g_control_position_kd = 0;
+static float g_control_velocity_kp = 0;
+static float g_control_velocity_kd = 0;
+static float g_control_velocity_min = -10.0;
+static float g_control_velocity_max = 10.0;
 static float g_control_max_voltage = 0;
 static float g_control_joint_offset = 0;
 static int g_control_joint_dir = 1;
@@ -63,6 +68,7 @@ static float g_control_joint_pos_lpf_alpha = 0.5;
 static float g_control_joint_vel_lpf_alpha = 0.1;
 static bool g_control_init_complete = false;
 static float g_control_prev_pos_error = 0;
+static float g_control_prev_vel_error = 0;
 static float g_control_vel_damp = 0;
 static int g_control_joint_wraps = 0;
 static float g_control_prev_unwrapped_pos = 0;
@@ -88,6 +94,12 @@ void control_init()
   param_float(
       "voltage_target",
       &g_control_voltage_target,
+      0,
+      PARAM_TRANSIENT);
+
+  param_float(
+      "joint_vel_target",
+      &g_control_velocity_target,
       0,
       PARAM_TRANSIENT);
 
@@ -146,6 +158,18 @@ void control_init()
       PARAM_PERSISTENT);
 
   param_float(
+      "velocity_kp",
+      &g_control_velocity_kp,
+      0.0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "velocity_kd",
+      &g_control_velocity_kd,
+      0.0,
+      PARAM_PERSISTENT);
+
+  param_float(
       "vel_damp",
       &g_control_vel_damp,
       0.0,
@@ -167,6 +191,18 @@ void control_init()
       "joint_dir",
       &g_control_joint_dir,
       1,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "velocity_min",
+      &g_control_velocity_min,
+      -10.0,
+      PARAM_PERSISTENT);
+
+  param_float(
+      "velocity_max",
+      &g_control_velocity_max,
+      10.0,
       PARAM_PERSISTENT);
 
   param_float(
@@ -334,6 +370,26 @@ void control_timer()
 
       g_control_prev_pos_error = pos_error;
     }
+    else if (g_control_mode == CONTROL_MODE_VELOCITY)
+    {
+      // clamp the velocity target
+      float clamped_vel_target = g_control_velocity_target;
+      if (clamped_vel_target < g_control_velocity_min)
+        clamped_vel_target = g_control_velocity_min;
+      else if (clamped_vel_target > g_control_velocity_max)
+        clamped_vel_target = g_control_velocity_max;
+
+      const float vel_error = clamped_vel_target - g_state.joint_vel;
+
+      const float vel_deriv_error =
+        (vel_error - g_control_prev_vel_error) * 20000.0f;
+
+      g_control_voltage_target =
+        g_control_velocity_kp * vel_error +
+        g_control_velocity_kd * vel_deriv_error;
+
+      g_control_prev_vel_error = vel_error;
+    }
 
     // clamp voltage target to the parameterized range
     if (g_control_voltage_target > g_control_max_voltage)
@@ -342,7 +398,8 @@ void control_timer()
       g_control_voltage_target = -g_control_max_voltage;
 
     if (g_control_mode == CONTROL_MODE_VOLTAGE ||
-        g_control_mode == CONTROL_MODE_POSITION)
+        g_control_mode == CONTROL_MODE_POSITION ||
+        g_control_mode == CONTROL_MODE_VELOCITY)
     {
       float decogged_voltage_target = g_control_voltage_target;
       if (g_control_cog_scale != 0)

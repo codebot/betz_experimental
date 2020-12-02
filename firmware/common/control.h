@@ -27,5 +27,6 @@ void control_set_position_target(const float target);
 #define CONTROL_MODE_IDLE     0
 #define CONTROL_MODE_VOLTAGE  1
 #define CONTROL_MODE_POSITION 2
+#define CONTROL_MODE_VELOCITY 3
 
 #endif
